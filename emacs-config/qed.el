@@ -16,15 +16,11 @@
  '(show-paren-mode t nil (paren))
  '(transient-mark-mode t)
  '(truncate-lines t)
- '(user-mail-address "<andyetitmoves@yahoo.co.in>")
+ '(user-mail-address "andyetitmoves@gmail.com")
  '(version-control t))
-
-(defun kill-current-buffer ()
-  (interactive)
-  (kill-buffer (current-buffer)))
 
 (pc-bindings-mode)
 
 (global-set-key "\t" 'hippie-expand)
 (global-set-key [(control ?`)] 'indent-according-to-mode)
-(global-set-key [(control ?x) ?k] 'kill-current-buffer)
+(global-set-key [(control ?x) ?k] 'kill-this-buffer)

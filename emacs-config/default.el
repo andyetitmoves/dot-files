@@ -1,9 +1,12 @@
 ;;;; Paths
 
 (eval-and-compile
-  (add-to-list 'load-path "/home/ramk/elisp")
-  (add-to-list 'load-path "/home/ramk/elisp/empi")
-  (add-to-list 'load-path "/home/ramk/elisp/empi/defs"))
+  (defvar ramk-home "/home/ramk")
+
+  (defun add-ramk-subdir (path)
+    (add-to-list 'load-path (concat ramk-home "/elisp/" path)))
+
+  (mapc 'add-ramk-subdir '("" "libmpdee" "empi" "empi/defs")))
 
 ;;;; Custom
 
@@ -19,7 +22,7 @@
  '(backup-directory-alist (quote (("." . "~/.emacs.d/backup"))))
  '(backward-delete-char-untabify-method nil)
  '(blink-cursor t)
- '(browse-url-browser-function (quote browse-url-gnome-moz))
+ '(browse-url-browser-function (quote browse-url-w3))
  '(c-auto-newline t t)
  '(c-basic-offset 4)
  '(c-cleanup-list (quote (brace-catch-brace empty-defun-braces defun-close-semi list-close-comma scope-operator space-before-funcall)))
@@ -43,6 +46,8 @@
  '(cperl-under-as-char t)
  '(delete-old-versions t)
  '(desktop-base-file-name "desktop")
+ '(desktop-globals-to-save nil)
+ '(desktop-locals-to-save nil)
  '(desktop-path (quote ("~/.emacs.d")))
  '(desktop-save-mode t nil (desktop))
  '(dired-recursive-copies (quote top))
@@ -50,7 +55,7 @@
  '(ecb-options-version "2.26")
  '(ecb-tip-of-the-day-file "~/.emacs.d/ecb-tip-of-day")
  '(ecb-windows-width 0.25)
- '(ede-project-placeholder-cache-file "/home/ramk/.emacs.d/projects.ede")
+ '(ede-project-placeholder-cache-file "~/.emacs.d/projects.ede")
  '(eldoc-mode t t)
  '(elp-reset-after-results nil)
  '(elp-sort-by-function (quote elp-sort-by-total-time))
@@ -84,13 +89,13 @@
  '(pc-select-meta-moves-sexps t)
  '(pc-select-selection-keys-only t)
  '(pc-selection-mode t nil (pc-select))
- '(save-place t nil (saveplace))
- '(save-place-file "~/.emacs.d/places")
  '(scroll-bar-mode nil)
  '(semantic-which-function-use-color t)
  '(semanticdb-default-save-directory "~/.emacs.d/semantic-cache")
  '(semanticdb-project-roots (quote ("~/programs")))
+ '(session-locals-include (quote (buffer-read-only view-mode)))
  '(session-save-file "~/.emacs.d/session")
+ '(session-undo-check -1)
  '(sh-shell-arg (quote ((bash . "-i") (csh . "-f") (pdksh) (ksh88) (rc . "-p") (wksh) (zsh . "-f"))))
  '(shell-command-completion-mode t)
  '(shell-command-on-region-prompt "CmdReg [%w] ")
@@ -117,6 +122,7 @@
  '(version-control t)
  '(view-read-only t)
  '(view-remove-frame-by-deleting t)
+ '(w3-configuration-directory "~/.emacs.d/w3/")
  '(w3-do-incremental-display t)
  '(w3-honor-stylesheets t)
  '(w3-horizontal-rule-char 45)
@@ -129,8 +135,6 @@
   ;; If you edit it by hand, you could mess it up, so be careful.
   ;; Your init file should contain only one such instance.
   ;; If there is more than one, they won't work right.
- '(default ((((type tty)) (:background "black" :foreground "white"))
-	    (t (:background "black" :foreground "white" :slant normal :weight bold :height 101 :width normal :family "adobe-courier"))))
  '(bold ((t (:foreground "lightyellow" :underline t :weight bold :width semi-expanded))))
  '(bold-italic ((t (:foreground "grey80" :slant italic :weight bold :width semi-expanded))))
  '(border ((t (:background "grey70"))) t)
@@ -165,6 +169,13 @@
  '(trailing-whitespace ((t (:background "grey20"))))
  '(underline ((t (:foreground "lightblue" :underline t)))))
 
+(custom-theme-set-faces
+ 'user
+ '(default
+    ((((type tty)) (:background "black" :foreground "white"))
+     (t (:background "black" :foreground "white" :slant normal :weight bold
+		     :height 101 :width normal :family "adobe-courier")))))
+
 ;;;; Disabled
 
 (put 'narrow-to-region 'disabled nil)
@@ -180,15 +191,7 @@
      (let ((load-path (cons "~/.emacs.d" load-path)))
        (load "loaddefs")))
 
-;;;; Fully manual init starts here
-
-(defvar ramk-home "/home/ramk")
-
 ;;;; Binding Helpers
-
-(defun kill-current-buffer ()
-  (interactive)
-  (kill-buffer (current-buffer)))
 
 (defun hi-backspace ()
   (interactive)
@@ -229,8 +232,8 @@
   [remap find-library]	                'read-library-find-library
   [?\t]					'hippie-expand
   [C-f3]				'find-grep-dired
-  [f4]					'kill-current-buffer
-  [(control ?x) ?k]			'kill-current-buffer
+  [f4]					'kill-this-buffer
+  [(control ?x) ?k]			'kill-this-buffer
   [f7]					'compile
   [(control ?`)]			'indent-according-to-mode
   [insert]				'back-to-indentation
@@ -306,7 +309,7 @@
 (defun dired-kill-current-buffer ()
   (interactive)
   (let ((return (and (boundp 'return-to-buffer) return-to-buffer)))
-    (kill-current-buffer)
+    (kill-this-buffer)
     (and return (buffer-live-p return) (switch-to-buffer return))))
 
 (defun dired-setup-kill-for-return ()
@@ -380,7 +383,7 @@
   (add-to-list 'auto-mode-alist '(".*\\.pod$" . text-mode))
   (add-to-list 'conv-param-list '(".*\\.[mM][pP]3" "id3info" nil ("%s")))
   (add-to-list 'auto-mode-alist '(".*\\.[mM][pP]3" . text-mode))
-;;;(add-to-list 'conv-param-list (list ".*\\.ps" "/home/ramk/pstotext"))
+;;;(add-to-list 'conv-param-list (list ".*\\.ps" "pstotext"))
 ;;;(add-to-list 'auto-mode-alist '(".*\\.ps$" . text-mode))
   )
 (eval-after-load "shell-convert" '(shell-conv-after-load-hook))
@@ -503,6 +506,24 @@
   (interactive "P")
   (orig-quit-window (not nokill) window))
 
+(defvar protected-buffer-variables '(view-mode buffer-read-only))
+
+(defun save-protected-buffer-variables ()
+  (mapc '(lambda (var)
+	   (and (boundp var)
+		(set (make-local-variable
+		      (intern (concat "buffer-original-" (symbol-name var))))
+		     (symbol-value var)))) protected-buffer-variables))
+
+(defun session-locals-predicate (var buf)
+  (let ((orig (intern-soft (concat "buffer-original-" (symbol-name var)))))
+    (and (local-variable-p var)
+	 (or (not orig)
+	     (not (boundp orig))
+	     (not (equal (symbol-value orig) (symbol-value var)))))))
+
+(setq session-locals-predicate 'session-locals-predicate)
+
 ;;;; Files
 
 (eval-after-load "auto-insert-tkld"
@@ -544,11 +565,11 @@
 	"CXXFLAGS=-march=pentium4 -mfpmath=sse" "LDFLAGS="))
 
 (defun doxymacs-add-project (name)
-  (add-to-list 'doxymacs-doxygen-dirs
-	       (list (concat "^/home/ramk/programs/" name "/")
-		     (concat "/home/ramk/.doxygen.tags/"
-			     name ".xml")
-		     (concat "file:///home/ramk/programs/" name "/doc/"))))
+  (let ((home (expand-file-name "~")))
+    (add-to-list 'doxymacs-doxygen-dirs
+		 (list (concat "^" home "/programs/" name "/")
+		       (concat home "/.doxygen.tags/" name ".xml")
+		       (concat "file://" home "/programs/" name "/doc/")))))
 
 (setq mf--source-file-extension "cc")
 
@@ -572,5 +593,6 @@
 
 (add-hook 'after-init-hook
 	  '(lambda ()
+	     (add-hook 'find-file-hook 'save-protected-buffer-variables t)
 	     (session-initialize)
 	     (setq safe-load-compile-end-prompt nil)))

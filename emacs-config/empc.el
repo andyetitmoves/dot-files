@@ -45,10 +45,6 @@
 
 ;;;; Binding Helpers
 
-(defun kill-current-buffer ()
-  (interactive)
-  (kill-buffer (current-buffer)))
-
 (defun switch-to-other-buffer ()
   (interactive)
   (switch-to-buffer (other-buffer)))
@@ -59,7 +55,7 @@
 
 (global-set-key [(control ?o)] 'other-window)
 (global-set-key [C-f4] 'kill-current-buffer)
-(global-set-key [(control ?x) ?k] 'kill-current-buffer)
+(global-set-key [(control ?x) ?k] 'kill-this-buffer)
 (global-set-key [C-escape] 'switch-to-other-buffer)
 (global-set-key [(control ?a)] 'mark-whole-buffer)
 (global-set-key [mouse-3] 'mouse-popup-menubar-stuff)
