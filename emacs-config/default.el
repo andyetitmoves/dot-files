@@ -168,6 +168,7 @@
 ;;;; Disabled
 
 (put 'narrow-to-region 'disabled nil)
+(put 'dired-find-alternate-file 'disabled nil)
 
 ;;;; Autoloads
 
@@ -208,167 +209,47 @@
   (interactive)
   (switch-to-buffer (other-buffer)))
 
-(defun find-library (lib)
-  (interactive "sFind Library: ")
-  (let ((path (locate-library lib)))
-    (if path
-	(progn
-	  (and (> (length path) 4) (string-equal (substring path -4) ".elc")
-	       (setq path (substring path 0 -1)))
-	  (find-file path))
-      (error "Source for library %s not found in load-path" lib))))
+(defun read-library-find-library (lib)
+  (interactive (list (read-library "Find Library: ")))
+  (find-library lib))
 
-(defun elisp-source-jump (&optional symbol)
-  (interactive)
-  (unless symbol
-    (setq symbol (thing-at-point 'symbol))
-    (and symbol (setq symbol (intern symbol))))
-  (when symbol
-    (let ((point (point))
-	  (pos
-	   (cond
-	    ((fboundp symbol)
-	     (if (subrp (symbol-function symbol))
-		 (let ((find-function-C-source-directory source-directory))
-		   (find-function-C-source
-		    symbol (help-C-file-name
-			    (symbol-function symbol) 'subr) nil))
-	       (find-function-noselect symbol)))
-	    ((boundp symbol) (find-definition-noselect symbol 'defvar))
-	    ((facep symbol) (find-definition-noselect symbol 'defface))
-	    ((featurep symbol) (cons (locate-library symbol) 1))
-	    ((widgetp symbol) (widget-browse symbol)))))
-      (when pos
-	(push-mark point)
-	(switch-to-buffer (car pos))
-	(goto-char (cdr pos))
-	(recenter '(4))))))
-
-(defun elisp-show-doc (&optional sexp)
-  (interactive)
-  (let (fail)
-    (unless sexp
-      (setq sexp (thing-at-point 'sexp))
-      (and sexp (setq sexp (condition-case nil (read sexp) (error nil)))))
-    (when sexp
-      (cond
-       ((symbolp sexp)
-	(cond
-	 ((fboundp sexp) (describe-function sexp))
-	 ((boundp sexp) (describe-variable sexp))
-	 ((featurep sexp)
-	  (let ((window (selected-window)) (lib (symbol-name sexp)))
-	    (condition-case nil
-		;; May not have a commentary section
-		(finder-commentary lib)
-	      (error
-	       (setq lib (find-library-name lib))
-	       (if lib (find-file-other-window lib) (setq fail t))))
-	    (or fail (select-window window))))
-	 ((facep sexp) (describe-face sexp))
-	 ((charsetp sexp) (describe-character-set sexp))
-	 ((coding-system-p sexp) (describe-coding-system sexp))
-	 ((widgetp sexp) (widget-browse sexp))
-	 ((setq fail t))))
-       ((stringp sexp)
-	(cond
-	 ((key-binding sexp) (describe-key sexp))
-	 ((fontset-name-p sexp) (describe-fontset sexp))
-	 ((setq fail t))))
-       ((char-or-string-p sexp)
-	(describe-char sexp))
-       ((vectorp sexp)
-	(cond
-	 ((key-binding sexp) (describe-key sexp))
-	 ((setq fail t))))
-       ((listp sexp)
-	(cond
-	 ((not (cdr sexp)) (elisp-show-doc (car sexp)))
-	 ((eq (car sexp) 'quote) (elisp-show-doc (cdr sexp)))
-	 ((setq fail t))))
-       ((setq fail t))))
-    (and sexp (not fail))))
-
-(defun cperl-show-doc (&optional word verbose)
-  (interactive)
-  (or word (setq word (cperl-word-at-point)))
-  (let* (found (try word) (toks (split-string try "::")))
-    (while (and (not found) try)
-      (and verbose (message "Trying perldoc for %s" try))
-      (setq found (call-process "perldoc" nil nil nil "-l" try))
-      (or (setq found (if (and (numberp found) (= found 0)) t))
-	  (setq toks (nbutlast toks)
-		try (and toks (mapconcat 'identity toks "::")))))
-    (save-excursion
-      (or (and try (cperl-perldoc try))
-	  (let (cperl-message-on-help-error)
-	    (car (cperl-describe-perl-symbol word)))))))
-
-(defvar show-doc-function-alist
-  '((emacs-lisp-mode . elisp-show-doc)
-    (cperl-mode . cperl-show-doc)))
-
-(defun show-doc-at-point ()
-  (interactive)
-  (let ((sexp (assq major-mode show-doc-function-alist)))
-    (or (and sexp (funcall (cdr sexp)))
-	(and (fboundp 'ffap-guesser)
-	     (setq sexp (ffap-guesser))
-	     (cond
-	      ((ffap-url-p sexp) (browse-url sexp))
-	      ((and (file-exists-p sexp) (setq sexp (find-file-noselect sexp)))
-	       (display-buffer sexp t))))
-	(message "No appropriate documentation found"))))
-
-(defvar source-jump-function-alist
-  '((emacs-lisp-mode . elisp-source-jump)
-    (t . semantic-complete-jump-local)))
-
-(defun source-jump ()
-  (interactive)
-  (let ((def (or (assq major-mode source-jump-function-alist)
-		 (assq t source-jump-function-alist))))
-    (and def (funcall (cdr def)))))
-
-(defun source-jump-at-mouse (evt)
-  (interactive "e")
-  (let* ((start-posn (event-start evt))
-	 (start-point (posn-point start-posn))
-	 (start-window (posn-window start-posn)))
-    (select-window start-window)
-    (goto-char start-point))
-  (source-jump))
+(or (fboundp 'define-keys)
+    (defun define-keys (map &rest args)
+      (while (cadr args)
+	(define-key map (car args) (cadr args))
+	(setq args (cddr args)))))
 
 ;;;; Bindings
 
 (pc-bindings-mode)
 
-(global-set-key "\t" 'hippie-expand)
-(global-set-key [backspace] 'hi-backspace)
-(global-set-key [C-f3] 'find-grep-dired)
-(global-set-key [f3] 'kill-current-buffer)
-(global-set-key [f4] 'kill-current-buffer)
-(global-set-key [f7] 'compile)
-(global-set-key [(control ?`)] 'indent-according-to-mode)
-(global-set-key [insert] 'back-to-indentation)
-(global-set-key [M-insert] 'overwrite-mode)
-(global-set-key [(control ?n)] 'open-line)
-(global-set-key [(control ?o)] 'other-window)
-(global-set-key [C-f4] 'kill-current-buffer)
-(global-set-key [(control ?x) ?k] 'kill-current-buffer)
-(global-set-key [C-escape] 'switch-to-other-buffer)
-(global-set-key [(control ?a)] 'mark-whole-buffer)
-(global-set-key [?\(] 'insert-parentheses)
-(global-set-key [(meta ?f)] 'find-function)
-(global-set-key [(meta ?v)] 'find-variable)
-(global-set-key [(meta ?l)] 'find-library)
-(global-set-key [(control ?\?)] 'redo)
-(global-set-key [home] 'smart-home)
-(global-set-key [(control ?,)] 'pop-global-mark)
-(global-set-key [mouse-3] 'mouse-popup-menubar-stuff)
-(global-set-key [(control mouse-3)] 'mouse-save-then-kill)
-(global-set-key [(control return)] 'source-jump)
-(global-set-key [M-return] 'show-doc-at-point)
+(define-keys (current-global-map)
+  [remap backward-delete-char-untabify]	'hi-backspace
+  [remap beginning-of-line]		'smart-home
+  [remap find-library]	                'read-library-find-library
+  [?\t]					'hippie-expand
+  [C-f3]				'find-grep-dired
+  [f4]					'kill-current-buffer
+  [(control ?x) ?k]			'kill-current-buffer
+  [f7]					'compile
+  [(control ?`)]			'indent-according-to-mode
+  [insert]				'back-to-indentation
+  [M-insert]				'overwrite-mode
+  [(control ?n)]			'open-line
+  [(control ?o)]			'other-window
+  [C-escape]				'switch-to-other-buffer
+  [(control ?a)]			'mark-whole-buffer
+  [?\(]					'insert-parentheses
+  [(meta ?f)]				'find-function
+  [(meta ?v)]				'find-variable
+  [(meta ?l)]				'find-library
+  [(control ?\?)]			'redo
+  [(control ?,)]			'pop-global-mark
+  [mouse-3]				'mouse-popup-menubar-stuff
+  [(control mouse-3)]			'mouse-save-then-kill
+  [(control return)]			'source-jump-at-point
+  [M-return]				'show-doc-at-point
+  )
 
 (eval-after-load "empi" '(global-set-key [(control ?e)] empi-map))
 
@@ -376,19 +257,19 @@
 (eval (cons 'progn (cons '(global-set-key [M-S-mouse-3] 'ffap-at-mouse)
 			 (cdr ffap-bindings))))
 
-(define-key emacs-lisp-mode-map [?\t] 'hippie-expand)
-(define-key emacs-lisp-mode-map [return] 'newline-and-indent)
-(define-key emacs-lisp-mode-map [f8] 'emacs-lisp-byte-compile)
-(define-key emacs-lisp-mode-map
-  [(control f8)] 'emacs-lisp-byte-compile-and-load)
-(define-key emacs-lisp-mode-map [f9] 'edebug-defun)
-(define-key emacs-lisp-mode-map [f10] 'edebug-next-mode)
-(define-key emacs-lisp-mode-map [return] 'newline-and-indent)
+(define-keys emacs-lisp-mode-map
+  [?\t]			'hippie-expand
+  [return]		'newline-and-indent
+  [f8]			'emacs-lisp-byte-compile
+  [(control f8)]	'emacs-lisp-byte-compile-and-load
+  [f9]			'edebug-defun
+  [return]		'newline-and-indent
+  )
 
 (defvar view-mode-map)
 (defun view-after-load-hook ()
   ;; [return] causes incorrect overriding with help-mode
-  (define-key view-mode-map [return] 'source-jump)
+  (define-key view-mode-map [return] 'source-jump-at-point)
   (define-key view-mode-map [mouse-2] 'source-jump-at-mouse)
   ;; Our view-mode clobbers mouse-2 as well.
   (eval-after-load "help"
@@ -403,13 +284,46 @@
 ;;; due to a global key binding to hi-backspace above.
 (define-key isearch-mode-map [backspace] 'isearch-delete-char)
 
+(defvar dired-file-visit-hook nil)
+(defvar dired-from-buffer)
+
+(eval-when-compile (require 'dired))
+
+(defun dired-hooked-view-file ()
+  (interactive)
+  (let ((dired-from-buffer (current-buffer)))
+    (dired-view-file)
+    (run-hooks 'dired-file-visit-hook)))
+
+(defun dired-hooked-find-file ()
+  (interactive)
+  (let ((dired-from-buffer (current-buffer)))
+    (dired-find-file)
+    (run-hooks 'dired-file-visit-hook)))
+
+(defvar return-to-buffer)
+
+(defun dired-kill-current-buffer ()
+  (interactive)
+  (let ((return (and (boundp 'return-to-buffer) return-to-buffer)))
+    (kill-current-buffer)
+    (and return (buffer-live-p return) (switch-to-buffer return))))
+
+(defun dired-setup-kill-for-return ()
+  (unless (eq major-mode 'dired-mode)
+    (and (boundp 'dired-from-buffer)
+	 (set (make-local-variable 'return-to-buffer) dired-from-buffer))
+    (local-set-key [f3] 'dired-kill-current-buffer)
+    (local-set-key [f4] 'dired-kill-current-buffer)))
+
 (defvar dired-mode-map)
 (defvar empi-dired-map)
 (defun dired-after-load-hook ()
+  (define-key dired-mode-map [f3] 'dired-hooked-view-file)
+  (define-key dired-mode-map [f4] 'dired-hooked-find-file)
+  (add-hook 'dired-file-visit-hook 'dired-setup-kill-for-return)
   (require 'empi-dired)
-  (define-key dired-mode-map [(control ?e)] empi-dired-map)
-  (define-key dired-mode-map [f3] 'dired-view-file)
-  (define-key dired-mode-map [f4] 'dired-find-file))
+  (define-key dired-mode-map [(control ?e)] empi-dired-map))
 
 (eval-after-load "dired" '(dired-after-load-hook))
 
@@ -429,18 +343,19 @@
 
 (defvar xray-map
   (let ((map (make-sparse-keymap)))
-    (define-key map [?k] 'xray-click/key)
-    (define-key map [?s] 'xray-symbol)
-    (define-key map [?p] 'xray-position)
-    (define-key map [?b] 'xray-buffer)
-    (define-key map [?w] 'xray-window)
-    (define-key map [?r] 'xray-frame)
-    (define-key map [?m] 'xray-marker)
-    (define-key map [?o] 'xray-overlay)
-    (define-key map [?c] 'xray-screen)
-    (define-key map [?f] 'xray-faces)
-    (define-key map [?h] 'xray-hooks)
-    (define-key map [?e] 'xray-features) map))
+    (define-keys map
+      [?k] 'xray-click/key
+      [?s] 'xray-symbol
+      [?p] 'xray-position
+      [?b] 'xray-buffer
+      [?w] 'xray-window
+      [?r] 'xray-frame
+      [?m] 'xray-marker
+      [?o] 'xray-overlay
+      [?c] 'xray-screen
+      [?f] 'xray-faces
+      [?h] 'xray-hooks
+      [?e] 'xray-features) map))
 (global-set-key [(control ?h) ?x] xray-map)
 
 ;;;; Mode alists
@@ -478,7 +393,6 @@
 
 ;;;(add-hook 'find-file-hooks 'autovc-find-file-hook)
 
-;; Silence the compiler
 (eval-when-compile (require 'cc-mode))
 (add-hook 'c-mode-common-hook
 	  (lambda ()
@@ -493,7 +407,9 @@
 	(toggle-read-only 1)
       (auto-fill-mode))))
 
-(defun disable-trw () (setq show-trailing-whitespace nil))
+(defun disable-trw ()
+  (interactive)
+  (setq show-trailing-whitespace nil))
 
 (add-hook 'term-mode-hook 'disable-trw)
 (add-hook 'custom-mode-hook 'disable-trw)
