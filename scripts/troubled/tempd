@@ -1,0 +1,154 @@
+#!/usr/bin/perl -w
+# Optimize quick successive calls to a program, accumulating arguments in an
+# user specified fashion and passing them as one call to the program.
+
+use strict;
+use Getopt::Long;
+use IO::Socket;
+use IO::Select;
+
+my $port = 8255;
+my @num = ();
+my @str = ();
+my $timeout = 5;
+my $reset = 1;
+
+Getopt::Long::Configure ("no_auto_abbrev", "gnu_compat", "bundling",
+	   "no_getopt_compat", "require_order", "auto_help");
+
+GetOptions ("num=i"	=> \@num,
+	    "port=i"	=> \$port,
+	    "str=s"	=> \@str,
+	    "timeout=i"	=> \$timeout,
+	    "reset!"	=> \$reset
+	    ) or die "Unable to parse command line";
+
+my $sockpath = "/tmp/.tempd.".$port;
+
+my $socket = IO::Socket::UNIX->new (Type => SOCK_DGRAM,
+				    Peer => $sockpath,);
+
+# if ($socket && ! $socket->send("")) {
+#     print STDERR "Unable to send to $port: $!\n";
+#     close $socket;
+#     $socket = undef;
+# }
+
+my $delim = "\0";
+
+if ($socket) {
+    print "Making remote call: ";
+    my $buf;
+    $buf .= $_.$delim foreach (@num);
+    $buf .= $delim;
+    $buf .= $_.$delim foreach (@str);
+    $buf .= $delim;
+    print $buf."\n";
+    $socket->send ($buf) || die "Unable to send data: $!";
+    close $socket;
+    exit 0;
+}
+
+print "Starting server:\n";
+
+use Fcntl;
+
+sub cleanup { unlink $sockpath; exit 1; }
+
+$SIG{"TERM"} = $SIG{"INT"} = $SIG{"HUP"} = \&cleanup;
+
+$socket = IO::Socket::UNIX->new (Type => SOCK_DGRAM,
+				 Local => $sockpath,
+				 Listen => 1, Blocking => 0)
+    or die "Unable to listen on port $port: $!";
+
+my $flags = fcntl ($socket, F_GETFL, 0) or die "Unable to get socket flags: $!";
+fcntl ($socket, F_SETFL, $flags | O_NONBLOCK)
+    or die "Unable to set socket flags: $!";
+
+my $sel = IO::Select->new ($socket);
+
+my $tstart;
+$tstart = time unless $reset;
+print "Selecting for $timeout\n";
+while ($sel->can_read ($timeout)) {
+    print "Select succeeded\n";
+    my $cnt = 0;
+    my $state = 0;
+    print "Reading from socket\n";
+    my $buf = <$socket>;
+    if ($buf) {
+	print "Got buffer: $buf\n";
+	foreach (split /$delim/, $buf) {
+	    print "Got token: $_\n";
+	    if ($_ eq "") {
+		$cnt = 0;
+		$state ++;
+		next;
+	    }
+	    if ($state == 0) {
+		$num[$cnt] += $_;
+		$cnt ++;
+	    } elsif ($state == 1) {
+		push @str, $_;
+	    } else { last; }
+	}
+    } else {
+	print "Got undef buffer\n";
+    }
+    unless ($reset) {
+	$cnt = time;
+	$cnt -= $tstart;
+	$timeout -= $cnt;
+	last if $timeout <= 0;
+	$tstart = time;
+    }
+    print "Selecting for $timeout\n";
+}
+
+$sel = undef;
+close $socket;
+unlink $sockpath;
+
+my $numbuf;
+my $strbuf;
+
+my @command = ();
+
+sub processToken {
+    my $append = 1;
+    my $i = ($1 eq "" ? -1 : ($1 - 1));
+    if (length ($&) == length ($_)) {
+	$append = 0;
+	if ($2 eq 'd') {
+	    push @command, ($i < 0 ? @num : ($i <= $#num ? $num[$i] : ""));
+	} elsif ($2 eq 's') {
+	    push @command, ($i < 0 ? @str : ($i <= $#str ? $str[$i] : ""));
+	} elsif ($2 eq '%') { push @command, '%' }
+	else { return $&; }
+    } else {
+	unless ($numbuf) {
+	    $numbuf = "";
+	    $strbuf = "";
+	    $numbuf .= $_.' ' foreach (@num);
+	    $strbuf .= $_.' ' foreach (@str);
+	}
+	if ($2 eq 'd') {
+	    return ($i < 0 ? $numbuf : ($i <= $#num ? $num[$i] : ""));
+	} elsif ($2 eq 's') {
+	    return ($i < 0 ? $strbuf : ($i <= $#str ? $str[$i] : ""));
+	} elsif ($2 eq '%') { return '%' }
+    }
+    return undef;
+}
+
+foreach (@ARGV) {
+    my $token;
+    my $append = 1;
+    s/%([0-9]*)([a-z%])/($token = processToken, $append = defined ($token), $token)/ge;
+    push @command, $_ if $append;
+}
+
+print "Exec: @command\n";
+
+exec @command;

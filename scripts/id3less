@@ -1,0 +1,5 @@
+#!/bin/bash
+# Uses less to print pretty printed output of ID3 tags in the given file
+
+id3info "$@" | id3fmt > /tmp/.id3less-out
+exec less -f -q -~ -S -R -c -P "" $ID3FILE

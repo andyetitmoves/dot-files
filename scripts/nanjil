@@ -1,0 +1,11 @@
+#!/usr/bin/perl -w
+# Sanitizes lyrics html pages from http://www.nanjil.com
+
+while (<>) {
+    next unless /<!--HTML--><!--HEAD-->/;
+    print;
+    while (<>) {
+	print;
+	last if /<!--\/BODY--><!--\/HTML-->/;
+      }
+  }

@@ -1,0 +1,109 @@
+#!/usr/bin/perl -w
+# Seeks some time forward in mpd, optimizing for fast successive invocations.
+
+use strict;
+use IO::Socket;
+use Fcntl;
+
+my $seek = shift || 0;
+my $FIFO = '/tmp/mpseek.pl.queue';
+my $ret = 0;
+
+open LOG, '>> ~/log';
+
+unless (-p $FIFO) {
+    unlink $FIFO;
+    system 'mkfifo', $FIFO and die "Can't mkfifo $FIFO: $! - ";
+    $ret = fork;
+}
+
+unless ($ret) {
+    print LOG "Child\n";
+    sysopen QUEUE, $FIFO, O_WRONLY;
+    print QUEUE $seek."\n";
+    close QUEUE;
+    print LOG "Child: Queued\n";
+    close LOG;
+    exit 0;
+}
+
+open LOG, ">> ~/log";
+
+my $timeout = shift || 0.2;
+my $remote = IO::Socket::INET->new (Proto => 'tcp',
+				    PeerAddr => 'localhost',
+				    PeerPort => '6600',)
+    or die 'Cannot connect to mpd port at localhost';
+
+$SIG{CHLD} = 'IGNORE';
+$SIG{TERM} = sub { unlink $FIFO; exit 1 };
+sysopen QUEUE, $FIFO, O_RDONLY;
+
+sub mpd_seek {
+    my $seek = shift;
+    my ($cur, $tot, $pos);
+
+    print LOG "Seeking by $seek\n";
+    print $remote "status\n";
+    while (<$remote>) {
+	if (/^time:\s*([0-9]+):([0-9]+)$/) {
+	    ($cur, $tot) = ($1, $2);
+	    last if defined $pos;
+	} elsif (/^song:\s*([0-9]+)$/) {
+	    $pos = $1;
+	    last if defined $cur;
+	}
+    }
+    if (defined ($cur)) {
+	$seek += $cur;
+	if (defined ($tot) && $tot < $seek) {
+	    $pos ++;
+	    $seek -= $tot;
+	}
+	print $remote "seek $pos $seek\n";
+    }
+}
+
+my $rin = '';
+vec ($rin, fileno(QUEUE), 1) = 1;
+my $rout = $rin;
+my $buf = "";
+my $skip = 0;
+my ($nrdy, $tout);
+
+$nrdy = select ($rout, undef, undef, $tout);
+die "Select failed - $!" if $nrdy == -1;
+while (1) {
+    my $temp = "";
+    sysread QUEUE, $temp, 1024 if $nrdy;
+    if ($temp ne "") {
+	my $fin = chomp $temp;
+	$buf .= $temp;
+	my @toks = split /\n/, $buf;
+	if (! $fin) {
+	    $buf = $toks[$#toks -1];
+	    $#toks --;
+	} else {
+	    $buf = "";
+	}
+	$seek += $_ foreach (@toks);
+	print LOG "Seek is now $seek\n";
+	$tout = $timeout;
+    } else {
+	$skip ++;
+	if ($skip > 1) {
+	    mpd_seek $seek if $seek;
+	    $seek = 0;
+	    $skip = 0;
+	    $tout = undef;
+	}
+    }
+    $rout = $rin;
+    $nrdy = select ($rout, undef, undef, $tout);
+}
+
+unlink $FIFO;
+close QUEUE;
+mpd_seek $seek;
+close $remote;
+close LOG;

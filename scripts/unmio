@@ -1,0 +1,285 @@
+#!/usr/bin/perl -w
+# Extracts song information from files from http://www.musicindiaonline.com and
+# pretty prints the database constructed to a HTML file, with an index.
+
+use strict;
+
+sub link_list {
+    my $search = shift;
+    my $sync = 0;
+    my @list;
+    foreach (split /<a[^>]*>([^<]*)<\/a>/, $search) {
+	$sync ++;
+	push @list, $_ unless ($sync % 2);
+    }
+    return @list;
+}
+
+sub pprint {
+    my ($key, $val, $prefix) = @_;
+    $prefix = "" unless $prefix;
+    print "<br>$prefix<b>$key</b>: $val\n";
+}
+
+sub dirof {
+    my $name = shift;
+    chomp $name;
+    $name .= '/' unless $name =~ /\/\s*$/;
+    return $name;
+}
+
+my $pwd = dirof `pwd`;
+
+sub abs_path {
+    my $filename = shift;
+    $filename = $pwd.$filename if substr($filename, 0, 1) ne '/';
+    return $filename;
+}
+
+sub memq {
+    my $check = shift;
+    foreach (@_) {
+	return 1 if ($_ eq $check);
+    }
+    return undef;
+}
+
+my @upflds = ('Singer', 'Lyrics', 'Theme', 'Music Director');
+my @acflds = ('Actors', 'Director', 'Producer');
+my @db;
+
+sub unmio_file {
+    my %data;
+    my $filename = abs_path shift;
+    my $file;
+    open $file, $filename
+	or do { print STDERR "Unable to read $filename: $!\n"; return };
+    $data{'Src'} = $filename;
+    my $pic = (dirof `dirname $filename`).'1.jpg';
+    $data{'Picture'} = $pic if -e $pic;
+    while (<$file>) {
+	if (/<span class="t_t_14_gb_b">&nbsp;<a href="[^\"]*">([^<]*)<\/a>/) {
+	    my $movstr = $1;
+	    if ($movstr =~ /\s*(.*)\((.*)\)\s*/) {
+		$movstr = $1;
+		$data{'Year'} = $2;
+	    }
+	    $data{'Name'} = $movstr;
+	    last;
+	}
+    }
+    unless ($data{'Name'}) {
+	close $file;
+	return;
+    }
+    my $sync;
+    while (<$file>) {
+	if (/<span class="t_\w_\d\d_b_b">(.*) <\/span><span class="t_\w_\d\d_b">: (.*)<\/span>/) {
+	    $sync = 1;
+	    $data{$1} = join(', ', link_list ($2));
+	} elsif ($sync || $_ eq "\n") { last }
+    }
+
+    my @songs;
+    while (<$file>) {
+	if (/<tr><td class="t_t_\d\d_b">.*<span class="t_t_\d\d_b"><a[^>]*>([^<]*)<\/a>/) {
+	    my $song = $1;
+	    my %fields;
+	    my $repeat;
+	    if ($song =~ /(.*)\s+-\s+(.*)/) {
+		$song = $1;
+		$fields{'Singer'} = join ', ', split (/\s*,\s*/, $2);
+	    }
+	    $fields{'Name'} = $song;
+	    while (<$file>) {
+		if (/\s*&nbsp;\s*&nbsp;\s*([a-zA-Z ]*) : (.*?)<br>(.*)/) {
+		    my $key = $1;
+		    $_ = $3;
+		    if (defined ($fields{$key})) {
+			$fields{$key} = join ', ', $fields{$key}, (link_list $2);
+		    } else {
+			$fields{$key} = join ', ', (link_list $2);
+		    }
+		    redo if $_;
+		} else { $repeat = (eof($file) ? 2 : 1); last; }
+	    }
+	    push @songs, \%fields;
+	    ($repeat = 1 ? redo : last) if $repeat;
+	}
+    }
+    close $file;
+
+    if (@songs) {
+	foreach (@upflds) {
+	    my $fld = $_;
+	    my $def = $data{$fld};
+	    my %hit;
+	    foreach (@songs) {
+		if ($_->{$fld}) {
+		    $hit{$_->{$fld}} ++;
+		} elsif ($def) {
+		    $_->{$fld} = $def;
+		    $hit{$def} ++;
+		} else {
+		    $hit{''} ++;
+		}
+	    }
+	    undef $def;
+	    my $max = -1;
+	    foreach (keys %hit) {
+		if ($hit{$_} > $max) {
+		    $def = $_;
+		    $max = $hit{$def};
+		}
+	    }
+	    if ($def && $max > (@songs /2) && $max > 1) {
+		$data{$fld} = $def;
+		foreach (@songs) {
+		    if ($_->{$fld}) {
+			delete $_->{$fld} if $_->{$fld} eq $def;
+		    } else {
+			$_->{$fld} = '???';
+		    }
+		}
+	    } else {
+		delete $data{$fld};
+	    }
+	}
+	foreach (@acflds) {
+	    my $fld = $_;
+	    my @toks;
+	    @toks = (split /\s*,\s*/, $data{$fld}) if $data{$fld};
+	    foreach (@songs) {
+		if ($_->{$fld}) {
+		    push @toks, (split /\s*,\s*/, $_->{$fld});
+		    delete $_->{$fld};
+		}
+	    }
+	    @toks = sort @toks;
+	    my @utoks;
+	    my $last;
+	    foreach (@toks) {
+		push @utoks, $_ unless ($last && $last eq $_);
+		$last = $_;
+	    }
+	    if (@utoks) {
+		$data{$fld} = join ', ', @utoks;
+	    } else {
+		delete $data{$fld};
+	    }
+	}
+	$data{'Songs'} = \@songs;
+    }
+    push @db, \%data;
+}
+
+use Getopt::Long;
+
+my $list;
+my $index;
+my $refbase;
+my $dflds;
+
+Getopt::Long::Configure ('gnu_getopt');
+
+GetOptions ('list|l!'		=> \$list,
+	    'index|i=s'		=> \$index,
+	    'refbase|r=s'	=> \$refbase,
+	    'dumpfields|d!'	=> \$dflds,
+	    ) or die 'Unable to parse command line';
+
+($index && ! $refbase) and die "No reference base specified for index file";
+
+if ($list) {
+    while (<>) {
+	chomp;
+	unmio_file $_;
+    }
+} else {
+    unmio_file $_ foreach (@ARGV);
+}
+
+@db = sort { $a->{'Name'} cmp $b->{'Name'} } @db;
+
+if ($index) {
+    open INDEX, '>', $index or die "Unable to open $index for writing: $!";
+    print INDEX <<EOF;
+<html>
+<head>
+    <title>UnMIO database index</title>
+</head>
+<body>
+<center><b><big>Movie-wise index for the UnMIO database</big></b></center><br><br>
+EOF
+
+    my $index = 1;
+    foreach (@db) {
+	print INDEX "<a href='$refbase#movie$index'>$_->{'Name'}</a><br>\n";
+	$index ++;
+    }
+    printf INDEX <<EOF;
+</body>
+</html>
+EOF
+}
+
+print <<EOF;
+<html>
+<head>
+    <title>UnMIO database</title>
+</head>
+<body>
+<center><b><big>Movie-wise index of files:</big></b></center><br><br>
+<table border="1" width="100%">
+EOF
+
+my @globalExcl = ('Src', 'Name', 'Songs', 'Picture');
+my @localExcl = ('Name', 'Singer');
+
+my %fnames;
+
+my $i = 1;
+
+foreach (@db) {
+    my $data = $_;
+    print '<tr><td width=\'';
+    print ($data->{'Picture'} ? '67' : '100');
+    print "%'>\n<center>\n";
+    print "<a name='movie$i' href='file://".$data->{'Src'}."'>".$data->{'Name'}."</a>\n";
+    foreach (keys %$data) {
+	$fnames{$_} = '';
+	pprint $_, $data->{$_} unless memq $_, @globalExcl;
+    }
+    print "</center>\n<table width='100%' border='1'>";
+    foreach (@{$data->{'Songs'}}) {
+	my $song = $_;
+	print '<tr><td width="';
+	print ($song->{'Singer'} ? '50' : '100');
+	print '%">'.$song->{'Name'};
+	foreach (keys %$song) {
+	    $fnames{$_} = '';
+	    pprint ($_, $song->{$_}, "&nbsp;&nbsp;")
+		if ($song->{$_} && ! (memq $_, @localExcl));
+	}
+	print '</td><td width="50%" align="right"><i>'
+	    .$song->{'Singer'}.'</i></td>' if $song->{'Singer'};
+	print "</tr>\n";
+    }
+    print "</table>\n";
+    if ($data->{'Picture'}) {
+	print "</td>\n<td width='33%'>";
+	print "<center><img src='file://$data->{'Picture'}'></center>";
+    }
+    print "</td></tr>\n";
+    $i ++;
+}
+
+printf <<EOF;
+</body>
+</html>
+EOF
+
+if ($dflds) {
+    print STDERR "Fields found:\n";
+    print STDERR "$_\n" foreach (keys %fnames);
+}

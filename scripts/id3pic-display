@@ -1,0 +1,35 @@
+#!/bin/bash
+# Displays pictures in the given mp3 file.
+
+SCRSIZE=`xwininfo -metric -root | grep -m1 "Height:" | awk '{ print $2; }'`
+[ $SCRSIZE -gt 0 ] || SCRSIZE=768
+
+MAXSIZE=96
+
+PREFIX=/tmp/.dispinfo
+PIDFILE=$PREFIX-pid
+PICPREF=$PREFIX-pic
+PICMASK=$PICPREF*
+
+{
+    rm -f $PICMASK
+    id3pic -p $PICPREF "$1"
+    IMGS=`ls $PICMASK | wc -l`
+
+    DISP=`cat $PIDFILE`
+    kill -s 0 $DISP || DISP=0
+    [ $DISP -gt 0 ] && EXISTING=-remote
+
+    if [ $IMGS -gt 0 ]; then
+	let SIZE='(SCRSIZE - 1)/IMGS + 1';
+	[ $SIZE -gt $MAXSIZE ] && SIZE=$MAXSIZE;
+	SIZE=$SIZE'x'$SIZE;
+	montage -geometry $SIZE -tile 1x$IMGS -background "rgba(0,0,0,255)" \
+	    $PICMASK $PICPREF.jpg
+	display -immutable $EXISTING $PICPREF.jpg &
+	[ x$EXISTING != x-remote ] && echo $! > $PIDFILE
+    else
+	[ $DISP -gt 0 ] && kill $DISP
+	rm -f $PIDFILE
+    fi
+} 2> /dev/null

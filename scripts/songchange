@@ -1,0 +1,65 @@
+#!/usr/bin/perl -w
+# Polls for a song change in mpd and calls the command specified for each such
+# event, substituting every occurrence of {} with the new song name.
+
+use strict;
+use IO::Socket;
+
+my $dbbase = $ENV{"MPD_DB_ROOT"};
+my $last = '';
+my $now = '';
+my $child;
+
+sub die_child {
+    wait;
+    undef $child;
+    $SIG{CHLD} = \&die_child;
+}
+
+sub force_update {
+    $last = '';
+    $SIG{USR1} = \&force_update;
+}
+
+$SIG{CHLD} = \&die_child;
+$SIG{USR1} = \&force_update;
+$SIG{HUP} = sub { exit 0; };
+
+my $remote = IO::Socket::INET->new (Proto => "tcp",
+				    PeerAddr => "localhost",
+				    PeerPort => "6600",)
+    or die "cannot connect to mpd port at localhost";
+
+while (1 < 2) {
+    until ($remote and $remote->connected) {
+#	print STDERR "Connection broken, retrying...\n";
+	$remote = IO::Socket::INET->new (Proto => "tcp",
+					 PeerAddr => "localhost",
+					 PeerPort => "6600",)
+	    and last;
+	sleep 1;
+    }
+    print $remote "currentsong\n";
+    while (<$remote>) {
+	do { $now=$1; last; } if /^file: (.*)/;
+    }
+    if ($now and $now ne $last) {
+	if (defined ($child)) {
+	    kill "TERM", $child;
+	    wait;
+	}
+	defined ($child = fork) or die 'Unable to fork';
+	if ($child) {
+	    $last = $now;
+	} else {
+	    my $file = $dbbase.'/'.$now;
+	    my @command = ();
+	    foreach (@ARGV) {
+		s/{}/$file/g;
+		push @command, $_;
+	    }
+	    exec @command;
+	}
+    }
+    sleep 1;
+}

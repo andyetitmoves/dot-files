@@ -1,0 +1,23 @@
+#!/usr/bin/perl -w
+# Sends the current mpd title to the osd daemon. Needs mpc.
+
+use strict;
+use IO::Socket;
+
+open TITLE, 'mpc --format "[[%title%]|[%file%]][ - %artist%][ - %album%]'
+    .'[ - Track %track%]" |';
+my $title = <TITLE>;
+close TITLE;
+
+# Well, just dump out the title in case someone needs it.
+open TFILE, '> /tmp/.mpd.curtitle';
+print TFILE $title;
+close TFILE;
+
+my $remote = IO::Socket::INET->new (Proto => "udp",
+				    PeerAddr => "localhost",
+				    PeerPort => "7600",)
+    or die "Cannot connect to osd port at localhost";
+
+print $remote $title;
+close $remote;

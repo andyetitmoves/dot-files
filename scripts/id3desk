@@ -1,0 +1,8 @@
+#!/bin/bash
+# Hook script to manage a media centric desktop.
+
+SCRDIR=/home/ramk/scripts
+
+$SCRDIR/mposd
+$SCRDIR/id3pic-display "$1"
+exec $SCRDIR/id3less "$1"

@@ -1,0 +1,11 @@
+#!/usr/bin/perl -w
+# Scans mpd logs for added songs, printing them in descending order of
+# appearance in the log.
+
+use strict;
+
+my @new= ();
+while (<>) {
+    push @new, $1 if /\w+\s+\d+\s+\d+:\d+\s+:\s+added (.*)/;
+  }
+print pop @new, "\n" while @new;

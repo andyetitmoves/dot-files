@@ -1,0 +1,9 @@
+#!/bin/bash
+# Checks a directory for presence of given file basenames.
+
+CHECK=$1
+shift
+
+for i in "$@"; do
+    [ -e "$CHECK/$i" ] || echo $i
+done

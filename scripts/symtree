@@ -1,0 +1,22 @@
+#!/usr/bin/perl -w
+# Mirrors a directory to the current directory using symlinks.
+
+use strict;
+
+my $base = shift or die "No base directory specified!";
+
+{
+    local $/ = '/';
+    chomp $base;
+}
+
+system 'find '.$base.' -type d -mindepth 1 -printf "%P\0" | xargs -0 install -d';
+$? and die "Unable to install directories: $?";
+
+open FILES, 'find '.$base.' -type f -mindepth 1 -printf "%P\n" |';
+
+while (<FILES>) {
+    chomp;
+    symlink $base.'/'.$_, $_;
+}
+close FILES;

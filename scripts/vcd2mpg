@@ -1,0 +1,5 @@
+#!/bin/bash
+# Wrapper for mencoder ro convert a vcd to an mpg file.
+
+mencoder vcd:// -o $1 -vf hqdn3d -of mpeg \
+    -oac lavc -ovc lavc -lavcopts abitrate=64

@@ -1,0 +1,19 @@
+#!/usr/bin/perl -w
+# Displays a volume control usign osd
+
+use strict;
+use Socket;
+
+my $paddr = sockaddr_in(5000, INADDR_ANY);
+socket(SOCKET, PF_INET, SOCK_DGRAM, 0)	|| die "socket: $!";
+bind(SOCKET, $paddr)			|| die "bind: $!";
+
+open OSD, '| osd_cat -l 1 -s 5 -p middle '
+    .'-f "-*-fixed-*-*-*-*-*-230-*-*-*-120-iso8859-1" -c green';
+
+my $buf;
+
+while (recv (SOCKET, $buf, 1024, 0)) {
+    print "Yey!!!!\n";
+    print OSD $buf.'\n';
+  }

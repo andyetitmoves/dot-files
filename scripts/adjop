@@ -1,0 +1,24 @@
+#!/usr/bin/perl -w
+# increase / decrese / report opacity of the current window
+# managed by Enlightenment Needs eesh. Useful only in the presence of a
+# composition manager like xcompmgr.
+
+my $curwin = `eesh wf ?`;
+$curwin =~ /focused: (.*)/m;
+$curwin = $1;
+
+my $opc = shift;
+my $head = substr ($opc, 0, 1);
+
+my $old = `eesh wop $curwin opacity ?`;
+$old =~ /opacity: (.*)/m;
+$old = $1;
+
+if ($head eq '+' || $head eq '-') {
+    $opc += $old;
+} elsif ($head eq '?') {
+    print "$old\n";
+    exit 0;
+}
+
+exec 'eesh', '-e', "wop $curwin opacity $opc";

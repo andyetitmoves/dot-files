@@ -1,0 +1,13 @@
+#!/usr/bin/perl -w
+# Clears osd message displayed by an osd_cat daemon.
+
+use strict;
+use IO::Socket;
+
+my $remote = IO::Socket::INET->new (Proto => "udp",
+				    PeerAddr => "localhost",
+				    PeerPort => "7600",)
+    or die "Cannot connect to osd port at localhost";
+
+print $remote "\n";
+close $remote;
