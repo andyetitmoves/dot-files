@@ -39,7 +39,7 @@ Go to parent group: <span class="custom-button-face-0000">Multimedia External</s
 /- <span class="custom-group-tag-face-0001">Empi</span> group: ----------------------------------------------------------\
       <span class="custom-button-face-0000">State</span>: something in this group has been set and saved.
    <span class="custom-documentation-face-0002">The Emacs Media Player Interface</span>
-   See also <span class="custom-button-face-0000">empi-gen</span>.
+   See also <span class="custom-button-face-0000">Introduction to EMPI</span>.
 
 <span class="custom-variable-tag-face-0003">Empi Initial Backends</span>: <span class="custom-button-face-0000">Hide Value
 INS DEL</span> Name: <span class="widget-field-face-0004">empi-mpd
@@ -49,7 +49,11 @@ INS DEL</span> Name: <span class="widget-field-face-0004">empi-mpd
 </span><span class="custom-button-face-0000">INS
    State</span>: this option has been set and saved.
 
-<span class="custom-documentation-face-0002">The list of backends required at startup by EMPI. </span><span class="custom-button-face-0000">More</span>
+<span class="custom-documentation-face-0002">The list of backends required at startup by EMPI. </span><span class="custom-button-face-0000">Hide Rest</span><span class="custom-documentation-face-0002">
+This list is usually decided by the handlers in `empi-player-alist'.
+Each element of the list needs to be feature to be provided by a file with a
+similar filename on the load path. See `require' for more details.
+Do not set this variable directly, use the customization interface instead.</span>
 
 <span class="custom-variable-tag-face-0003">Empi Player Alist</span>: <span class="custom-button-face-0000">Hide Value
 INS DEL</span> Player:
@@ -85,17 +89,28 @@ INS DEL</span> Player:
 INS
    State</span>: this option has been set and saved.
 
-<span class="custom-documentation-face-0002">Alist of players and their corresponding handlers for EMPI. </span><span class="custom-button-face-0000">More</span>
+<span class="custom-documentation-face-0002">Alist of players and their corresponding handlers for EMPI. </span><span class="custom-button-face-0000">Hide Rest</span><span class="custom-documentation-face-0002">
+Each of the elements in the alist has the player name as the car and a list of
+handlers as the cdr. Each handler is either the symbol containing the function
+to call as its value, or a list. In the first case, the handler is given a
+chance to handle any action. In the second case, the first element of the list
+is the name of the symbol, and the elements following are action symbols for
+which this handler is used. It is advised to keep `empi-forwarder' as the last
+handler for all players.</span>
 
 <span class="custom-variable-tag-face-0003">Empi Default Player</span>: <span class="custom-button-face-0000">Hide Value Value Menu</span> Player name: <span class="widget-field-face-0004">mpd
 </span>   <span class="custom-button-face-0000">State</span>: this option has been set and saved.
 
-<span class="custom-documentation-face-0002">The default player used for all EMPI actions. </span><span class="custom-button-face-0000">More</span>
+<span class="custom-documentation-face-0002">The default player used for all EMPI actions. </span><span class="custom-button-face-0000">Hide Rest</span><span class="custom-documentation-face-0002">
+Should be one of the values defined by `empi-player-alist'. The current player
+used can be modified by a call to `empi-select-player'.</span>
 
 <span class="custom-variable-tag-face-0003">Empi Update Reference Interval</span>: <span class="custom-button-face-0000">Hide Value</span> <span class="widget-field-face-0004">1
 </span>   <span class="custom-button-face-0000">State</span>: this option is unchanged from its standard setting.
 
-<span class="custom-documentation-face-0002">Reference interval for timed action in the EMPI system. </span><span class="custom-button-face-0000">More</span>
+<span class="custom-documentation-face-0002">Reference interval for timed action in the EMPI system. </span><span class="custom-button-face-0000">Hide Rest</span><span class="custom-documentation-face-0002">
+Various timed actions in EMPI use a factor of this value as the interval between
+successive executions.</span>
 
 <span class="custom-group-tag-face-0001">Empi Volume Balance</span> group: <span class="custom-button-face-0000">Go to Group</span> 
 <span class="custom-documentation-face-0002">Volume and balance control for EMPI</span>

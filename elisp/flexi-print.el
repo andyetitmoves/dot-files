@@ -200,7 +200,7 @@ corresponding value, and the result read and eval'ed to get the return value."
 
 (defun flexi-print-backend-function (scheme func)
   "Wrapper function backend to `flexi-print'.
-Just calls any other flexi-print backend. Exists for customization purposes."
+Just calls any other flexi-print backend, without any format argument though."
   (funcall func scheme))
 (put 'flexi-print-backend-function 'flexi-print-backend-name "function")
 (put 'flexi-print-backend-function 'flexi-print-backend-custom-type 'function)
@@ -233,6 +233,8 @@ custom, for the argument the backend takes."
     flexi-print-backend-function)
   "List of known `flexi-print' backends.")
 
+(eval-when-compile (require 'cus-edit))
+
 (defun flexi-print-custom-function-item-list ()
   (mapcar '(lambda (item)
 	     (list 'function-item :tag
@@ -241,14 +243,9 @@ custom, for the argument the backend takes."
 	  flexi-print-known-backends))
 
 (defun flexi-print-custom-match-arg (wid val)
-  (and (fboundp (cdr val))
-       (or (not (setq wid (get (cdr val) 'flexi-print-backend-custom-type)))
-	   (widget-apply wid :match val))))
-
-(defvar flexi-print-custom-type-tail
-  '((sexp :tag "Argument")
-;;    :match flexi-print-custom-match-arg
-    ))
+  (and (fboundp (car val))
+       (or (not (setq wid (get (car val) 'flexi-print-backend-custom-type)))
+	   (widget-apply (widget-convert wid) :match (cdr val)))))
 
 (defmacro defflexi-print-custom (symbol backend cookie doc &rest args)
   "Create a customization entry for a `flexi-print' format.
@@ -261,8 +258,10 @@ need not be specified in ARGS."
 This variable serves as a formatting argument to `flexi-print'.
 See `flexi-print-known-backends' for the list of known backends.")
      :type
-     (append (list 'cons (cons 'radio (flexi-print-custom-function-item-list)))
-	     flexi-print-custom-type-tail)))
+     `(cons :match flexi-print-custom-match-arg
+	    (radio ,@(flexi-print-custom-function-item-list))
+	    (sexp :tag "Argument"))
+     :link '(emacs-commentary-link :tag "Flexi Print" "flexi-print")))
 
 (provide 'flexi-print)
 

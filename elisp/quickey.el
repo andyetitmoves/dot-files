@@ -57,7 +57,7 @@
 (defvar working-report-execution t
   "*Report the form executed in a quickey keyset to the echo area.")
 
-(require 'misc-load)
+(require 'working)
 
 (defun quickey (keyset)
   "Act on quickey keyset KEYSET to execute or schedule an action specified.

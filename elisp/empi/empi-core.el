@@ -134,7 +134,8 @@
 
 (defgroup empi nil
   "The Emacs Media Player Interface"
-  :prefix "empi-" :link '(emacs-commentary-link "empi-core")
+  :prefix "empi-"
+  :link '(emacs-commentary-link :tag "Introduction to EMPI" "empi-core")
   :group 'multimedia :group 'external)
 
 (defcustom empi-initial-backends nil
