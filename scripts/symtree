@@ -1,7 +1,8 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 # Mirrors a directory to the current directory using symlinks.
 
 use strict;
+use warnings;
 
 my $base = shift or die "No base directory specified!";
 

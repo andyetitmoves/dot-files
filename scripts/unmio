@@ -1,8 +1,9 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 # Extracts song information from files from http://www.musicindiaonline.com and
 # pretty prints the database constructed to a HTML file, with an index.
 
 use strict;
+use warnings;
 
 sub link_list {
     my $search = shift;

@@ -1,8 +1,9 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 # Sanity checks ID3 tags in the given files and (recursively) all files in the
 # given directories.
 
 use strict;
+use warnings;
 use MP3::Tag;
 
 # Interface

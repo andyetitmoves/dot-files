@@ -1,8 +1,9 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 # Polls for a song change in mpd and calls the command specified for each such
 # event, substituting every occurrence of {} with the new song name.
 
 use strict;
+use warnings;
 use IO::Socket;
 
 my $dbbase = $ENV{"MPD_DB_ROOT"};
