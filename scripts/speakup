@@ -1,8 +1,8 @@
 #!/bin/bash
 # Pauses mpd if necessary to evaluate some expression, and then resumes.
 
-echo pause 1 | nc localhost 6600 2>&1 > /dev/null
+echo pause 1 | nc localhost 6600 > /dev/null 2>&1
 usleep 100
 eval "$1"
 usleep 100
-echo pause 0 | nc localhost 6600 2>&1 > /dev/null
+echo pause 0 | nc localhost 6600 > /dev/null 2>&1

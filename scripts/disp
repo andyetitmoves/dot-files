@@ -6,7 +6,7 @@ declare -a args
 
 rm -f /tmp/.display-*.[mM][pP]3.*
 for i in "$@"; do
-    if echo $i | grep -i "^[^-].*\.mp3$" 2>&1 > /dev/null; then
+    if echo $i | grep -i "^[^-].*\.mp3$" > /dev/null 2>&1; then
 	FPREF=`echo $i | tr / _`
 	FPREF="/tmp/display$FPREF."
 	id3pic -p "$FPREF" "$i"
