@@ -122,7 +122,7 @@ nil to prevent automatic updation altogether. You will then have to use \
 to manually update. Keep in mind the speed of your machine while coming up
 with a good value. However, this is a relatively cheap operation,
 see `empl-no-id-update-flag' in this regard."
-  :type '(choice (integer :tag "Timeout") (const :tag "Manual" nil))
+  :type '(choice (natnum :tag "Timeout") (const :tag "Manual" nil))
   :group 'empl)
 
 (defcustom empl-no-id-update-flag nil
@@ -931,7 +931,8 @@ Use `empl' to display a playlist, this is not to be used directly.
 	  (empi-update-register
 	   `(lambda ()
 	      (with-current-buffer ,(current-buffer)
-		(or empl-inhibit-timed-update (empl-update)))) 1 nil))
+		(or empl-inhibit-timed-update (empl-update))))
+	   empl-update-interval nil))
     (add-hook 'kill-buffer-hook 'empl-cancel-updates nil t)
     (add-hook 'change-major-mode-hook 'empl-cancel-updates nil t))
   (use-local-map empl-mode-map)

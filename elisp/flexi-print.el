@@ -178,7 +178,8 @@ after the opening brace negates this result."
 			(print-any (flexi-print-query scheme key))))))))
     (concat newstr (and (= skip 0) (substring fmt end)))))
 (put 'flexi-print-backend-format 'flexi-print-backend-name "format")
-(put 'flexi-print-backend-format 'flexi-print-backend-custom-type 'string)
+(put 'flexi-print-backend-format
+     'flexi-print-backend-custom-type '(string :tag "Format"))
 
 (defun flexi-print-backend-read-eval (scheme fmt)
   "Lisp string backend to `flexi-print'.
@@ -196,7 +197,7 @@ corresponding value, and the result read and eval'ed to get the return value."
 (put 'flexi-print-backend-read-eval
      'flexi-print-backend-name "read-eval")
 (put 'flexi-print-backend-read-eval
-     'flexi-print-backend-custom-type 'string)
+     'flexi-print-backend-custom-type '(string :tag "Expression"))
 
 (defun flexi-print-backend-function (scheme func)
   "Wrapper function backend to `flexi-print'.
@@ -225,7 +226,7 @@ is added to the known list, some properties in the symbol are of importance.
 `flexi-print-backend-name' is a descriptive name for the backend.
 `flexi-print-backend-custom-type' can be any type specification recognized by
 custom, for the argument the backend takes."
-  (funcall (car format) scheme (cdr format)))
+  (funcall (car format) scheme (cadr format)))
 
 (defvar flexi-print-known-backends
   '(flexi-print-backend-format
@@ -234,6 +235,68 @@ custom, for the argument the backend takes."
   "List of known `flexi-print' backends.")
 
 (eval-when-compile (require 'cus-edit))
+
+(defun widget-dyngroup-convert-widget (widget)
+  (let* ((args (widget-get widget :args)) (sym (car args))
+	 (default (or (widget-get widget :default-type) 'sexp))
+	 (expand (or (widget-get widget :dyngroup-expand) 0)))
+    (when (= expand 0)
+      (setq args (cdr args))
+      (or (symbolp sym) (signal 'wrong-type-argument (list 'symbolp sym)))
+      (widget-put
+       widget :args
+       (mapcar '(lambda (item)
+		  (or (if (listp item)
+			  (or (get sym (car item))
+			      (plist-get (cdr item) :default))
+			(get sym item)) default)) args)))
+    (widget-put widget :dyngroup-expand (1+ expand))
+    (funcall (widget-get (widget-convert 'group) :convert-widget) widget)))
+
+(define-widget 'dyngroup 'group
+  "A widget which groups widget descriptions given in proplist of a symbol."
+  :tag "Dynamic Group"
+  :convert-widget 'widget-dyngroup-convert-widget)
+
+(define-widget 'dynlist 'dyngroup
+  "A widget for a list using `dyngroup'."
+  :tag "Dynamic List"
+  :format "%{%t%}:\n%v")
+
+(defun widget-flexi-make-backend-item (item)
+  `(dynlist :format "%v" ,item
+	    (nil :default (function-item
+			   :format "%t\n%h"
+			   :tag ,(concat
+				  (custom-unlispify-menu-entry
+				   (or (intern (get item
+						    'flexi-print-backend-name))
+				       (symbol-name item)) t)
+				  " Backend") ,item))
+	    (flexi-print-backend-custom-type :default (sexp :tag "Argument"))))
+
+(defun widget-flexi-convert-widget (widget)
+  (widget-put widget
+	      :args (mapcar 'widget-flexi-make-backend-item
+			    flexi-print-known-backends))
+  (funcall (widget-get (widget-convert 'radio) :convert-widget) widget))
+
+(defun widget-flexi-format-handler (widget esc)
+  (cond
+   ((eq esc ?l)
+    (widget-create 'documentation-string "\
+This variable serves as a formatting argument to `flexi-print'.")
+    (insert "To know more about Flexi Print, read ")
+    (widget-create 'emacs-commentary-link :tag "this" "flexi-print"))
+   (t (funcall (widget-get (widget-convert 'radio) :format-handler)
+	       widget esc))))
+
+(define-widget 'flexi-print-format 'radio
+  "A widget for `flexi-print' format."
+  :tag "Flexi Print Format"
+  :format "%{%t%}:\n\n%l\n\n%v"
+  :convert-widget 'widget-flexi-convert-widget
+  :format-handler 'widget-flexi-format-handler)
 
 (defun flexi-print-custom-function-item-list ()
   (mapcar '(lambda (item)

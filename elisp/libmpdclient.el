@@ -96,40 +96,44 @@
 
 ;;;; User serviceable variable(s).
 
-;; Make custom stuff work even without customize
-;;   Courtesy of Hrvoje Niksic <hniksic@srce.hr>
-(eval-and-compile
-  (condition-case ()
-      (require 'custom)
-    (error nil))
-  (unless (and (featurep 'custom) (fboundp 'custom-declare-variable))
-    ;; We have the old custom-library, hack around it!
-    (defmacro defgroup (&rest args) nil)
-    (defmacro defcustom (var value doc &rest args)
-      `(defvar ,var ,value ,doc))
-    (defmacro defface (var value doc &rest args)
-      `(make-face ,var))))
+(require 'custom)
 
-(defmacro def-mpd-conn-custom
-  (symbol &optional host port timeout doc &rest args)
-  "Create a customization entry for a MPD connection.
-SYMBOL holds the format, HOST, PORT and TIMEOUT are default values, defaulting
-to 'localhost', 6600 and 10.0 respectively. DOC documents the variable and the
-rest of the arguments are passed on to `defcustom'. This macro takes care of the
-:type argument to `defcustom', so it need not be specified in ARGS."
-  (or host (setq host "localhost"))
-  (or port (setq port 6600))
-  (or timeout (setq timeout 10.0))
-  `(defcustom ,symbol (list ,host ,port ,timeout)
-     ,(concat doc "\n
-This variable specifies a MPD connection. The value is a list of the mpd host
-name, port number, and the timeout for server replies. See `mpd-conn-new' for
-more details.")
-     :type '(list (string :tag "Hostname")
-		  (number :tag "Port"
-			  :match (lambda (widget value) (> value 0)))
-		  (float :tag "Timeout"
-			 :match (lambda (widget value) (> value 0))))))
+(defun widget-mpd-format-handler (widget esc)
+  (cond
+   ((eq esc ?l)
+    (widget-create-child-and-convert widget 'documentation-string "\
+This variable specifies a MPD connection.
+The value is a list of the mpd host name, port number, and the timeout for
+server replies. See `mpd-conn-new' for more details.")
+    (insert "To know more about libmpdclient, read ")
+    (widget-create 'emacs-commentary-link :tag "this" "libmpdclient"))
+   (t (funcall (widget-get (widget-convert 'lazy) :format-handler)
+	       widget esc))))
+
+(defun mpd-connection-tidy (val)
+  (or val (setq val '(nil nil nil)))
+  (let ((val val))
+    (and (listp val)
+	 (or (car val) (setcar val "localhost"))
+	 (setq val (cdr val))
+	 (or (car val) (setcar val 6600))
+	 (setq val (cdr val))
+	 (or (car val) (setcar val 10.0)))) val)
+
+(define-widget 'mpd-connection 'lazy
+  "A widget for a MPD connection."
+  :tag "MPD Connection"
+  :format "%{%t%}:\n\n%l\n\n%v"
+  :format-handler 'widget-mpd-format-handler
+  :value-to-internal '(lambda (wid val) (mpd-connection-tidy val))
+  :type '(list :format "%v"
+	       (string :format "%t: %v\n" :tag "Hostname" :size 15)
+	       (integer :format "%t:     %v\n" :tag "Port" :size 5
+			:match (lambda (widget value) (> value 0))
+			:type-error "Port number must be a natural number")
+	       (float :format "%t:  %v\n\n" :tag "Timeout" :size 10
+		      :match (lambda (widget value) (> value 0))
+		      :type-error "Timeout must be a positive number.")))
 
 (defgroup mpd nil
   "The client end library for MPD, the music playing daemon."
@@ -138,12 +142,12 @@ more details.")
 
 (defcustom mpd-db-root (getenv "MPD_DB_ROOT")
   "*MPD database directory root"
-  :type '(directory) :group 'mpd)
+  :type 'directory :group 'mpd)
 
-(def-mpd-conn-custom mpd-interactive-connection-parameters nil nil nil
+(defcustom mpd-interactive-connection-parameters nil
   "Parameters for the interactive mpd connection.
 These determine the connection used by interactive functions in `libmpdclient'."
-  :group 'mpd)
+  :type 'mpd-connection :group 'mpd)
 
 (defface mpd-separator-face '((((background dark)) (:foreground "lightyellow"))
 			      (((background light)) (:foreground "darkgreen")))
@@ -169,11 +173,6 @@ Most lines in interactive displays are split into two fields."
   :group 'mpd)
 
 ;;;; Constants and internal variables.
-
-(defconst libmpdclient-version (substring "$Revision: 1.2 $" 11 -2)
-  "$Id: libmpdclient.el,v 1.2 2004/05/17 15:02:22 andyetitmoves Exp $
-
-Report bugs to: R.Ramkumar <andyetitmoves@gmail.com>")
 
 (eval-and-compile (defconst mpd-welcome-message " MPD "))
 (defmacro mpd-welcome-length () (length mpd-welcome-message))
@@ -567,7 +566,8 @@ See also `mpd-execute-command'."
   (_mpdso nil))
 
 (defvar mpd-inter-conn
-  (apply 'mpd-conn-new `(,@mpd-interactive-connection-parameters nil))
+  (apply 'mpd-conn-new `(,@(mpd-connection-tidy
+			    mpd-interactive-connection-parameters) nil))
   "The global mpd connection used for interactive queries.")
 
 (defsubst mpd-get-version (conn)

@@ -200,7 +200,7 @@ With ARG, make the playback random iff ARG is positive."
   "*Atomic positive integer to adjust EMPI volume by.
 The volume to adjust by a singal keypress in the volume control
 either up or down."
-  :type empi-natural-number :group 'empi-volume-balance)
+  :type 'natnum :group 'empi-volume-balance)
 
 (defcustom empi-vol-fill-char ?>
   "*Character to draw the EMPI volume bar with."
@@ -210,7 +210,7 @@ either up or down."
   "*Atomic positive integer to adjust EMPI balance by.
 The balance to adjust by a singal keypress in the volume or balance control
 either to the left or to the right."
-  :type empi-natural-number :group 'empi-volume-balance)
+  :type 'natnum :group 'empi-volume-balance)
 
 (defcustom empi-bal-left-fill-char ?<
   "*Character to draw the left bias in the EMPI balance bar."
@@ -507,7 +507,6 @@ The minimum was %d.\nMaybe you should rely on %d."
 (defun empi-caption-set-restart (sym val)
   (set sym val)
   (and empi-caption-mode
-       (y-or-n-p "Do you want to restart auto-caption to effect changes ")
        (progn
 	 (empi-caption-mode-off)
 	 (empi-caption-mode-on))))
@@ -541,7 +540,7 @@ There is no good way (that I know, that is) to find out the number of characters
 the title bar can accomodate without clipping in graphical window systems, hence
 this variable. The default in terminals is a good one.
 Use `empi-test-title-length' for a semi-automatic method to determine a value."
-  :type empi-natural-number :group 'empi-caption
+  :type 'natnum :group 'empi-caption
   :initialize '(lambda (var val)
 		 (or (boundp var)
 		     (set var (if window-system 100 (- (frame-width) 10))))))
@@ -549,7 +548,7 @@ Use `empi-test-title-length' for a semi-automatic method to determine a value."
 (defcustom empi-caption-scroll-step 1
   "*Number of characters to shift the EMPI caption for each scroll.
 To change the speed of scrolling, use `empi-caption-redisplay-interval'."
-  :type empi-natural-number :group 'empi-caption)
+  :type 'natnum :group 'empi-caption)
 
 (defcustom empi-caption-end-indicator " *** "
   "*String to append to EMPI caption while scrolling.
@@ -563,8 +562,7 @@ The actual value in seconds is `empi-update-reference-interval'/<this value>.
 This is independent of the speed with which the display is refreshed,
 see `empi-caption-redisplay-interval'. Don't use nil to disable updates,
 instead use `empi-caption-mode'."
-  :type empi-natural-number
-  :group 'empi-caption :set 'empi-caption-set-restart)
+  :type 'natnum :group 'empi-caption :set 'empi-caption-set-restart)
 
 (defcustom empi-caption-redisplay-interval 3
   "*Scale for interval between display refresh of the EMPI caption.
@@ -572,8 +570,7 @@ The actual value in seconds is `empi-update-reference-interval'/<this value>.
 If scrolling is on, this value corresponds to the scrolling speed when it is
 required. Otherwise, any value other than `empi-caption-update-interval' is
 sub-optimal."
-  :type empi-natural-number
-  :group 'empi-caption :set 'empi-caption-set-restart)
+  :type 'natnum :group 'empi-caption :set 'empi-caption-set-restart)
 
 (defcustom empi-caption-capture-all t
   "*If non-nil, EMPI auto caption update occurs for all frames.
@@ -666,7 +663,6 @@ When enabled, shows current playtime on the mode-line."
 (defun empi-mode-line-playtime-set-restart (sym val)
   (setq sym val)
   (and empi-mode-line-playtime-mode
-       (y-or-n-p "Do you want to restart mode-line playtime to effect changes ")
        (empi-mode-line-playtime-mode -1)
        (empi-mode-line-playtime-mode 1)))
 
@@ -677,7 +673,7 @@ When enabled, shows current playtime on the mode-line."
   "*Scale for interval between updates of EMPI mode-line playtime display.
 The actual value in seconds is `empi-update-reference-interval'/<this value>.
 Don't use nil to disable updates, instead use `empi-mode-line-playtime-mode'."
-  :type empi-natural-number :group 'empi-mode-line
+  :type 'natnum :group 'empi-mode-line
   :set 'empi-mode-line-playtime-set-restart)
 
 (provide 'empi)

@@ -240,4 +240,17 @@ already non-nil.  Return non-nil if the search succeeds."
 	 ;; ((memq (car-safe form) '(macro mocklisp keymap)) nil)
 	 ))))
 
+(defun widget-numrange-validate (widget val)
+  (let ((check))
+    (and (widget-restricted-sexp-match widget val)
+	 (or (not (numberp (setq check (widget-get widget :minimum))))
+	     (>= val check))
+	 (or (not (numberp (setq check (widget-get widget :maximum))))
+	     (<= val check)))))
+
+(define-widget 'range 'restricted-sexp
+  "Range of values"
+  :tag "Range" :value 0 :size 10
+  :match 'widget-numrange-validate)
+
 ;;; CODE-SNIPPETS.EL ends here

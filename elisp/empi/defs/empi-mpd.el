@@ -8,28 +8,27 @@
   "Elisp backend to MPD for EMPI."
   :prefix "empi-mpd-" :group 'empi :group 'mpd)
 
-(def-mpd-conn-custom empi-mpd-connection-parameters nil nil nil
-  "Parameters for the interactive mpd connection.
-These determine the connection used by interactive functions in `libmpdclient'."
-  :group 'empi-mpd-backend)
+(defcustom empi-mpd-connection-parameters nil
+  "Parameters for the mpd connection to be used by empi-mpd backend."
+  :type 'mpd-connection :group 'empi-mpd-backend)
 
 (defvar empi-mpd 'empi-elisp-command)
 (defvar empi-mpd-conn
-  (apply 'mpd-conn-new `(,@empi-mpd-connection-parameters nil)))
+  (apply 'mpd-conn-new `(,@(mpd-connection-tidy empi-mpd-connection-parameters) nil)))
 
-(defflexi-print-custom empi-mpd-title-flexi
-  'flexi-print-backend-format
-  "%{title}%(!{title}%{file}%)%({artist} | %{artist}%)%({album} | %{album}%)\
-%({track} | Track #%{track}%)"
+(defcustom empi-mpd-title-flexi
+  '(flexi-print-backend-format
+    "%{title}%(!{title}%{file}%)%({artist} | %{artist}%)%({album} | %{album}%)\
+%({track} | Track #%{track}%)")
   "Format to be used for titles by the elisp MPD backend for EMPI."
-  :group 'empi-mpd-backend)
+  :type 'flexi-print-format :group 'empi-mpd-backend)
 
-(defflexi-print-custom empi-mpd-plentry-flexi
-  'flexi-print-backend-format
-  "[%({time}%{time}%)%(!{time}-:--%)] %{title}%(!{title}%{file}%)%({artist} - \
-%{artist}%)%({album} - %{album}%)%({track} - Track #%{track}%)"
+(defcustom empi-mpd-plentry-flexi
+  '(flexi-print-backend-format
+    "[%({time}%{time}%)%(!{time}-:--%)] %{title}%(!{title}%{file}%)%({artist} - \
+%{artist}%)%({album} - %{album}%)%({track} - Track #%{track}%)")
   "Format to be used for playlist entries by the elisp MPD backend for EMPI."
-  :group 'empi-mpd-backend)
+  :type 'flexi-print-format :group 'empi-mpd-backend)
 
 (defun empi-mpd-status-to-output-list (status)
   (let (slist)

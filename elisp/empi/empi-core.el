@@ -144,7 +144,7 @@ This list is usually decided by the handlers in `empi-player-alist'.
 Each element of the list needs to be feature to be provided by a file with a
 similar filename on the load path. See `require' for more details.
 Do not set this variable directly, use the customization interface instead."
-  :type '(repeat :tag "Backends" (symbol :tag "Name"))
+  :type '(repeat (symbol :tag "Feature"))
   :group 'empi :set '(lambda (sym val)
 		       (eval-after-load "empi" `(mapc 'require (quote ,val)))
 		       (set sym val)))
@@ -172,14 +172,20 @@ chance to handle any action. In the second case, the first element of the list
 is the name of the symbol, and the elements following are action symbols for
 which this handler is used. It is advised to keep `empi-forwarder' as the last
 handler for all players."
-  :type '(repeat (list :tag "Player"
-		       (string :tag "Name")
-		       (repeat :inline t :tag "Handler List"
-			       (list :tag "Handler"
-				     (symbol :tag "Symbol")
-				     (repeat :inline t
-					     :tag "Selective Actions"
-					     (symbol :tag "Action"))))))
+  :type
+  '(repeat
+    (list :format "   %v"
+	  (string :tag "Name")
+	  (repeat :inline t :tag "Handler List"
+		  :value (empi-forwarder)
+		  (list :format "%v"
+			:value (empi-)
+			(symbol :tag "Symbol")
+			(set :inline t :format "%v"
+			     (list :inline t :format "%v"
+				   (const :format "" :restrict)
+				   (repeat :tag "Selective Actions"
+					   (symbol :format "%v" :value :))))))))
   :get '(lambda (sym)
 	  (empi-player-alist-custom-friendly (symbol-value sym) 'get))
   :set '(lambda (sym val)
@@ -284,10 +290,6 @@ used can be modified by a call to `empi-select-player'."
     `(with-unlogged-message
       (message ,@args))))
 
-(defvar empi-natural-number
-  '(integer :match (lambda (widget value)
-		     (and (integerp value) (> value 0)))))
-
 (defun define-keys (map &rest args)
   (while (cadr args)
     (define-key map (car args) (cadr args))
@@ -354,7 +356,8 @@ please check your settings"))
       (while (and htail (not ret))
 	(setq cur (car htail))
 	(and (listp cur)
-	     (setq cur (and (or (not (cdr cur)) (memq cmd (cdr cur)))
+	     (setq cur (and (let ((restrict (plist-get (cdr cur) :restrict)))
+			      (or (not restrict) (memq cmd restrict)))
 			    (car cur))))
 	(when cur
 	  (if (and (symbolp cur) (functionp (setq func (symbol-value cur))))
@@ -488,7 +491,7 @@ please check your settings"))
 ;;; Redeclared with defcustom, this is to silence the compiler.
 (defvar empi-update-reference-interval)
 
-(defun empi-update-build-ring (list)
+(defun empi-update-build-schedule (list)
   (let* ((length (/ (aref empi-update-timer 2) (aref empi-update-timer 1)))
 	 (ring (make-list length nil)) (ringpos 0) ringptr interval)
     (while list
@@ -530,8 +533,8 @@ please check your settings"))
 (defun empi-update-start (&optional rebuild)
   (when empi-update-timer
     (empi-update-stop)
-    (and rebuild
-	 (setq empi-update-schedule (empi-update-build-ring empi-update-list)))
+    (and rebuild (setq empi-update-schedule
+		       (empi-update-build-schedule empi-update-list)))
     (setq empi-update-schedule-pos empi-update-schedule)
     (aset empi-update-timer 0
 	  (run-at-time nil
@@ -583,15 +586,31 @@ please check your settings"))
     (empi-update-stop)
     (setq empi-update-timer nil)))
 
+(define-widget 'wholenum 'restricted-sexp
+  "Whole number type"
+  :tag "Whole number" :value 0 :size 10
+  :type-error "This field should contain a whole number"
+  :match-alternatives '(wholenump))
+
+(define-widget 'natnum 'restricted-sexp
+  "Natural number type"
+  :tag "Natural number" :match-alternatives '(natnump) :value 1 :size 10
+  :type-error "This field must contain a natural number")
+
+(defun positive-nump (val) (> val 0))
+
+(define-widget 'posnum 'restricted-sexp
+  "Positive number type"
+  :tag "Positive number" :match-alternatives '(positive-nump) :value 1 :size 10
+  :type-error "This field must contain a positive number")
+
 (defcustom empi-update-reference-interval 1
   "Reference interval for timed action in the EMPI system.
 Various timed actions in EMPI use a factor of this value as the interval between
 successive executions."
-  :type '(number :match (lambda (widget value) (> value 0)))
-  :set '(lambda (var val)
-	  (set var val)
-	  (empi-update-start))
-  :group 'empi)
+  :type 'posnum :set '(lambda (var val)
+			(set var val)
+			(empi-update-start)) :group 'empi)
 
 ;;; Generic interactive functions
 
