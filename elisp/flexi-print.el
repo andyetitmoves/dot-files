@@ -41,21 +41,21 @@
 ;; go the emacs way :)
 
 ;; In view of a modular design, this package has a few printing backends, and
-;; the user can even choose the backend...cool...Each backend operates upon
-;; two objects - the scheme, a value particular to a package and usually
-;; fixed; and the format, the user customizable value. For a logical example,
-;; scheme could be 'f => foo, b => bar and format could be '%f: %b', where foo
-;; and bar are variables. At the time of invocation, if foo = hello, bar =
-;; world; the output would be 'hello: world'. Ok, that was just a *logical*
-;; example. The format is specific to the backend, here it could be for the
-;; printf/format-like backend.
+;; the user can even choose the backend. Each backend operates upon two objects
+;; - the scheme, a value particular to a package and usually fixed; and the
+;; format, the user customizable value. For a logical example, scheme could be
+;; 'f => foo, b => bar and format could be '%f: %b', where foo and bar are
+;; variables. At the time of invocation, if foo = hello, bar = world; the output
+;; would be 'hello: world'. Ok, that was just a *logical* example. The format is
+;; specific to the backend, here it could be for the printf/format-like backend.
 
 ;; A quick guide. Use `flexi-print-compile' to create a scheme. If the scheme is
 ;; static (most likely), you can do this at compile time and store way the
 ;; result. Use `flexi-print' using the generated scheme and the format. Use
-;; `defflexi-print-custom' to create a customization entry for the format.
-;; This is not the complete documentation. Being a package for developers, I can
-;; take the liberty of asking you to browse the source :)
+;; the `flexi-print-format' widget for customization entries (using the keys
+;; :type 'flexi-print-format in say, `defcustom') . This is not the complete
+;; documentation. Being a package for developers, I can take the liberty of
+;; asking you to browse the source :)
 
 ;;; Code:
 
@@ -177,9 +177,10 @@ after the opening brace negates this result."
 		      (if (string-equal key "%") "%"
 			(print-any (flexi-print-query scheme key))))))))
     (concat newstr (and (= skip 0) (substring fmt end)))))
-(put 'flexi-print-backend-format 'flexi-print-backend-name "format")
+
+(put 'flexi-print-backend-format 'flexi-print-backend-name "Format")
 (put 'flexi-print-backend-format
-     'flexi-print-backend-custom-type '(string :tag "Format"))
+     'flexi-print-backend-widget-type '(string :tag "Format"))
 
 (defun flexi-print-backend-read-eval (scheme fmt)
   "Lisp string backend to `flexi-print'.
@@ -194,17 +195,18 @@ corresponding value, and the result read and eval'ed to get the return value."
 			   (prin1-to-string (flexi-print-query scheme key))))
       (setq end (match-end 0)))
     (eval (read (concat newstr (substring fmt end))))))
+
+(put 'flexi-print-backend-read-eval 'flexi-print-backend-name "Read Eval")
 (put 'flexi-print-backend-read-eval
-     'flexi-print-backend-name "read-eval")
-(put 'flexi-print-backend-read-eval
-     'flexi-print-backend-custom-type '(string :tag "Expression"))
+     'flexi-print-backend-widget-type '(string :tag "Expression"))
 
 (defun flexi-print-backend-function (scheme func)
   "Wrapper function backend to `flexi-print'.
 Just calls any other flexi-print backend, without any format argument though."
   (funcall func scheme))
-(put 'flexi-print-backend-function 'flexi-print-backend-name "function")
-(put 'flexi-print-backend-function 'flexi-print-backend-custom-type 'function)
+
+(put 'flexi-print-backend-function 'flexi-print-backend-name "Function")
+(put 'flexi-print-backend-function 'flexi-print-backend-widget-type 'function)
 
 (defun flexi-print (scheme format)
   "Flexible output formatting for packages.
@@ -220,12 +222,12 @@ known backends. However, any function could potentially be a backend.
 A flexi-print backend takes the scheme and an arbitrary cookie as arguments.
 It can use `flexi-print-query' to get the value for the scheme corresponding
 to some string. When the backend is added to `flexi-print-known-backends', it
-becomes available for choice in the customization buffer for flexi-print schemes
-defined using `defflexi-print-custom'. If a symbol holding the backend function
+becomes available for choice in the `flexi-print-format' widget which can say,
+be used in the customization buffer. If a symbol holding the backend function
 is added to the known list, some properties in the symbol are of importance.
 `flexi-print-backend-name' is a descriptive name for the backend.
-`flexi-print-backend-custom-type' can be any type specification recognized by
-custom, for the argument the backend takes."
+`flexi-print-backend-widget-type' is the widget type specification for the
+argument accepted by the backend."
   (funcall (car format) scheme (cadr format)))
 
 (defvar flexi-print-known-backends
@@ -234,7 +236,7 @@ custom, for the argument the backend takes."
     flexi-print-backend-function)
   "List of known `flexi-print' backends.")
 
-(eval-when-compile (require 'cus-edit))
+(require 'widget)
 
 (defun widget-dyngroup-convert-widget (widget)
   (let* ((args (widget-get widget :args)) (sym (car args))
@@ -268,12 +270,10 @@ custom, for the argument the backend takes."
 	    (nil :default (function-item
 			   :format "%t\n%h"
 			   :tag ,(concat
-				  (custom-unlispify-menu-entry
-				   (or (intern (get item
-						    'flexi-print-backend-name))
-				       (symbol-name item)) t)
-				  " Backend") ,item))
-	    (flexi-print-backend-custom-type :default (sexp :tag "Argument"))))
+				   (or (get item 'flexi-print-backend-name)
+				       (symbol-name item))
+				   " Backend") ,item))
+	    (flexi-print-backend-widget-type :default (sexp :tag "Argument"))))
 
 (defun widget-flexi-convert-widget (widget)
   (widget-put widget
@@ -297,34 +297,6 @@ This variable serves as a formatting argument to `flexi-print'.")
   :format "%{%t%}:\n\n%l\n\n%v"
   :convert-widget 'widget-flexi-convert-widget
   :format-handler 'widget-flexi-format-handler)
-
-(defun flexi-print-custom-function-item-list ()
-  (mapcar '(lambda (item)
-	     (list 'function-item :tag
-		   (or (get item 'flexi-print-backend-name)
-		       (symbol-name item)) item))
-	  flexi-print-known-backends))
-
-(defun flexi-print-custom-match-arg (wid val)
-  (and (fboundp (car val))
-       (or (not (setq wid (get (car val) 'flexi-print-backend-custom-type)))
-	   (widget-apply (widget-convert wid) :match (cdr val)))))
-
-(defmacro defflexi-print-custom (symbol backend cookie doc &rest args)
-  "Create a customization entry for a `flexi-print' format.
-SYMBOL holds the format, BACKEND and COOKIE are the default values.
-DOC documents the variable and the rest of the arguments are passed on to
-`defcustom'. This macro takes care of the :type argument to `defcustom', so it
-need not be specified in ARGS."
-  `(defcustom ,symbol (cons ,backend ,cookie)
-     ,(concat doc "\n
-This variable serves as a formatting argument to `flexi-print'.
-See `flexi-print-known-backends' for the list of known backends.")
-     :type
-     `(cons :match flexi-print-custom-match-arg
-	    (radio ,@(flexi-print-custom-function-item-list))
-	    (sexp :tag "Argument"))
-     :link '(emacs-commentary-link :tag "Flexi Print" "flexi-print")))
 
 (provide 'flexi-print)
 
