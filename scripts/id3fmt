@@ -11,7 +11,7 @@ my $c0 = "\e[0m";
 
 while (<>) {
     if (/^\*\*\* Tag information for (.*)$/) {
-	print $ch."Filename:".$c0." $1\n";
+	print $ch.'Filename:'.$c0." $1\n";
 	last;
     }
     next if /^\s+$/;
@@ -24,30 +24,30 @@ SYNC: {
 	last if /^\*\*\* mp3 info$/;
 	do { print "\t$line"; next; } unless
 	    /^=== ([A-Z0-9]{4,4}) \(([^:]+)\): (?:(?:(?:\((.*)\)(?:\[(.*)\])?)|(?:\[(.*)\])): )?(.*)$/;
-	next if ($1 eq "APIC");
+	next if ($1 eq 'APIC');
 	my $data = $6;
-	if ($1 eq "COMM" && $3 ne "Noname") {
+	if ($1 eq 'COMM' && $3 ne 'Noname') {
 	    my $name = $3;
-	    $name = "Comment" if ($3 =~ /^\s*$/);
+	    $name = 'Comment' if ($3 =~ /^\s*$/);
 	    print "$ch$name";
 	} else {
 	    print "$ch$2";
 	    my $needCode = 0;
-	    if (defined ($3) && $3 ne "") {
+	    if (defined ($3) && $3 ne '') {
 		print " $ca($3)";
-		print " ".$cl."[$4]" if (defined ($4) && $4 ne "");
+		print ' '.$cl."[$4]" if (defined ($4) && $4 ne '');
 		$needCode = 1;
-	    } elsif (defined ($5) && $5 ne "") {
-		print " ".$cl."[$5]";
+	    } elsif (defined ($5) && $5 ne '') {
+		print ' '.$cl."[$5]";
 		$needCode = 1;
 	    }
 	    print "$ch" if $needCode;
 	}
-	print ":";
-	print (($1 eq "USLT") ? "$c0\n\t" : "$c0 ");
-	if ($1 eq "IPLS") {
+	print ':';
+	print (($1 eq 'USLT') ? "$c0\n\t" : "$c0 ");
+	if ($1 eq 'IPLS') {
 	    my $valid = 0;
-	    my $key = "";
+	    my $key = '';
 	    print "\n";
 	    foreach (split (/\s*,\s*/, $data)) {
 		if ($valid == 0) {
@@ -71,7 +71,7 @@ SYNC: {
     while (<>) {
 	if (/^\*\*\* Tag information for (.*)$/) {
 	    print $ca.('-'x80).$c0."\n\n";
-	    print $ch."Filename:".$c0." $1\n";
+	    print $ch.'Filename:'.$c0." $1\n";
 	    redo SYNC;
 	}
 	chomp;

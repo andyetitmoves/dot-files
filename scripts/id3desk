@@ -1,8 +1,14 @@
 #!/bin/bash
 # Hook script to manage a media centric desktop.
 
+trap "kill \$! 2>&1 > /dev/null; exit 1" HUP TERM QUIT INT PIPE
+
 SCRDIR=/home/ramk/scripts
 
 $SCRDIR/mposd
 $SCRDIR/id3pic-display "$1"
-exec $SCRDIR/id3less "$1"
+
+while true; do
+    $SCRDIR/id3less "$1" & wait
+    ncmpc
+done

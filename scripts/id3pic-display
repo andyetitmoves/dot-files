@@ -11,14 +11,14 @@ PIDFILE=$PREFIX-pid
 PICPREF=$PREFIX-pic
 PICMASK=$PICPREF*
 
+USEREMOTE=
+
 {
     rm -f $PICMASK
     id3pic -p $PICPREF "$1"
     IMGS=`ls $PICMASK | wc -l`
 
     DISP=`cat $PIDFILE`
-    kill -s 0 $DISP || DISP=0
-    [ $DISP -gt 0 ] && EXISTING=-remote
 
     if [ $IMGS -gt 0 ]; then
 	let SIZE='(SCRSIZE - 1)/IMGS + 1';
@@ -26,6 +26,13 @@ PICMASK=$PICPREF*
 	SIZE=$SIZE'x'$SIZE;
 	montage -geometry $SIZE -tile 1x$IMGS -background "rgba(0,0,0,255)" \
 	    $PICMASK $PICPREF.jpg
+	if [ $DISP -gt 0 ] && kill -s 0 $DISP; then
+	    if [ x$USEREMOTE != xyes ]; then
+		kill $DISP
+	    else
+		EXISTING=-remote
+	    fi
+	fi
 	display -immutable $EXISTING $PICPREF.jpg &
 	[ x$EXISTING != x-remote ] && echo $! > $PIDFILE
     else
