@@ -363,9 +363,10 @@
 
 ;;;; Mode alists
 
-(add-to-list 'auto-mode-alist '(".*\\.h$" . c++-mode))
-(add-to-list 'auto-mode-alist '(".*\\.tcc$" . c++-mode))
-(add-to-list 'auto-mode-alist '(".*\\.elc$" . emacs-lisp-mode))
+(add-to-list 'auto-mode-alist '("\\.h$" . c++-mode))
+(add-to-list 'auto-mode-alist '("\\.tcc$" . c++-mode))
+(add-to-list 'auto-mode-alist '("\\.elc$" . emacs-lisp-mode))
+(add-to-list 'auto-mode-alist '("\\.svn-base$" nil t))
 
 (defun executable-file-p (filename)
   (let ((ext (file-name-extension filename)))
@@ -378,13 +379,13 @@
 ;;;(add-to-list 'conv-param-list (list 'executable-file-p "%s" nil nil t))
   (add-to-list
    'conv-param-list (list ".*\\.pdf" "pdftotext" (list "-layout" "-q")))
-  (add-to-list 'auto-mode-alist '(".*\\.pdf$" . text-mode))
+  (add-to-list 'auto-mode-alist '("\\.pdf$" . text-mode))
   (add-to-list 'conv-param-list (list ".*\\.pod" "pod2text"))
-  (add-to-list 'auto-mode-alist '(".*\\.pod$" . text-mode))
+  (add-to-list 'auto-mode-alist '("\\.pod$" . text-mode))
   (add-to-list 'conv-param-list '(".*\\.[mM][pP]3" "id3info" nil ("%s")))
-  (add-to-list 'auto-mode-alist '(".*\\.[mM][pP]3" . text-mode))
+  (add-to-list 'auto-mode-alist '("\\.[mM][pP]3" . text-mode))
 ;;;(add-to-list 'conv-param-list (list ".*\\.ps" "pstotext"))
-;;;(add-to-list 'auto-mode-alist '(".*\\.ps$" . text-mode))
+;;;(add-to-list 'auto-mode-alist '("\\.ps$" . text-mode))
   )
 (eval-after-load "shell-convert" '(shell-conv-after-load-hook))
 
