@@ -192,6 +192,13 @@ handler for all players."
 	  (set sym (empi-player-alist-custom-friendly val 'set)))
   :group 'empi)
 
+(put 'empi-player-alist 'custom-tag
+     (substitute-command-keys
+      "Empi Player Alist: This variable has no sane default.
+This always needs to be specified. To know more about this variable, read the
+package commentary using `\\[finder-commentary] empi-core'.
+See {srcdir}/cust-eg.html for an example customization."))
+
 (defcustom empi-default-player nil
   "*The default player used for all EMPI actions.
 Should be one of the values defined by `empi-player-alist'. The current player

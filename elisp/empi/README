@@ -4,5 +4,6 @@ and customize the `empi' group. Please read the commentary using the
 'See also empi-core' link in the empi customization group to get an idea about
 EMPI, before proceeding with the customization.
 
-cust-eg.html shows an example snapshot of the filled customization buffer
-(thanks to htmlfontify.el :)
+cust-eg.html shows an example snapshot of the filled customization
+buffer. (thanks to htmlfontify.el :) This also shows a sample customization for
+empi-player-alist, a "necessary" customization.

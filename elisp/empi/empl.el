@@ -210,6 +210,7 @@ marking and the anchoring actions themselves, which acts on a selection."
       [?c] 		'empl-compact
       [?g] 		'empl-update
       [?G] 		'empl-force-update
+      [?q]		'quit-window
       ) map)
   "Keymap for the EMPL playlist buffer.")
 
