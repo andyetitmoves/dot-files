@@ -47,7 +47,6 @@
 (require 'empi-core)
 (require 'dired)
 
-;;;###autoload
 (defvar empi-dired-map
   (let ((map (make-sparse-keymap)))
     (define-key map [?e] 'empi-dired-do-enqueue)

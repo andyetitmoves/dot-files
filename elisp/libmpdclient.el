@@ -592,7 +592,7 @@ Return nil if CONN isn't a mpd connection object."
 (put 'mpd-get-connection-timeout 'side-effect-free t)
 
 ;;;###autoload
-(defsubst mpd-set-connection-timeout (conn timeout)
+(defun mpd-set-connection-timeout (conn timeout)
   "Set the timeout of mpd connection object CONN to TIMEOUT.
 See also `mpd-new-connection'."
   (interactive

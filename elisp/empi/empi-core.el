@@ -275,14 +275,11 @@ used can be modified by a call to `empi-select-player'."
 	  (substring str nwbeg (1+ (walk-white str (1- (length str)) t))) ""))))
 
 (eval-and-compile
-  (eval-when-compile
-   `(defmacro with-unlogged-message (&rest args)
-      (cons 'let
-	    (cons
-	     (list
-	      ,(if (boundp 'log-message-filter-function)
-		   '(log-message-filter-function #'ignore)
-		 '(message-log-max nil))) args))))
+  (defmacro with-unlogged-message (&rest args)
+    `(let ,(list
+	    (if (boundp 'log-message-filter-function)
+		'(log-message-filter-function #'ignore)
+	      '(message-log-max nil))) ,@args))
   (defmacro unlogged-message (&rest args)
     `(with-unlogged-message
       (message ,@args))))
@@ -315,12 +312,8 @@ LOCK is evaluated thrice in this process."
 ;;;; Core commands
 
 (defvar empi-current-player nil)
-(defvar empi-map (make-sparse-keymap)
-  "The keymap for all EMPI commands.
-The keys in the map are as follows:
 
-\\{empi-map}")
-
+;;;###autoload
 (defun empi-select-player (pname)
   (interactive
    (list
@@ -421,13 +414,9 @@ please check your settings"))
     (apply 'empi-uncache (plist-get empi-query-dependencies cmd))
     (setq empi-global-cache (plist-put empi-global-cache cmd args)) args))
 
-(defvar empi-cache-hits 0.0)
-
 (defun empi-cached-command (cmd &rest args)
-  (let ((res (plist-get empi-global-cache cmd)))
-    (if (not res)
-	(apply 'empi-merge-command cmd args)
-      (setq empi-cache-hits (1+ empi-cache-hits)) res)))
+  (or (plist-get empi-global-cache cmd)
+      (apply 'empi-merge-command cmd args)))
 
 (defsubst empi-clear-cache () (setq empi-global-cache nil))
 
@@ -606,6 +595,7 @@ successive executions."
 
 ;;; Generic interactive functions
 
+;;;###autoload
 (defun empi-send-command (cmd)
   (interactive
    (list (intern-soft (completing-read "Enter Command: "

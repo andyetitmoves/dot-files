@@ -221,4 +221,23 @@ already non-nil.  Return non-nil if the search succeeds."
       (setq item (cdr item)))
     ret))
 
+(defun get-interactivity (sym &optional load)
+  (if (fboundp sym)
+      (let ((form (symbol-function sym)))
+	(cond
+	 ((subrp form) nil)
+	 ((byte-code-function-p form) (and (>= (length form) 6) (aref form 5)))
+	 ((symbolp form) (get-interactivity form))
+	 ((eq (car-safe form) 'lambda)
+	  (setq form (nthcdr 2 form))
+	  (and (stringp (car form)) (setq form (cdr form)))
+	  (car-safe (cdr-safe (car form))))
+	 ((eq (car-safe form) 'autoload)
+	  (when load
+	    (load (nth 1 form) (eq load t) t)
+	    (get-interactivity sym)))
+	 ;; next line is implied by cond anyway
+	 ;; ((memq (car-safe form) '(macro mocklisp keymap)) nil)
+	 ))))
+
 ;;; CODE-SNIPPETS.EL ends here

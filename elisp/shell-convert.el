@@ -55,17 +55,15 @@ got by the command output.")
 
 (eval-and-compile
   (require 'working nil t)
-
   (or (fboundp 'working-status-timeout)
       (defmacro working-status-timeout (&rest args)
 	`(progn ,@args))))
 
 (defun map-till-t (seq func)
-  (if (car seq)
-      (if (not (eval (list func '(car seq))))
-	  (map-till-t (cdr seq) func)
-	seq)
-    nil))
+  (catch 'map-till-t-break
+    (while seq
+      (and (funcall func (car seq)) (throw 'map-till-t-break seq))
+      (setq seq (cdr seq)))))
 
 (defun conv-check-param (thisp)
   (if (listp thisp)
@@ -94,30 +92,25 @@ list, please refer documentation for details.")
   (if conv-file-assoc
       (if (not (and (stringp conv-file-assoc) (= conv-file-assoc "d")))
 	  (save-buffer))
-    (progn
-      (delete-auto-save-file-if-necessary t)
-      (auto-save-mode nil)
-      (setq buffer-file-name nil)
-      (set-buffer-modified-p nil)))
+    (delete-auto-save-file-if-necessary t)
+    (auto-save-mode nil)
+    (setq buffer-file-name nil)
+    (set-buffer-modified-p nil))
   (if conv-lock-on-replace
-      (toggle-read-only t))
-  nil)
+      (toggle-read-only t)) nil)
 
 (defun conv-fail-file-finish()
   (if (y-or-n-p "All valid conversion commands failed, \
 do you want to display the original text ")
-      (progn
-	(delete-region 1 (point-max))
-	(insert-file (buffer-file-name))
-	(set-buffer-modified-p nil))
-    (progn
-      (set-buffer-modified-p nil)
-      (kill-buffer (current-buffer)))))
+      (insert-file-contents (buffer-file-name) t nil nil t)
+    (set-buffer-modified-p nil)
+    (kill-buffer (current-buffer))))
 
 (defun eval-dbg (stat)
   (print stat t)
   (eval stat))
 
+;;;###autoload
 (defun shell-conv-find-file-hook ()
   "The function to be called by the find-file hook for formatting
 text using a shell command before displaying them."

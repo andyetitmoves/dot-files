@@ -128,6 +128,7 @@
 (defsubst mpd-random-flag (conn)
   (aref (mpd-get-status conn) 2))
 
+;;;###autoload
 (defun mpd-enqueue-from-log (conn)
   (interactive (list mpd-inter-conn))
   (with-free-buffer

@@ -82,6 +82,7 @@
 	    (toggle-read-only 1))
 	(setq dynlog-update-lock nil))))
 
+;;;###autoload
 (define-minor-mode dynlog-mode
   "Minor mode to handle dynamic logs. Periodically updates a log being
 constantly appended to, externally."

@@ -37,48 +37,60 @@
 
 (require 'empi-core)
 
-(define-keys empi-map
-  [?z]			'empi-prev
-  [?x]			'empi-play
-  [?c]			'empi-pause
-  [?v]			'empi-stop
-  [?b]			'empi-next
-  [?e]			'empi-enqueue
-  [f1]			'empi-player-version
-  [?s]			'empi-send-command
-  [?i]			'empi-send-input
-  [?|]			'empi-volume
-  [?-]			'empi-balance
-  [?j]			'empi-jump-to-item
-  [?t]			'empi-jump-to-time
-  [?a]			'empi-caption-mode
-  [?m]			'empi-mode-line-control-mode
-  [?p]			'empi-mode-line-playtime-mode
-  [(control ?r)]	'empi-toggle-repeat
-  [(control ?s)]	'empi-toggle-shuffle)
+(defvar empi-map
+  (let ((map (make-sparse-keymap)))
+    (define-keys map
+      [?z]		'empi-prev
+      [?x]		'empi-play
+      [?c]		'empi-pause
+      [?v]		'empi-stop
+      [?b]		'empi-next
+      [?e]		'empi-enqueue
+      [f1]		'empi-player-version
+      [?s]		'empi-send-command
+      [?i]		'empi-send-input
+      [?|]		'empi-volume
+      [?-]		'empi-balance
+      [?j]		'empi-jump-to-item
+      [?t]		'empi-jump-to-time
+      [?a]		'empi-caption-mode
+      [?m]		'empi-mode-line-control-mode
+      [?p]		'empi-mode-line-playtime-mode
+      [(control ?r)]	'empi-toggle-repeat
+      [(control ?s)]	'empi-toggle-shuffle
+      ) map)
+  "The keymap for all EMPI commands.
+The keys in the map are as follows:
+
+\\{empi-map}")
 
 ;;;; Basic commands
 
+;;;###autoload
 (defun empi-prev ()
   "Play previous item in the EMPI playlist."
   (interactive)
   (empi-simple-action :plback))
 
+;;;###autoload
 (defun empi-play ()
   "Start or restart playing the current item in the EMPI playlist."
   (interactive)
   (empi-simple-action :play))
 
+;;;###autoload
 (defun empi-pause ()
   "Pause playback for the EMPI player."
   (interactive)
   (empi-simple-action :pause))
 
+;;;###autoload
 (defun empi-stop ()
   "Stop playback for the EMPI player."
   (interactive)
   (empi-simple-action :stop))
 
+;;;###autoload
 (defun empi-next ()
   "Play next item in the EMPI playlist."
   (interactive)
@@ -86,6 +98,7 @@
 
 (defvar empi-enqueue-history nil)
 
+;;;###autoload
 (defun empi-enqueue (fil)
   "Enqueue a file to the EMPI playlist."
   (interactive
@@ -95,6 +108,7 @@
        (setq empi-enqueue-history file-name-history))))
   (empi-simple-action :enqueue fil))
 
+;;;###autoload
 (defun empi-player-version ()
   "Print version information for the EMPI player."
   (interactive)
@@ -102,6 +116,7 @@
 
 (empi-static-dep :qrepeat :repeat)
 
+;;;###autoload
 (defun empi-toggle-repeat (&optional arg)
   "Change whether the EMPI playlist is played in a circular fashion.
 With ARG, make the playlist circular iff ARG is positive."
@@ -115,6 +130,7 @@ With ARG, make the playlist circular iff ARG is positive."
 
 (empi-static-dep :qshuffle :shuffle)
 
+;;;###autoload
 (defun empi-toggle-shuffle (&optional arg)
   "Change whether the EMPI playlist is played randomly.
 With ARG, make the playback random iff ARG is positive."
@@ -127,6 +143,7 @@ With ARG, make the playback random iff ARG is positive."
 	    (emperet "qshuffle"))))))
 
 ;;; uses :jumptime
+;;;###autoload
 (defun empi-jump-to-time (secs)
   (interactive "sEnter time to jump to: ")
   (cond
@@ -146,6 +163,7 @@ With ARG, make the playback random iff ARG is positive."
   (empi-simple-action :jumptime secs))
 
 ;;; uses :jumpitemnum :jumpitem
+;;;###autoload
 (defun empi-jump-to-item (item)
   (interactive "sEnter the number of name to where you want to jump: ")
   (cond
@@ -159,6 +177,7 @@ With ARG, make the playback random iff ARG is positive."
    (t (error "Argument must be a number or a string"))))
 
 ;;; uses :misc
+;;;###autoload
 (defun empi-send-input (str)
   "Send a raw command string to the EMPI player."
   (interactive "sEnter string to be sent: ")
@@ -222,6 +241,7 @@ increasing screen width"))
 (empi-static-dep :qbalance :baladd :balsub)
 
 ;;; uses :qvolume :voladd :volsub :balance
+;;;###autoload
 (defun empi-volume ()
   (interactive)
   (with-empi-cache-let ((msg t) rvol lvol range)
@@ -266,6 +286,7 @@ shortening the center marker or increasing screen width"))
 (empi-static-dep :qbalance :balance :baladd :balsub)
 
 ;;; uses :balance
+;;;###autoload
 (defun empi-balance ()
   (interactive)
   (with-empi-cache-let ((msg t) bal range)
@@ -296,6 +317,7 @@ shortening the center marker or increasing screen width"))
       (setq str (concat str (randcharstr)))
       (setq len (1- len))) str))
 
+;;;###autoload
 (defun empi-test-title-length (&optional prefix)
   (interactive "sEnter prefix: ")
   (or prefix (setq prefix ""))
@@ -380,6 +402,7 @@ The minimum was %d.\nMaybe you should rely on %d."
 (defsubst empi-set-frame-name (frame name)
   (modify-frame-parameters frame (list (cons 'name name))))
 
+;;;###autoload
 (defun empi-caption-redisplay ()
   (interactive)
   (when (and empi-caption-capture-dynamic
@@ -425,6 +448,7 @@ The minimum was %d.\nMaybe you should rely on %d."
 		     (concat "< " (if (= state 2) "Paused" "Stopped")
 			     " > ")))))))
 
+;;;###autoload
 (defun empi-caption-update ()
   (interactive)
   (with-empi-cache

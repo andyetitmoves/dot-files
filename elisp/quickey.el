@@ -59,6 +59,7 @@
 
 (require 'working)
 
+;;;###autoload
 (defun quickey (keyset)
   "Act on quickey keyset KEYSET to execute or schedule an action specified.
 This function is not meant to be used directly. Refer `quickey-bind-forms',

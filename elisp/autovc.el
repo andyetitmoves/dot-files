@@ -33,14 +33,13 @@
 
 (defvar autovc-checkout-on-change 'ask)
 (defvar autovc-checkin-on-exit 'ask)
+
 (defvar autovc-buffer-list nil)
 (defvar autovc-suspend-kill nil)
 
 (require 'vc)
 
-(defun autovc-setup ()
-  (add-hook 'find-file-hooks 'autovc-find-file-hook))
-
+;;;###autoload
 (defun autovc-find-file-hook ()
   (when (and (vc-backend (buffer-file-name)) (not autovc-suspend-kill))
     (add-to-list 'kill-emacs-query-functions 'autovc-on-query-emacs-kill)
@@ -67,51 +66,45 @@
        ;; exit has been called while taking (possibly checkin) action on a file.
        ;; so, just ignore the current file, and move on to the next one.
        (autovc-cleanup-hooks))
-  (let (i)
-    (while (and (not autovc-suspend-kill) autovc-buffer-list)
-      (setq i (pop autovc-buffer-list))
-      (autovc-take-action i))
-    (if autovc-suspend-kill
-	;; ok, we need to interrupt the exit to accomodate logging.
-	(let (logbuf)
-	  (message "Temporarily aborting exit to accomodate log message")
-	  ;; hey hey, this is just temporary abort.
-	  ;; come back after logging is over !
-	  (add-hook 'vc-checkin-hook 'autovc-on-log-over)
-	  (setq autovc-suspend-kill i)
-	  (when (setq logbuf (get-buffer "*VC-log*"))
-	    (with-current-buffer logbuf
-	      ;; the user may abort the checkin and close the log buffer.
-	      (add-hook kill-buffer-hook 'autovc-on-log-over nil t)))
-	  ;; signal "no exit"
-	  nil)
-      ;; no suspend needed, so goodbye
-      t)))
+  (while (and (not autovc-suspend-kill) autovc-buffer-list)
+    (autovc-take-action (car autovc-buffer-list))
+    (and (not autovc-suspend-kill)
+	 (setq autovc-buffer-list (cdr autovc-buffer-list))))
+  (or (not autovc-suspend-kill)
+      ;; ok, interrupt the exit to accomodate logging.
+      (let (logbuf)
+	(message "Temporarily aborting exit to accomodate log message")
+	;; hey, this is just a temporary abort.
+	;; come back after logging is over!
+	(add-hook 'vc-checkin-hook 'autovc-on-log-over)
+	(setq autovc-suspend-kill autovc-buffer-list)
+	(and (setq logbuf (get-buffer "*VC-log*"))
+	     (with-current-buffer logbuf
+	       ;; the user may abort the checkin and close the log buffer.
+	       (add-hook kill-buffer-hook 'autovc-on-log-over nil t)))
+	;; signal "no exit"
+	nil)))
 
 ;; almost the same as vc-next-action, but the original version didn't suit me.
 ;; so, just changed that a bit and put it over here...
 (defun autovc-take-action (file)
-  (let ((visited (get-file-buffer file))
-	state version err )
+  (let ((visited (get-file-buffer file)) state version err)
     (when visited
       (if vc-dired-mode
 	  (find-file-other-window file)
 	(set-buffer (find-file-noselect file)))
       (if (not (verify-visited-file-modtime (current-buffer)))
-	  (if (y-or-n-p "Replace file on disk with buffer contents? ")
-	      (write-file (buffer-file-name)))
+	  (and (y-or-n-p "Replace file on disk with buffer contents? ")
+	       (write-file (buffer-file-name)))
 	(vc-buffer-sync t)
-	(if (buffer-modified-p)
-	    (or (y-or-n-p "Operate on disk file, keeping modified buffer? ")
-		(setq err t)))))
-
-    (if (or err (not (vc-registered file)))
-	nil
+	(and (buffer-modified-p)
+	     (or (y-or-n-p "Operate on disk file, keeping modified buffer? ")
+		 (setq err t)))))
+    (unless (or err (not (vc-registered file)))
       (vc-recompute-state file)
       (if visited (vc-mode-line file))
       (setq state (vc-state file))
       (cond
-
        ((and visited (eq state 'edited)
 	     buffer-read-only (not (file-writable-p file)))
 	(message "File is edited but read-only; making it writable")
@@ -119,7 +112,6 @@
 			(logior (file-modes buffer-file-name) 128))
 	(toggle-read-only -1)
 	(autovc-take-action file))
-
        ((eq state 'edited)
 	(cond
 	 ((and (not (eq (vc-checkout-model file) 'implicit))
@@ -129,35 +121,28 @@
 	  (if (y-or-n-p "Locked file is unchanged, revert to master version? ")
 	      (vc-revert-buffer)))
 	 (t
-	  (if (y-or-n-p (format "The file %s has changed after checkout, commit changes? "
-				(file-name-nondirectory file)))
-	      (progn
-		(vc-checkin file nil nil)
-		(setq autovc-suspend-kill t))
-	    nil))))
-
+	  (when (y-or-n-p (format "The file %s has changed after checkout, \
+commit changes? " (file-name-nondirectory file)))
+	    (vc-checkin file nil nil)
+	    (setq autovc-suspend-kill t)))))
        ((eq state 'needs-merge)
-	(if (y-or-n-p (format
-		       "%s is not up-to-date. Merge in changes now? "
-		       (file-name-nondirectory file)))
-	    (vc-maybe-resolve-conflicts file (vc-call merge-news file))
-	  nil))
-
+	(and (y-or-n-p (format "%s is not up-to-date. Merge in changes now? "
+			       (file-name-nondirectory file)))
+	     (vc-maybe-resolve-conflicts file (vc-call merge-news file))))
        ((eq state 'unlocked-changes)
-	(if (not visited) (find-file-other-window file))
-	(if (save-window-excursion
-	      (vc-version-diff file (vc-workfile-version file) nil)
-	      (goto-char (point-min))
-	      (let ((inhibit-read-only t))
-		(insert (format "Changes to %s since last lock:\n\n" file)))
-	      (not (beep))
-	      (y-or-n-p (concat "File has unlocked changes.  "
-				"Claim lock retaining changes? ")))
-	    (progn (vc-call steal-lock file)
-		   (vc-clear-headers file)
-		   (vc-mode-line file)
-		   (autovc-take-action file))
-	  nil))))))
+	(and (not visited) (find-file-other-window file))
+	(when (save-window-excursion
+		(vc-version-diff file (vc-workfile-version file) nil)
+		(goto-char (point-min))
+		(let ((inhibit-read-only t))
+		  (insert (format "Changes to %s since last lock:\n\n" file)))
+		(not (beep))
+		(y-or-n-p (concat "File has unlocked changes.  "
+				  "Claim lock retaining changes? ")))
+	  (vc-call steal-lock file)
+	  (vc-clear-headers file)
+	  (vc-mode-line file)
+	  (autovc-take-action file)))))))
 
 (provide 'autovc)
 

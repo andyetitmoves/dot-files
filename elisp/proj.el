@@ -77,6 +77,7 @@
 		   (eval-minibuffer prompt))))))
     (customize-set-variable var val)))
 
+;;;###autoload
 (defun proj-set ()
   (interactive)
   (proj-set-variable 'proj-toplevel "Toplevel directory")
