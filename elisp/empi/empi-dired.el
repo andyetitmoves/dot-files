@@ -32,8 +32,6 @@
 ;;
 ;;	(eval-after-load "dired"
 ;;	  '(progn
-;;	     ;; Remove the `require' if you used
-;;	     ;; `update-file-autoloads' for the file.
 ;;	     (require 'empi-dired)
 ;;	     (define-key dired-mode-map [(control ?e)] empi-dired-map)))
 ;;
@@ -49,11 +47,18 @@
     map)
   "Keymap for EMPI operations in dired mode.")
 
+(defun empi-dired-enqueue ()
+  (let ((file (dired-get-filename)))
+    (if (empi-action :enqueue file)
+	(unlogged-message "Enqueued %s" file)
+      (message "Unable to enqueue %s" file) nil)))
+
 ;;;###autoload
 (defun empi-dired-do-enqueue (&optional arg)
   "Enqueue using EMPI the marked (or next ARG) files."
   (interactive "P")
-  (dired-map-over-marks (empi-simple-action :enqueue (dired-get-filename)) arg))
+  (let ((fail 0) (pass 0))
+    (dired-map-over-marks (empi-dired-enqueue) arg)))
 
 (provide 'empi-dired)
 
