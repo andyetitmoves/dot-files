@@ -1,6 +1,6 @@
 ;;; SHELL-CONVERT.EL --- Convert a file using a shell command and then display it.
 
-;; Copyright (C) 2004 R.Ramkumar
+;; Copyright (C) 2004, 2005 R.Ramkumar
 
 ;; Author: 	R.Ramkumar <andyetitmoves@gmail.com>
 ;; Created: 	14 Jul 2004
@@ -11,7 +11,7 @@
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 1, or (at your option)
+;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
 
 ;; This program is distributed in the hope that it will be useful,
@@ -19,14 +19,12 @@
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
 
-;; A copy of the GNU General Public License can be obtained from this program's
-;; author (send electronic mail to <andyetitmoves@gmail.com>) or from the Free
-;; Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+;; A copy of the GNU General Public License can be obtained from this
+;; program's author (send electronic mail to andyetitmoves@gmail.com)
+;; or from the Free Software Foundation, Inc.,
+;; 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-;; LCD Archive Entry:
-;; shell-convert|R.Ramkumar|<andyetitmoves@gmail.com>
-;; |Convert a file using a shell command and then display it.
-;; |$Date: 2004/07/14 16:49:53 $|$Revision: 1.1 $|~/packages/shell-convert.el
+;;; Code:
 
 (defconst default-conv-flags  '())
 (defconst default-conv-io-args (list "%s" "-"))

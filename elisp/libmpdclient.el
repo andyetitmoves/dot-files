@@ -1,6 +1,6 @@
 ;;; LIBMPDCLIENT.EL --- Client end library for mpd, a music playing daemon
 
-;; Copyright (C) 2004 R.Ramkumar
+;; Copyright (C) 2004, 2005 R.Ramkumar
 
 ;; Author: 	R.Ramkumar <andyetitmoves@gmail.com>
 ;; Created: 	10 May 2004
@@ -11,7 +11,7 @@
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 1, or (at your option)
+;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
 
 ;; This program is distributed in the hope that it will be useful,
@@ -20,18 +20,12 @@
 ;; GNU General Public License for more details.
 
 ;; A copy of the GNU General Public License can be obtained from this
-;; program's author (send electronic mail to
-;; <andyetitmoves@gmail.com>) or from the Free Software Foundation,
-;; Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-;; LCD Archive Entry:
-;; libmpdclient|R.Ramkumar|<andyetitmoves@gmail.com>
-;; |Client end library for mpd, a music playing daemon
-;; |$Date: 2004/05/17 15:02:22 $|$Revision: 1.2 $|~/packages/libmpdclient.el
+;; program's author (send electronic mail to andyetitmoves@gmail.com)
+;; or from the Free Software Foundation, Inc.,
+;; 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 ;;; Commentary:
 
-;;
 ;; This package is a client end library to the wonderful music playing daemon by
 ;; name mpd. Hence, an obvious prerequisite for this package is mpd itself,
 ;; which you can get at http://www.musicpd.org. For those who haven't heard of
@@ -941,9 +935,9 @@ CONN and FOREACH are as in `mpd-get-songs'."
   (or (functionp foreach) (setq foreach nil))
   (mpd-execute-command
    conn "playlist" '(lambda (conn cell)
-		     (setq foreach (mpd-elt-add
-				    (cdr cell) foreach
-				    (string-to-number (car cell))))))
+		      (setq foreach (mpd-elt-add
+				     (cdr cell) foreach
+				     (string-to-number (car cell))))))
   (safe-nreverse foreach))
 
 ;;;###autoload

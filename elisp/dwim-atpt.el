@@ -1,4 +1,4 @@
-;;; DWIM-ATPT.EL --- DWIM at point for doc, source etc.
+;;; DWIM-ATPT.EL --- 'Do what I mean' at point for doc, source etc.
 
 ;; Copyright (C) 2005 R.Ramkumar
 
@@ -11,7 +11,7 @@
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 1, or (at your option)
+;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
 
 ;; This program is distributed in the hope that it will be useful,
@@ -19,14 +19,10 @@
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
 
-;; A copy of the GNU General Public License can be obtained from this program's
-;; author (send electronic mail to andyetitmoves@gmail.com) or from the Free
-;; Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-;; LCD Archive Entry:
-;; dwim-atpt|R.Ramkumar|andyetitmoves@gmail.com
-;; |DWIM at point for doc, source etc.
-;; |$Date$|$Revision$|~/packages/dwim-atpt.el
+;; A copy of the GNU General Public License can be obtained from this
+;; program's author (send electronic mail to andyetitmoves@gmail.com)
+;; or from the Free Software Foundation, Inc.,
+;; 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 ;;; Code:
 

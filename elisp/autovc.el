@@ -1,6 +1,6 @@
 ;;; AUTOVC.EL --- Warns about edited and checked out packages at emacs exit
 
-;; Copyright (C) 2004 R.Ramkumar
+;; Copyright (C) 2004, 2005 R.Ramkumar
 
 ;; Author: 	R.Ramkumar <andyetitmoves@gmail.com>
 ;; Created: 	09 May 2004
@@ -11,7 +11,7 @@
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 1, or (at your option)
+;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
 
 ;; This program is distributed in the hope that it will be useful,
@@ -20,14 +20,9 @@
 ;; GNU General Public License for more details.
 
 ;; A copy of the GNU General Public License can be obtained from this
-;; program's author (send electronic mail to
-;; <andyetitmoves@gmail.com>) or from the Free Software Foundation,
-;; Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-;; LCD Archive Entry:
-;; autovc|R.Ramkumar|<andyetitmoves@gmail.com>
-;; |Warns about edited and checked out packages at emacs exit
-;; |$Date: 2004/07/14 17:05:18 $|$Revision: 1.1 $|~/packages/autovc.el
+;; program's author (send electronic mail to andyetitmoves@gmail.com)
+;; or from the Free Software Foundation, Inc.,
+;; 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 ;;; Code:
 

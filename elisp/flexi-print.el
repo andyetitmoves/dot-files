@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2005 R.Ramkumar
 
-;; Author: 	R.Ramkumar andyetitmoves@gmail.com
+;; Author: 	R.Ramkumar <andyetitmoves@gmail.com>
 ;; Created: 	06 Feb 2005
 ;; Version: 	1.0
 ;; Keywords:	format output
@@ -11,7 +11,7 @@
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 1, or (at your option)
+;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
 
 ;; This program is distributed in the hope that it will be useful,
@@ -19,14 +19,10 @@
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
 
-;; A copy of the GNU General Public License can be obtained from this program's
-;; author (send electronic mail to andyetitmoves@gmail.com) or from the Free
-;; Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-;; LCD Archive Entry:
-;; flexi-print|R.Ramkumar|andyetitmoves@gmail.com
-;; |Customizable formatted string output
-;; |$Date$|$Revision$|~/packages/flexi-print.el
+;; A copy of the GNU General Public License can be obtained from this
+;; program's author (send electronic mail to andyetitmoves@gmail.com)
+;; or from the Free Software Foundation, Inc.,
+;; 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 ;;; Commentary:
 
@@ -270,9 +266,9 @@ argument accepted by the backend."
 	    (nil :default (function-item
 			   :format "%t\n%h"
 			   :tag ,(concat
-				   (or (get item 'flexi-print-backend-name)
-				       (symbol-name item))
-				   " Backend") ,item))
+				  (or (get item 'flexi-print-backend-name)
+				      (symbol-name item))
+				  " Backend") ,item))
 	    (flexi-print-backend-widget-type :default (sexp :tag "Argument"))))
 
 (defun widget-flexi-convert-widget (widget)

@@ -1,6 +1,6 @@
 ;;; EMPI-CORE.EL --- Generic portions of EMPI
 
-;; Copyright (C) 2004 R.Ramkumar
+;; Copyright (C) 2004, 2005 R.Ramkumar
 
 ;; Author: 	R.Ramkumar <andyetitmoves@gmail.com>
 ;; Created: 	12 May 2004
@@ -11,7 +11,7 @@
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 1, or (at your option)
+;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
 
 ;; This program is distributed in the hope that it will be useful,
@@ -20,14 +20,9 @@
 ;; GNU General Public License for more details.
 
 ;; A copy of the GNU General Public License can be obtained from this
-;; program's author (send electronic mail to
-;; <andyetitmoves@gmail.com>) or from the Free Software Foundation,
-;; Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-;; LCD Archive Entry:
-;; empi-core|R.Ramkumar|<andyetitmoves@gmail.com>
-;; |Generic portions of EMPI
-;; |$Date: 2004/05/12 10:56:02 $|$Revision: 1.1 $|~/packages/empi-core.el
+;; program's author (send electronic mail to andyetitmoves@gmail.com)
+;; or from the Free Software Foundation, Inc.,
+;; 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 ;;; Commentary:
 
@@ -206,7 +201,7 @@ used can be modified by a call to `empi-select-player'."
   :type '(choice (const :tag "First in list" nil)
 		 (string :tag "Player name")) :group 'empi)
 
-;; Utility functions
+;;;; Utility functions
 
 (defmacro oconcat (&rest args)
   (let (actual (str "") item)
@@ -438,7 +433,7 @@ please check your settings"))
 	  ,@body)
      (setq empi-cache-lock (1- empi-cache-lock))))
 
-;;; Convenience macros/aliases
+;;;; Convenience macros/aliases
 
 (eval-when-compile (require 'edebug))
 
@@ -487,7 +482,7 @@ please check your settings"))
 (defmacro empi-recov-action (cmd &rest args)
   `(or (empi-action ,cmd ,@args) (empuns-nf (empi-symbol-name ,cmd))))
 
-;;; Display update support
+;;;; Display update support
 
 (defvar empi-update-list nil)
 (defvar empi-update-timer nil)
@@ -495,7 +490,7 @@ please check your settings"))
 (defvar empi-update-schedule nil)
 (defvar empi-update-schedule-pos nil)
 
-;;; Redeclared with defcustom, this is to silence the compiler.
+;; Redeclared with defcustom, this is to silence the compiler.
 (defvar empi-update-reference-interval)
 
 (defun empi-update-build-schedule (list)
@@ -619,18 +614,19 @@ successive executions."
 			(set var val)
 			(empi-update-start)) :group 'empi)
 
-;;; Generic interactive functions
+;;;; Generic interactive functions
 
 ;;;###autoload
 (defun empi-send-command (cmd)
   (interactive
-   (list (intern-soft (completing-read "Enter Command: "
-				(apply 'nconc
-				       (mapcar 'plist-keys
-					       (progn
-						 (empi-ensure-current-player)
-						 (cdr empi-current-player))))
-				nil t nil nil))))
+   (list (intern-soft (completing-read
+		       "Enter Command: "
+		       (apply 'nconc
+			      (mapcar 'plist-keys
+				      (progn
+					(empi-ensure-current-player)
+					(cdr empi-current-player))))
+		       nil t nil nil))))
   (display-message-or-buffer
    (trim-string (format "%s" (empi-simple-command cmd)))))
 

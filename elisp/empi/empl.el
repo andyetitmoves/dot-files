@@ -1,6 +1,6 @@
 ;;; EMPL.EL --- EMPI playlist editor
 
-;; Copyright (C) 2004 R.Ramkumar
+;; Copyright (C) 2004, 2005 R.Ramkumar
 
 ;; Author: 	R.Ramkumar <andyetitmoves@gmail.com>
 ;; Created: 	23 May 2004
@@ -11,7 +11,7 @@
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 1, or (at your option)
+;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
 
 ;; This program is distributed in the hope that it will be useful,
@@ -20,14 +20,9 @@
 ;; GNU General Public License for more details.
 
 ;; A copy of the GNU General Public License can be obtained from this
-;; program's author (send electronic mail to <andyetitmoves@gmail.com>)
-;; or from the Free Software Foundation, Inc., 675 Mass Ave, Cambridge,
-;; MA 02139, USA.
-
-;; LCD Archive Entry:
-;; empl|R.Ramkumar|<andyetitmoves@gmail.com>
-;; |EMPI playlist editor
-;; |$Date$|$Revision$|~/packages/empl.el
+;; program's author (send electronic mail to andyetitmoves@gmail.com)
+;; or from the Free Software Foundation, Inc.,
+;; 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 ;;; Code:
 
@@ -235,7 +230,7 @@ marking and the anchoring actions themselves, which acts on a selection."
 
 (mapc 'make-variable-buffer-local
       '(empl-playing-overlay empl-playing-position empl-plid empl-item-count
-        empl-marked-items empl-anchor empl-update-timer empl-playlist-locked
+	empl-marked-items empl-anchor empl-update-timer empl-playlist-locked
 	empl-range-mode empl-go-up-on-mark))
 
 (defvar empl-inhibit-timed-update nil
@@ -429,7 +424,7 @@ NOERROR is non-nil, when nil is returned."
 	      (setcdr tail (cons (vector (empl-new-mark-overlay
 					  (line-beginning-position 2)
 					  (overlay-end (aref flag 0)))
-				  (1+ add) (aref flag 2)) (cdr tail))))
+					 (1+ add) (aref flag 2)) (cdr tail))))
 	  (if (= (aref flag 1) add)
 	      (empl-delete-mgroup last tail)
 	    (move-overlay (aref flag 0) (overlay-start (aref flag 0)) (point))

@@ -1,17 +1,17 @@
 ;;; LIBMPDCLIENT-UTILS.EL --- Utilities for the libmpdclient package
 
-;; Copyright (C) 2004 R.Ramkumar
+;; Copyright (C) 2004, 2005 R.Ramkumar
 
 ;; Author: 	R.Ramkumar <andyetitmoves@gmail.com>
 ;; Created: 	16 May 2004
 ;; Version: 	1.0
 ;; Keywords:	mpd, music
 
-;; This file is (strangely) *NOT* part of GNU Emacs
+;; This file is *NOT* part of GNU Emacs
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 1, or (at your option)
+;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
 
 ;; This program is distributed in the hope that it will be useful,
@@ -19,14 +19,10 @@
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
 
-;; A copy of the GNU General Public License can be obtained from this program's
-;; author (send electronic mail to <andyetitmoves@gmail.com>) or from the Free
-;; Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-;; LCD Archive Entry:
-;; libmpdclient-utils|R.Ramkumar|<andyetitmoves@gmail.com>
-;; |Utilities for the libmpdclient package
-;; |$Date$|$Revision$|~/packages/libmpdclient-utils.el
+;; A copy of the GNU General Public License can be obtained from this
+;; program's author (send electronic mail to andyetitmoves@gmail.com)
+;; or from the Free Software Foundation, Inc.,
+;; 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 ;;; Code:
 
@@ -55,10 +51,10 @@
   (aref (mpd-get-status conn) 0))
 
 (defun mpd-compat-play (conn)
-   (interactive (list mpd-inter-conn))
-   (let ((status (and (eq (mpd-connection-status conn) 'ready)
-		      (mpd-get-status conn))))
-     (and (mpd-play conn (and status (aref status 6))) status)))
+  (interactive (list mpd-inter-conn))
+  (let ((status (and (eq (mpd-connection-status conn) 'ready)
+		     (mpd-get-status conn))))
+    (and (mpd-play conn (and status (aref status 6))) status)))
 
 (defun mpd-compat-stop (conn)
   (interactive (list mpd-inter-conn))

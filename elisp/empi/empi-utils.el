@@ -1,6 +1,6 @@
 ;;; EMPI-UTILS.EL --- Utilities for building backends for EMPI
 
-;; Copyright (C) 2004 R.Ramkumar
+;; Copyright (C) 2004, 2005 R.Ramkumar
 
 ;; Author: 	R.Ramkumar <andyetitmoves@gmail.com>
 ;; Created: 	12 May 2004
@@ -11,7 +11,7 @@
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 1, or (at your option)
+;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
 
 ;; This program is distributed in the hope that it will be useful,
@@ -20,14 +20,9 @@
 ;; GNU General Public License for more details.
 
 ;; A copy of the GNU General Public License can be obtained from this
-;; program's author (send electronic mail to
-;; <andyetitmoves@gmail.com>) or from the Free Software Foundation,
-;; Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-;; LCD Archive Entry:
-;; empi-utils|R.Ramkumar|<andyetitmoves@gmail.com>
-;; |Utilities for building backends for EMPI
-;; |$Date: 2004/05/12 10:57:01 $|$Revision: 1.1 $|~/packages/empi-utils.el
+;; program's author (send electronic mail to andyetitmoves@gmail.com)
+;; or from the Free Software Foundation, Inc.,
+;; 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 ;;; Code:
 
@@ -105,42 +100,42 @@
   `(setq ,num (1- ,num)))
 
 (defun empi-transform-output-form (item $< $? data)
-   (cond
-    ((listp item)
-      (mapcar '(lambda (elt) (empi-transform-output-form elt $< $? data)) item))
-    ((integerp item)
-     (or (match-string-data (abs item) data $<)
-	 (if (> item 0) (throw 'empi-format-nil-subexp nil) (- item))))
-    (t item)))
+  (cond
+   ((listp item)
+    (mapcar '(lambda (elt) (empi-transform-output-form elt $< $? data)) item))
+   ((integerp item)
+    (or (match-string-data (abs item) data $<)
+	(if (> item 0) (throw 'empi-format-nil-subexp nil) (- item))))
+   (t item)))
 
 (defsubst empi-format-output-item (item $< $? data)
   (eval (empi-transform-output-form item $< $? data)))
 
 (defun empi-format-output (str pexit ctx cmd &rest args)
   (let ((cell (cdr (empi-get-handler ctx cmd))))
-  (cond
-   ((not cell) (and (= pexit 0) str))
-   ((vectorp cell)
-    (if (string-match (aref cell 0) str)
-	(if (= (length cell) 1) str
-	  (let ((data (copy-sequence (match-data))))
-	    (if (= (length cell) 2)
-		(catch 'empi-format-nil-subexp
-		  (setq pexit (empi-format-output-item (aref cell 1)
-						       str pexit data))
-		  (and pexit (if (listp pexit) (list cmd pexit) pexit)))
-	      (let ((i (1- (length cell))) out)
-		(or (= (logand i 1) 0) (-- i))
-		(while (> i 0)
+    (cond
+     ((not cell) (and (= pexit 0) str))
+     ((vectorp cell)
+      (if (string-match (aref cell 0) str)
+	  (if (= (length cell) 1) str
+	    (let ((data (copy-sequence (match-data))))
+	      (if (= (length cell) 2)
 		  (catch 'empi-format-nil-subexp
-		    (push-valid-pair out (or (aref cell (1- i)) cmd)
-				     (empi-format-output-item (aref cell i)
-							      str pexit data)))
-		  (setq i (- i 2)))
-		out))))))
-   ((functionp cell) (apply cell str pexit ctx cmd args))
-   ((listp cell) (list cmd cell))
-   (t cell))))
+		    (setq pexit (empi-format-output-item (aref cell 1)
+							 str pexit data))
+		    (and pexit (if (listp pexit) (list cmd pexit) pexit)))
+		(let ((i (1- (length cell))) out)
+		  (or (= (logand i 1) 0) (-- i))
+		  (while (> i 0)
+		    (catch 'empi-format-nil-subexp
+		      (push-valid-pair out (or (aref cell (1- i)) cmd)
+				       (empi-format-output-item (aref cell i)
+								str pexit data)))
+		    (setq i (- i 2)))
+		  out))))))
+     ((functionp cell) (apply cell str pexit ctx cmd args))
+     ((listp cell) (list cmd cell))
+     (t cell))))
 
 (provide 'empi-utils)
 

@@ -1,6 +1,6 @@
 ;;; SAFE-LOAD.EL --- Timestamp checking for loading byte-compiled files.
 
-;; Copyright (C) 2004 R.Ramkumar
+;; Copyright (C) 2004, 2005 R.Ramkumar
 
 ;; Author: 	R.Ramkumar <andyetitmoves@gmail.com>
 ;; Created: 	14 Jul 2004
@@ -11,7 +11,7 @@
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 1, or (at your option)
+;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
 
 ;; This program is distributed in the hope that it will be useful,
@@ -19,14 +19,10 @@
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
 
-;; A copy of the GNU General Public License can be obtained from this program's
-;; author (send electronic mail to <andyetitmoves@gmail.com>) or from the Free
-;; Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-;; LCD Archive Entry:
-;; safe-load|R.Ramkumar|<andyetitmoves@gmail.com>
-;; |Timestamp checking for loading byte-compiled files.
-;; |$Date: 2004/07/14 10:54:40 $|$Revision: 1.1 $|~/packages/safe-load.el
+;; A copy of the GNU General Public License can be obtained from this
+;; program's author (send electronic mail to andyetitmoves@gmail.com)
+;; or from the Free Software Foundation, Inc.,
+;; 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 ;;; Commentary:
 
@@ -39,13 +35,15 @@
 ;; load to check if there is a more recent source file lying around and
 ;; byte-compile it after prompting the user.
 
-;; This package does not as yet work for autoloads.
+;;; Bugs:
+
+;; This package does not work for autoloads, loading seems to get
+;; short-circuited through the C code.
 
 ;;; Installation:
 
-;; Just load this file at initialisation time, that's it. However, do this as
-;; early as possible to ensure that all loads to be protected occur after the
-;; load of safe-load.
+;; Just load this file at initialisation time.
+;; The earlier, the better, as all further loads are protected.
 
 ;;; Code:
 
@@ -102,10 +100,10 @@ The file is checked with `check-load-file' before proceeding with require."
        (or (memq feature features)
 	   (check-load-file (or filename (symbol-name feature))))))
 
-;;; If this file is on the load-path, do a self test
+;; If this file is on the load-path, do a self test
 (if (check-load-file "safe-load")
     (load "safe-load")
-  ;;; Check over, can go for activation
+  ;; Check over, can go for activation
   (ad-activate 'load)
   (ad-activate 'require))
 

@@ -1,6 +1,6 @@
 ;;; QUICKEY.EL --- Multiple key bindings differentiated by keypress speeds.
 
-;; Copyright (C) 2004 R.Ramkumar
+;; Copyright (C) 2004, 2005 R.Ramkumar
 
 ;; Author: 	R.Ramkumar <andyetitmoves@gmail.com>
 ;; Created: 	17 May 2004
@@ -11,7 +11,7 @@
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 1, or (at your option)
+;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
 
 ;; This program is distributed in the hope that it will be useful,
@@ -19,14 +19,10 @@
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
 
-;; A copy of the GNU General Public License can be obtained from this program's
-;; author (send electronic mail to <andyetitmoves@gmail.com>) or from the Free
-;; Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-;; LCD Archive Entry:
-;; quickey|R.Ramkumar|<andyetitmoves@gmail.com>
-;; |Multiple key bindings differentiated by keypress speeds.
-;; |$Date: 2004/05/17 15:02:22 $|$Revision: 1.1 $|~/packages/quickey.el
+;; A copy of the GNU General Public License can be obtained from this
+;; program's author (send electronic mail to andyetitmoves@gmail.com)
+;; or from the Free Software Foundation, Inc.,
+;; 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 ;;; Commentary:
 
@@ -38,9 +34,9 @@
 ;; timeout period. Obviously, tapping the same key maybe twice quickly in
 ;; succession is not that tedious as something like C-x 5 C-f. The flip side -
 ;; you've always have to wait for the timeout period, which you probably won't
-;; notice being something like 0.2 seconds for 2 keybindings. It is suggested you
-;; use this for single keystrokes like TAB or INS for two bindings (maybe three
-;; if you are really quick) and keep the timeout to 0.2 or 0.3 seconds.
+;; notice being something like 0.2 seconds for 2 keybindings. It is suggested
+;; you use this for single keystrokes like TAB or INS for two bindings (maybe
+;; three if you are really quick) and keep the timeout to 0.2 or 0.3 seconds.
 
 ;;; Installation:
 
