@@ -1,4 +1,4 @@
-;;; LIBMPDCLIENT.EL --- Client end library for mpd, a music playing daemon
+;;; LIBMPDEE.EL --- Client end library for mpd, a music playing daemon
 
 ;; Copyright (C) 2004, 2005 R.Ramkumar
 
@@ -76,7 +76,7 @@
 ;;; Installation:
 
 ;; Put this file somewhere on your load-path. Then, you could use
-;; (require 'libmpdclient) whenever the services of this package are needed.
+;; (require 'libmpdee) whenever the services of this package are needed.
 ;; To use this package for interactive purposes, you will have to, in addition,
 ;; call `mpd-start-interactive-connection', either interactively before you
 ;; start using the package, or preferably somewhere in your startup scripts.
@@ -87,6 +87,9 @@
 ;; Please read the function documentation for details.
 
 ;;; Code:
+
+(defvar libmpdee-version "1.0"
+  "libmpdee version information.")
 
 ;;;; User serviceable variable(s).
 
@@ -99,8 +102,8 @@
 This variable specifies a MPD connection.
 The value is a list of the mpd host name, port number, and the timeout for
 server replies. See `mpd-conn-new' for more details.")
-    (insert "To know more about libmpdclient, read ")
-    (widget-create 'emacs-commentary-link :tag "this" "libmpdclient"))
+    (insert "To know more about libmpdee, read ")
+    (widget-create 'emacs-commentary-link :tag "this" "libmpdee"))
    (t (funcall (widget-get (widget-convert 'lazy) :format-handler)
 	       widget esc))))
 
@@ -132,7 +135,7 @@ server replies. See `mpd-conn-new' for more details.")
 (defgroup mpd nil
   "The client end library for MPD, the music playing daemon."
   :group 'external :group 'multimedia
-  :link '(emacs-commentary-link "libmpdclient"))
+  :link '(emacs-commentary-link "libmpdee"))
 
 (defcustom mpd-db-root (getenv "MPD_DB_ROOT")
   "*MPD database directory root"
@@ -140,7 +143,7 @@ server replies. See `mpd-conn-new' for more details.")
 
 (defcustom mpd-interactive-connection-parameters nil
   "Parameters for the interactive mpd connection.
-These determine the connection used by interactive functions in `libmpdclient'."
+These determine the connection used by interactive functions in `libmpdee'."
   :type 'mpd-connection :group 'mpd)
 
 (defface mpd-separator-face '((((background dark)) (:foreground "lightyellow"))
@@ -1274,7 +1277,7 @@ Zero TIME turns off cross-fading."
 (defun mpd-set-password (conn pass)
   "Set the password for access to the mpd server.
 *WARNING* The password is sent to the server in plaintext.
-The processing done by libmpdclient to send the command for
+The processing done by libmpdee to send the command for
 setting the password also has its data as plaintext."
   (interactive (list mpd-inter-conn (read-passwd "Enter password: ")))
   (assert-string pass)
@@ -1313,7 +1316,7 @@ Return non-nil on success."
 
 ;;; Adapted from bbdb.el
 ;;;###autoload
-(defun mpd-libmpdclient-submit-bug-report ()
+(defun mpd-libmpdee-submit-bug-report ()
   (interactive)
   (eval-and-compile
     (require 'reporter)
@@ -1321,7 +1324,7 @@ Return non-nil on success."
   (delete-other-windows)
   (reporter-submit-bug-report
    "andyetitmoves@gmail.com"
-   (concat "libmpdclient " libmpdclient-version)
+   (concat "libmpdee " libmpdee-version)
    (append
     ;; all mpd connections
     (apropos-internal
@@ -1337,7 +1340,7 @@ If you got an error, please enable debugging by
 	M-x set-variable debug-on-error t
 or if you have `dbfrobs', M-x debug-on-interesting-errors
 Then reproduce the error and immediately call
-	M-x mpd-libmpdclient-submit-bug-report
+	M-x mpd-libmpdee-submit-bug-report
 The backtrace will be automatically included with the report.
 Please remove these instructions from your message.")
 
@@ -1345,12 +1348,12 @@ Please remove these instructions from your message.")
   (let ((backtrace (get-buffer "*Backtrace*")))
     (when backtrace
       (goto-char (point-max))
-      (insert "\nPossible backtrace for libmpdclient:\n\n")
+      (insert "\nPossible backtrace for libmpdee:\n\n")
       (insert-buffer-substring backtrace)))
 
   (goto-char (point-min))
   (mail-position-on-field "Subject"))
 
-(provide 'libmpdclient)
+(provide 'libmpdee)
 
-;;; LIBMPDCLIENT.EL ends here
+;;; LIBMPDEE.EL ends here

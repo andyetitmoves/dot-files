@@ -160,7 +160,7 @@ With ARG, make the playback random iff ARG is positive."
 ;;; uses :jumpitemnum :jumpitem
 ;;;###autoload
 (defun empi-jump-to-item (item)
-  (interactive "sEnter the number of name to where you want to jump: ")
+  (interactive "sEnter the number or name to where you want to jump: ")
   (cond
    ((numberp item) (empi-simple-action :jumpitemnum item))
    ((stringp item)

@@ -2,7 +2,7 @@
 
 (require 'empi-defutils)
 (require 'empi-elisp)
-(require 'libmpdclient-utils)
+(require 'mpdee-aux)
 
 (defgroup empi-mpd-backend nil
   "Elisp backend to MPD for EMPI."

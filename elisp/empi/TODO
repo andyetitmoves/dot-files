@@ -35,6 +35,14 @@ TODO for EMPI			-*- text -*-
  * Some mechanism to provide the user to do something at the end of current item,
    or for that matter, when some event occurs.
  * Generalise empi-caption to render it wherever possible.
+ * A more OO approach to EMPI as a whole -
+     - We can have a player object with a particular interface.
+     - Interface functions can take objects as arguments, and return objects.
+     - Each object is an instance of an interface description.
+     - Each handler could implement some functions of some objects.
+     - We cache objects, nothing else.
+     - Apart from functions, we can get any object. This get is handled by the
+       backend, and the value got is cached.
 
 TODO for EMPL
 

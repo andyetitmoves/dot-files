@@ -1,4 +1,4 @@
-;;; LIBMPDCLIENT-UTILS.EL --- Utilities for the libmpdclient package
+;;; MPDEE-AUX.EL --- Utilities for the libmpdee package
 
 ;; Copyright (C) 2004, 2005 R.Ramkumar
 
@@ -26,7 +26,7 @@
 
 ;;; Code:
 
-(require 'libmpdclient)
+(require 'libmpdee)
 (require 'flexi-print)
 
 (defun mpd-jump-to-time (conn time)
@@ -38,8 +38,8 @@
   (let ((status (mpd-get-status conn)))
     (and status
 	 (mpd-seek conn (aref status 6)
-		   (if (< (setq time (+ (aref status 9) time)) 0) 0 time))
-	 status)))
+		   (if (< (setq time (+ (aref status 9) time)) 0)
+		       0 time)) status)))
 
 (defsubst mpd-jump-to-time-msec (conn time)
   (mpd-jump-to-time conn (floor (/ time 1000))))
@@ -138,6 +138,6 @@
 		   (mpd-get-last-error conn))))
       (error "No file on current line"))))
 
-(provide 'libmpdclient-utils)
+(provide 'mpdee-aux)
 
-;;; LIBMPDCLIENT-UTILS.EL ends here
+;;; MPDEE-AUX.EL ends here

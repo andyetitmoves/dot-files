@@ -614,22 +614,6 @@ successive executions."
 			(set var val)
 			(empi-update-start)) :group 'empi)
 
-;;;; Generic interactive functions
-
-;;;###autoload
-(defun empi-send-command (cmd)
-  (interactive
-   (list (intern-soft (completing-read
-		       "Enter Command: "
-		       (apply 'nconc
-			      (mapcar 'plist-keys
-				      (progn
-					(empi-ensure-current-player)
-					(cdr empi-current-player))))
-		       nil t nil nil))))
-  (display-message-or-buffer
-   (trim-string (format "%s" (empi-simple-command cmd)))))
-
 (provide 'empi-core)
 
 ;;; EMPI-CORE.EL ends here
