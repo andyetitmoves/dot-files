@@ -32,10 +32,10 @@ Right Volume: \\([0-9]+\\)\\)?" :playingp (streq 1 "Playing")
 
 (defvar empi-xmms-shell 'empi-proc-command)
 
-;;; Note: some of the info reported by executing actions with xmms-shell could be fake.
-;;; Eg.	:qplpos reported by "backward"/"forward" - it just inc/decrements the number.
-;;;	This fails in case there are bad entries in the playlist.
-;;;	:qbalance on "balance" - allows values like -200 and outputs them !
+;; Note: some of the info reported by executing actions with xmms-shell could be fake.
+;; Eg.	:qplpos reported by "backward"/"forward" - it just inc/decrements the number.
+;;	This fails in case there are bad entries in the playlist.
+;;	:qbalance on "balance" - allows values like -200 and outputs them !
 
 (setplist 'empi-xmms-shell
 `(:ihandle "xmms-shell" :prefix "-e" :defhandler ,empi-xmms-shell-status
