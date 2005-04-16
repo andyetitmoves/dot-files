@@ -438,7 +438,7 @@ The minimum was %d.\nMaybe you should rely on %d."
 			    (if (= state 0) 0 1)))))
       (and (or state curt tott)
 	   (concat (if (and curt (not (and state (= state 0))))
-		       (concat "[" curt (and tott (concat "/" tott)) "] "))
+		       (concat "[" curt (and tott (concat "/" tott)) "]"))
 		   (when (and state (not (= state 1)))
 		     (concat "< " (if (= state 2) "Paused" "Stopped")
 			     " > ")))))))
