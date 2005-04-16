@@ -3,12 +3,10 @@
 
 trap "kill \$! > /dev/null 2>&1; exit 1" HUP TERM QUIT INT PIPE
 
-SCRDIR=/home/ramk/scripts
-
-$SCRDIR/mposd
-$SCRDIR/id3pic-display "$1"
+mposd
+id3pic-display "$1"
 
 while true; do
-    $SCRDIR/id3less "$1" & wait
+    id3less "$1" & wait
     ncmpc
 done
