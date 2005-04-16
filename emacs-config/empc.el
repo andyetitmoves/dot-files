@@ -3,6 +3,7 @@
 (eval-and-compile
   (add-to-list 'load-path "/home/ramk/elisp")
   (add-to-list 'load-path "/home/ramk/elisp/empi")
+  (add-to-list 'load-path "/home/ramk/elisp/libmpdee")
   (add-to-list 'load-path "/home/ramk/elisp/empi/defs"))
 
 (setq user-init-file "~/.emacs.d/config/empc.el")
