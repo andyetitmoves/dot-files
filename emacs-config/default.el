@@ -89,6 +89,12 @@
  '(pc-select-meta-moves-sexps t)
  '(pc-select-selection-keys-only t)
  '(pc-selection-mode t nil (pc-select))
+ '(proj-c++ t)
+ '(proj-description "Lab Information Management System")
+ '(proj-library t)
+ '(proj-name "Lims")
+ '(proj-toplevel "~/programs/lims")
+ '(proj-use-relative-paths t)
  '(scroll-bar-mode nil)
  '(semantic-which-function-use-color t)
  '(semanticdb-default-save-directory "~/.emacs.d/semantic-cache")
@@ -135,6 +141,7 @@
   ;; If you edit it by hand, you could mess it up, so be careful.
   ;; Your init file should contain only one such instance.
   ;; If there is more than one, they won't work right.
+ '(default ((((type tty)) (:background "black" :foreground "white")) (t (:background "black" :foreground "white" :slant normal :weight bold :height 101 :width normal :family "adobe-courier"))))
  '(bold ((t (:foreground "lightyellow" :underline t :weight bold :width semi-expanded))))
  '(bold-italic ((t (:foreground "grey80" :slant italic :weight bold :width semi-expanded))))
  '(border ((t (:background "grey70"))) t)
@@ -539,8 +546,13 @@
 	(make-regexp '("desktop"))))
 
 (defvar backup-exclude-dirs
-  (list (expand-file-name semanticdb-default-save-directory)
-	temporary-file-directory small-temporary-file-directory))
+  (list temporary-file-directory small-temporary-file-directory))
+
+(and (stringp semanticdb-default-save-directory)
+     (setq backup-exclude-dirs
+	   (cons (expand-file-name semanticdb-default-save-directory)
+		 backup-exclude-dirs)))
+
 (defun backup-name-in-excluded-dir-p (name)
   (let ((dir backup-exclude-dirs))
     (catch 'excluded-dir-found
