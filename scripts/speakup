@@ -1,8 +1,11 @@
 #!/bin/bash
 # Pauses mpd if necessary to evaluate some expression, and then resumes.
 
-echo pause 1 | nc localhost 6600 > /dev/null 2>&1
+HOST=$MPD_HOST
+[ -z $HOST ] && HOST=127.0.0.1
+
+echo pause 1 | nc $HOST 6600 > /dev/null 2>&1
 usleep 100
 eval "$1"
 usleep 100
-echo pause 0 | nc localhost 6600 > /dev/null 2>&1
+echo pause 0 | nc $HOST 6600 > /dev/null 2>&1

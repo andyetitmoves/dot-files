@@ -6,6 +6,7 @@ use strict;
 use warnings;
 use IO::Socket;
 
+my $host = ($ENV{MPD_HOST} || '127.0.0.1');
 my $dbbase = $ENV{"MPD_DB_ROOT"};
 my $last = '';
 my $now = '';
@@ -26,16 +27,16 @@ $SIG{CHLD} = \&die_child;
 $SIG{USR1} = \&force_update;
 $SIG{HUP} = sub { exit 0; };
 
-my $remote = IO::Socket::INET->new (Proto => "tcp",
-				    PeerAddr => "localhost",
-				    PeerPort => "6600",)
-    or die "cannot connect to mpd port at localhost";
+my $remote = IO::Socket::INET->new (Proto => 'tcp',
+				    PeerAddr => $host,
+				    PeerPort => '6600',)
+    or die "cannot connect to mpd port at $host";
 
 while (1) {
     until ($remote and $remote->connected) {
-	$remote = IO::Socket::INET->new (Proto => "tcp",
-					 PeerAddr => "localhost",
-					 PeerPort => "6600",)
+	$remote = IO::Socket::INET->new (Proto => 'tcp',
+					 PeerAddr => $host,
+					 PeerPort => '6600',)
 	    and last;
 	sleep 1;
     }

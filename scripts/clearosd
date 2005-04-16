@@ -5,10 +5,10 @@ use strict;
 use warnings;
 use IO::Socket;
 
-my $remote = IO::Socket::INET->new (Proto => "udp",
-				    PeerAddr => "localhost",
-				    PeerPort => "7600",)
-    or die "Cannot connect to osd port at localhost";
+my $remote = IO::Socket::INET->new (Proto => 'udp',
+				    PeerAddr => '127.0.0.1',
+				    PeerPort => '7600',)
+    or die 'Cannot connect to osd port at 127.0.0.1';
 
 print $remote "\n";
 close $remote;

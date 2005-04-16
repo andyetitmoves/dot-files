@@ -15,10 +15,10 @@ open TFILE, '> /tmp/.mpd.curtitle';
 print TFILE $title;
 close TFILE;
 
-my $remote = IO::Socket::INET->new (Proto => "udp",
-				    PeerAddr => "localhost",
-				    PeerPort => "7600",)
-    or die "Cannot connect to osd port at localhost";
+my $remote = IO::Socket::INET->new (Proto => 'udp',
+				    PeerAddr => '127.0.0.1',
+				    PeerPort => '7600',)
+    or die "Cannot connect to osd port at ".($ENV{HOSTNAME} || '127.0.0.1');
 
 print $remote $title;
 close $remote;

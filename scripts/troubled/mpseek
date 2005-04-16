@@ -5,6 +5,7 @@ use strict;
 use IO::Socket;
 use Fcntl;
 
+my $host = ($ENV{MPD_HOST} || '127.0.0.1');
 my $seek = shift || 0;
 my $FIFO = '/tmp/mpseek.pl.queue';
 my $ret = 0;
@@ -31,9 +32,9 @@ open LOG, ">> ~/log";
 
 my $timeout = shift || 0.2;
 my $remote = IO::Socket::INET->new (Proto => 'tcp',
-				    PeerAddr => 'localhost',
+				    PeerAddr => $host,
 				    PeerPort => '6600',)
-    or die 'Cannot connect to mpd port at localhost';
+    or die "Cannot connect to mpd port at $host";
 
 $SIG{CHLD} = 'IGNORE';
 $SIG{TERM} = sub { unlink $FIFO; exit 1 };
