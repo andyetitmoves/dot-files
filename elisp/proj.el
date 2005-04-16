@@ -110,6 +110,7 @@
 		(split-string
 		 (file-relative-name (file-name-directory filename)
 				     proj-toplevel) "/"))
+	  (setq comps (delete "" comps))
 	  (setq comps (and (not (string-equal ".." (car comps)))
 			   (cons proj-name comps))))
       (setq comps (list proj-name)))
@@ -129,7 +130,7 @@
 	  (setq proj-comps-ctr (length comps))))
       (insert "class " (file-name-sans-extension
 			(file-name-nondirectory buffer-file-name))
-	      "\n{\nprivate:\npublic:\n};")
+	      "\n{\npublic:\nprivate:\n};")
       (while (> proj-comps-ctr 0)
 	(insert "\n}")
 	(setq proj-comps-ctr (1- proj-comps-ctr)))
