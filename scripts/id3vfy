@@ -322,7 +322,9 @@ sub execHook {
     }
 }
 
-sub process {
+sub process ($);
+
+sub process ($) {
     my $file = shift;
     if (-d $file) {
 	{
@@ -333,22 +335,23 @@ sub process {
 	execHook 'direnter';
 	# The index call to search for whitespace is a hack.
 	# Surely there must be a better way to glob directories with spaces.
-	process (glob ((index($tag, ' ') == -1 ? $tag : "'$tag'").'/*'));
+	process $_ foreach (glob ((index($tag, ' ') == -1 ?
+				   $tag : "'$tag'").'/*'));
 	$tag = $file;
 	execHook 'dirleave';
-	next;
+	return;
     }
     undef $prflag;
     $tag = MP3::Tag->new ($file);
     unless ($tag) {
 	print STDERR "Unable to open file $file\n\n";
-	next;
+	return;
     }
     $tag->get_tags();
     $id3v2 = $tag->{'ID3v2'};
     unless ($id3v2) {
 	report "No ID3v2 tag found\n", 'presence';
-	next;
+	return;
     }
     $id3v1 = $tag->{'ID3v1'};
     report "No ID3v1 tag found", 'presence' unless ($id3v1);
