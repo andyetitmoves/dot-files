@@ -7,7 +7,7 @@ use warnings;
 use IO::Socket;
 
 my $host = ($ENV{MPD_HOST} || '127.0.0.1');
-my $dbbase = $ENV{"MPD_DB_ROOT"};
+my $dbbase = $ENV{MPD_DB_ROOT};
 my $last = '';
 my $now = '';
 my $child;
