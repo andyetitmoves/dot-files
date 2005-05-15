@@ -93,7 +93,7 @@
  '(proj-description "Lab Information Management System")
  '(proj-library t)
  '(proj-name "Lims")
- '(proj-toplevel "~/programs/lims")
+ '(proj-toplevel "~/programs/lims/src/")
  '(proj-use-relative-paths t)
  '(scroll-bar-mode nil)
  '(semantic-which-function-use-color t)
