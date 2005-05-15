@@ -65,3 +65,12 @@ TODO for EMPL
  * to act on, defaulting to primary selection.
  * Randomize a range of entries
  * Play if file date later than
+ * Decouple playlist from player - playlist could have items from various players.
+   Probably make this functionality as a part of the forwarder playlist handler.
+   First phase: Totally ignore playlist handlers of the players, just use the
+   playfile action of the players. Probably have an extended syntax to specify
+   the player along with the playlist entry to play.
+   Second phase: Enabling interspersing of playlists of players.
+   Would need detecting of song change, stopping the player, and going to a
+   different player. Even then, things like crossfade in the player may cause
+   problems. It is worth thinking over whether this feature is really worth it.
