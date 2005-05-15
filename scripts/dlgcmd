@@ -1,0 +1,7 @@
+#!/bin/env zsh
+# Asks for a command in a dialog, sync exec's it, and displays results.
+
+PROG=`zenity --title 'Select Program' --entry --text 'Select program to run'`
+[ -z "$PROG" ] ||
+{ eval "$PROG"; RES=$?; echo; echo Program exited with status $RES } 2>&1 \
+    | exec zenity --title 'Program Output' --text-info
