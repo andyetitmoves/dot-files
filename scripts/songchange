@@ -27,10 +27,18 @@ $SIG{CHLD} = \&die_child;
 $SIG{USR1} = \&force_update;
 $SIG{HUP} = sub { exit 0; };
 
+unless (@ARGV) {
+    print STDERR "No command specified\n";
+    exit 1;
+}
+
 my $remote = IO::Socket::INET->new (Proto => 'tcp',
 				    PeerAddr => $host,
 				    PeerPort => '6600',)
-    or die "cannot connect to mpd port at $host";
+    or die "Cannot connect to mpd port at $host";
+
+# open LOG, "> $ENV{HOME}/.songch.log" or die "Open: $!";
+# select (LOG) and $| = 1;
 
 while (1) {
     until ($remote and $remote->connected) {
@@ -41,10 +49,12 @@ while (1) {
 	sleep 1;
     }
     print $remote "currentsong\n";
+    $now = '';
     while (<$remote>) {
-	do { $now=$1; last; } if /^file: (.*)/;
+	$now = ($1 || '') if ((not $now) && /^file: (.*)/);
+	last if /^OK$/;
     }
-    if ($now and $now ne $last) {
+    if ($now ne $last) {
 	if (defined ($child)) {
 	    kill "TERM", $child;
 	    wait;
@@ -53,7 +63,7 @@ while (1) {
 	if ($child) {
 	    $last = $now;
 	} else {
-	    my $file = $dbbase.'/'.$now;
+	    my $file = ($now ? $dbbase.'/'.$now : '');
 	    my @command = ();
 	    foreach (@ARGV) {
 		s/{}/$file/g;
