@@ -11,13 +11,23 @@ my $base = shift or die "No base directory specified!";
     chomp $base;
 }
 
-system 'find '.$base.' -type d -mindepth 1 -printf "%P\0" | xargs -0 install -d';
-$? and die "Unable to install directories: $?";
+my $opt = shift;
+my $flatten = undef;
+
+$flatten = 1 if $opt && $opt eq 'flat';
+
+unless ($flatten) {
+    system 'find '.$base.' -type d -mindepth 1 -printf "%P\0" | \
+xargs -0 install -d';
+    $? and die "Unable to install directories: $?";
+}
 
 open FILES, 'find '.$base.' -type f -mindepth 1 -printf "%P\n" |';
 
 while (<FILES>) {
     chomp;
-    symlink $base.'/'.$_, $_;
+    my $rel = $_;
+    s/\//!/ if $flatten;
+    symlink "$base/$rel", $_;
 }
 close FILES;
