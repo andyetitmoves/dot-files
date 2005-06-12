@@ -719,7 +719,7 @@ See `empl-playlist-locked' for a description of locking."
   (setq empl-playlist-locked
 	(if arg
 	    (if (> (prefix-numeric-value arg) 0) t)
-	  (if empl-playlist-locked nil t)))
+	  (not empl-playlist-locked)))
   (force-mode-line-update))
 
 (defsubst empl-assert-unlocked ()
