@@ -41,6 +41,7 @@
  '(cperl-clobber-lisp-bindings (quote null))
  '(cperl-hairy t)
  '(cperl-highlight-variables-indiscriminately t)
+ '(cperl-indent-level 4)
  '(cperl-lazy-help-time 2)
  '(cperl-pod-here-scan nil)
  '(cperl-under-as-char t)
