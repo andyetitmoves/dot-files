@@ -42,7 +42,6 @@
       [?b]		'empi-next
       [?e]		'empi-enqueue
       [f1]		'empi-player-version
-      [?s]		'empi-send-command
       [?i]		'empi-send-input
       [?|]		'empi-volume
       [?-]		'empi-balance
@@ -107,7 +106,8 @@ The keys in the map are as follows:
 (defun empi-player-version ()
   "Print version information for the EMPI player."
   (interactive)
-  (empi-send-command :version))
+  (display-message-or-buffer
+   (trim-string (format "%s" (empi-simple-command :version)))))
 
 (empi-static-dep :qrepeat :repeat)
 
