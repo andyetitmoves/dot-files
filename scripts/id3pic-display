@@ -15,7 +15,7 @@ USEREMOTE=
 
 {
     rm -f $PICMASK
-    id3pic -p $PICPREF "$1"
+    [ x"$1" != x ] && id3pic -p $PICPREF "$1"
     IMGS=`ls $PICMASK | wc -l`
 
     DISP=`cat $PIDFILE`
