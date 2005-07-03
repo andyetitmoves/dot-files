@@ -3,13 +3,14 @@
 
 trap "kill \$! > /dev/null 2>&1; exit 1" HUP TERM QUIT INT PIPE
 
+id3pic-display "$1"
+
 if [ "x$1" == "x" ]; then
     clear
     exit 0
 fi
 
 mposd
-id3pic-display "$1"
 
 while true; do
     id3less "$1" & wait
