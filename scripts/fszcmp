@@ -2,7 +2,7 @@
 # Checks differences in filestamps between files in the current directory and an
 # another specified directory.
 
-CHECK=$1
+CHECK="$1"
 shift
 
 for i in "$@"; do

@@ -1,11 +1,11 @@
 #!/bin/env zsh
 # Pauses mpd if necessary to play some file, and then resumes.
 
-HOST=$MPD_HOST
-[ -z $HOST ] && HOST=127.0.0.1
+[ -z "$MPD_HOST" ] && MPD_HOST=127.0.0.1
+[ -z "$MPD_PORT" ] && MPD_PORT=6600
 
 zmodload zsh/net/tcp
-ztcp $HOST 6600
+ztcp "$MPD_HOST" "$MPD_PORT"
 FD=$REPLY
 
 echo status >&$FD

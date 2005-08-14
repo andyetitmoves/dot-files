@@ -2,8 +2,8 @@
 # Executes a command with its first argument pushed after all the remaining
 # arguments, to facilitate use in programs like xargs.
 
-CMD=$1
-TO=$2
+CMD="$1"
+TO="$2"
 shift
 shift
 exec "$CMD" "$@" "$TO"
