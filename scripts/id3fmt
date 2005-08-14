@@ -7,13 +7,13 @@ use warnings;
 my ($ch, $ca, $cl, $c0);
 
 if (defined ($ARGV[0]) && ($ARGV[0] eq '-nc')) {
-  $ch = $ca = $cl = $c0 = '';
-  shift;
+    $ch = $ca = $cl = $c0 = '';
+    shift;
 } else {
-  $ch = "\e[1;35m";
-  $ca = "\e[1;37m";
-  $cl = "\e[1;32m";
-  $c0 = "\e[0m";
+    $ch = "\e[1;35m";
+    $ca = "\e[1;37m";
+    $cl = "\e[1;32m";
+    $c0 = "\e[0m";
 }
 
 while (<>) {
@@ -30,7 +30,7 @@ SYNC: {
 	my $line = $_;
 	last if /^\*\*\* mp3 info$/;
 	do { print "\t$line"; next; } unless
-	    /^=== ([A-Z0-9]{4,4}) \(([^:]+)\): (?:(?:(?:\((.*)\)(?:\[(.*)\])?)|(?:\[(.*)\])): )?(.*)$/;
+	  /^=== ([A-Z0-9]{4,4}) \(([^:]+)\): (?:(?:(?:\((.*)\)(?:\[(.*)\])?)|(?:\[(.*)\])): )?(.*)$/;
 	next if ($1 eq 'APIC');
 	my $data = $6;
 	if ($1 eq 'COMM' && $3 ne 'Noname') {
@@ -66,7 +66,7 @@ SYNC: {
 		    }
 		} else {
 		    print "\t$ca$key:$c0 $_\n"
-			if ($valid != 2 && !($_ =~ /^\s*$/));
+		      if ($valid != 2 && !($_ =~ /^\s*$/));
 		    $valid = 0;
 		}
 	    }

@@ -14,14 +14,14 @@ my $timeout = 5;
 my $reset = 1;
 
 Getopt::Long::Configure ("no_auto_abbrev", "gnu_compat", "bundling",
-	   "no_getopt_compat", "require_order", "auto_help");
+			 "no_getopt_compat", "require_order", "auto_help");
 
 GetOptions ("num=i"	=> \@num,
 	    "port=i"	=> \$port,
 	    "str=s"	=> \@str,
 	    "timeout=i"	=> \$timeout,
 	    "reset!"	=> \$reset
-	    ) or die "Unable to parse command line";
+	   ) or die "Unable to parse command line";
 
 my $sockpath = "/tmp/.tempd.".$port;
 
@@ -60,11 +60,11 @@ $SIG{"TERM"} = $SIG{"INT"} = $SIG{"HUP"} = \&cleanup;
 $socket = IO::Socket::UNIX->new (Type => SOCK_DGRAM,
 				 Local => $sockpath,
 				 Listen => 1, Blocking => 0)
-    or die "Unable to listen on port $port: $!";
+  or die "Unable to listen on port $port: $!";
 
 my $flags = fcntl ($socket, F_GETFL, 0) or die "Unable to get socket flags: $!";
 fcntl ($socket, F_SETFL, $flags | O_NONBLOCK)
-    or die "Unable to set socket flags: $!";
+  or die "Unable to set socket flags: $!";
 
 my $sel = IO::Select->new ($socket);
 
@@ -91,7 +91,9 @@ while ($sel->can_read ($timeout)) {
 		$cnt ++;
 	    } elsif ($state == 1) {
 		push @str, $_;
-	    } else { last; }
+	    } else {
+		last;
+	    }
 	}
     } else {
 	print "Got undef buffer\n";
@@ -124,8 +126,11 @@ sub processToken {
 	    push @command, ($i < 0 ? @num : ($i <= $#num ? $num[$i] : ""));
 	} elsif ($2 eq 's') {
 	    push @command, ($i < 0 ? @str : ($i <= $#str ? $str[$i] : ""));
-	} elsif ($2 eq '%') { push @command, '%' }
-	else { return $&; }
+	} elsif ($2 eq '%') {
+	    push @command, '%';
+	} else {
+	    return $&;
+	}
     } else {
 	unless ($numbuf) {
 	    $numbuf = "";
@@ -137,7 +142,9 @@ sub processToken {
 	    return ($i < 0 ? $numbuf : ($i <= $#num ? $num[$i] : ""));
 	} elsif ($2 eq 's') {
 	    return ($i < 0 ? $strbuf : ($i <= $#str ? $str[$i] : ""));
-	} elsif ($2 eq '%') { return '%' }
+	} elsif ($2 eq '%') {
+	    return '%';
+	}
     }
     return undef;
 }

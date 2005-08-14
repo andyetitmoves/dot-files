@@ -8,5 +8,5 @@ use warnings;
 my @new= ();
 while (<>) {
     push @new, $1 if /\w+\s+\d+\s+\d+:\d+\s+:\s+added (.*)/;
-  }
+}
 print pop @new, "\n" while @new;

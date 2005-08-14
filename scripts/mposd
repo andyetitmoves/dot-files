@@ -6,7 +6,7 @@ use warnings;
 use IO::Socket;
 
 open TITLE, 'mpc --format "[[%title%]|[%file%]][ - %artist%][ - %album%]'
-    .'[ - Track %track%]" |';
+  .'[ - Track %track%]" |';
 my $title = <TITLE>;
 close TITLE;
 
@@ -18,7 +18,7 @@ close TFILE;
 my $remote = IO::Socket::INET->new (Proto => 'udp',
 				    PeerAddr => '127.0.0.1',
 				    PeerPort => '7600',)
-    or die "Cannot connect to osd port at ".($ENV{HOSTNAME} || '127.0.0.1');
+  or die "Cannot connect to osd port at ".($ENV{HOSTNAME} || '127.0.0.1');
 
 print $remote $title;
 close $remote;
