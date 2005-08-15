@@ -18,21 +18,26 @@ sub register ($&%);
 
 # Checks
 
-sub frameNEQ ($$;@) {
+my $FN_NoPres = 1;
+my $FN_Regexp = 2;
+
+sub frameNEQ ($$;$@) {
     my $type = shift;
     my $check = shift;
+    my $cmode = (shift || 0);
     my $last;
     my $confl;
     my $fdesc = $id3v2->supported_frames()->{$type};
     my @frames = ($id3v2->get_frames($type, @_))[1];
     @frames = grep { $_ } @frames;
     unless (@frames) {
-	report "No $fdesc frame found" if $check;
+	report "No $fdesc frame found" if ($check && ($cmode & $FN_NoPres));
 	return;
     }
     foreach (@frames) {
 	$last ? ($_ eq $last || ($confl = 1)) : ($last = $_);
-	unless ((! $check) || $_ eq $check) {
+	unless ((! $check) ||
+		(($cmode & $FN_Regexp) ? ($_ =~ $check) : ($_ eq $check))) {
 	    $_ = ($id3v2->get_frames($type))[1] if @_;
 	    report "$fdesc is \"$_\"";
 	}
@@ -42,25 +47,74 @@ sub frameNEQ ($$;@) {
     return $last;
 }
 
-register 'cdmedia', sub { frameNEQ 'TMED', "\x00(CD)", 'raw' },
-    synopsis => 'media types other than CD',
-    ;
-register 'mp3type', sub { frameNEQ 'TFLT', "\x00MPG/3", 'raw' },
-    synopsis => 'file types other than MPEG 1/2 Layer III',
-    ;
+register 'cdmedia', sub { frameNEQ 'TMED', "\x00(CD)", undef, 'raw' },
+  synopsis => 'media types other than CD',
+  ;
+register 'mp3type', sub { frameNEQ 'TFLT', "\x00MPG/3", undef, 'raw' },
+  synopsis => 'file types other than MPEG 1/2 Layer III',
+  ;
+
+sub reportFields {
+    my $hash = shift;
+    foreach (keys %$hash) {
+	if (substr ($_, 0, 1) ne '_' && $hash->{$_}) {
+	    my $out = $hash->{$_};
+	    $out =~ /^\s*([^\n]*)(.?)/s;
+	    $out = $1;
+	    $out .= '...' if $2;
+	    report "\t$_: $out" if $out;
+	}
+    }
+}
+
+sub compMatch ($$) {
+    my $test = shift;
+    my $pat = shift;
+    my $ret = 1;
+    foreach (split /, ?/, $test) {
+	unless ($_ =~ /$pat/) {
+	    $ret = undef;
+	    last;
+	}
+    }
+    return $ret;
+}
+
+sub checkURL ($;$) {
+    my $type = shift;
+    my $req = shift;
+    my $fdesc = $id3v2->supported_frames()->{$type};
+    my @frames = ($id3v2->get_frames($type, @_))[1];
+    @frames = grep { $_ } @frames;
+    unless (@frames) {
+	report "No $fdesc found" if $req;
+	return;
+    }
+    foreach (@frames) {
+	unless ($_->{URL} && compMatch ($_->{URL}, '^http://')) {
+	    report "$fdesc with "
+	      .($_->{URL} ? "non-conformant" : "no")." target URL found";
+	    reportFields $_;
+	}
+    }
+}
+
+register 'httpurl', sub { checkURL 'WXXX' },
+  synopsis => 'urls other than using http:// protocol',
+  ;
 
 my @exclDirs = ("Miscellaneous");
 
 register 'diralbum',
-    sub {
-	my $dname = $tag->dir_component;
-	$dname = $1 if $dname =~ /-\s*(.*)$/;
-	frameNEQ "TALB", $dname
-	    unless (grep { $_ eq $dname } @exclDirs);
-    },
-    synopsis => 'album other than parent directory'
-    .(@exclDirs > 0 ? ' if the latter isn\'t '
-      .(@exclDirs > 1 ? 'one of '.join(', ', @exclDirs) : $exclDirs[0]) : '');
+  sub {
+      my $dname = $tag->dir_component;
+      $dname = $1 if $dname =~ /-\s*(.*)$/;
+      frameNEQ "TALB", $dname
+	unless (grep { $_ eq $dname } @exclDirs);
+  },
+  synopsis => 'album other than parent directory'
+  .(@exclDirs > 0 ? ' if the latter isn\'t '
+    .(@exclDirs > 1 ? 'one of '.join(', ', @exclDirs) : $exclDirs[0]) : '');
 
 my @allowedFrames = qw(APIC COMM IPLS TALB TCOM TCOP TENC TEXT TFLT TIT2 TIT3
 		       TLEN TMED TPE1 TPE3 TPUB TRCK TSSE TYER USLT WXXX);
@@ -68,22 +122,22 @@ my @allowedFrames = qw(APIC COMM IPLS TALB TCOM TCOP TENC TEXT TFLT TIT2 TIT3
 sub frameAllowed {
     my $frameIDs = $id3v2->get_frame_ids('truename');
     my @nallow
-	= grep {
-	    my $this = $_;
-	    !(grep { $_ eq $this } @allowedFrames)
-	    } keys %$frameIDs;
+      = grep {
+	  my $this = $_;
+	  !(grep { $_ eq $this } @allowedFrames)
+      } keys %$frameIDs;
     foreach (@nallow) {
 	my @info;
 	(undef, @info) = $id3v2->get_frames($_);
 	my $nfr = @info;
 	report "$_".($frameIDs->{$_} ? ': '.$frameIDs->{$_} : "")
-	    ." - $nfr frame(s)" if $nfr > 0;
+	  ." - $nfr frame(s)" if $nfr > 0;
     }
 }
 
 register 'filter', \&frameAllowed,
-    synopsis => 'tag types other than those in a known set'
-    ;
+  synopsis => 'tag types other than those in a known set'
+  ;
 
 sub frameExists ($) {
     my $type = shift;
@@ -97,16 +151,16 @@ sub frameExists ($) {
 my %basename;
 
 register 'basename',
-    sub {
-	my $bname = $tag->filename_nodir_noextension;
-	if ($basename{$bname}) {
-	    report "Conflict with ".$basename{$bname};
-	} else {
-	    $basename{$bname} = $tag->filename;
-	}
-    },
-    synopsis => 'presence of identical base filenames',
-    ;
+  sub {
+      my $bname = $tag->filename_nodir_noextension;
+      if ($basename{$bname}) {
+	  report "Conflict with ".$basename{$bname};
+      } else {
+	  $basename{$bname} = $tag->filename;
+      }
+  },
+  synopsis => 'presence of identical base filenames',
+  ;
 
 sub frameSorted ($) {
     my $type = shift;
@@ -127,14 +181,14 @@ sub frameSorted ($) {
 }
 
 register 'sortperf', sub { frameSorted 'TPE1' },
-    synopsis => 'unsorted artist name frames',
-    ;
+  synopsis => 'unsorted artist name frames',
+  ;
 register 'sortcomp', sub { frameSorted 'TCOM' },
-    synopsis => 'unsorted composer name frames',
-    ;
+  synopsis => 'unsorted composer name frames',
+  ;
 register 'sortlyr', sub { frameSorted 'TEXT' },
-    synopsis => 'unsorted lyrics writer frames',
-    ;
+  synopsis => 'unsorted lyrics writer frames',
+  ;
 
 sub mapv1 {
     return unless $id3v1;
@@ -154,8 +208,8 @@ sub mapv1 {
     my $error;
     if (length($v2fld) > 30) {
 	$error = "Possible truncation"
-	    if ($v1fld eq substr($v2fld, 0, 30) &&
-		!(substr($v2fld, 30, 1) =~ /\s/));
+	  if ($v1fld eq substr($v2fld, 0, 30) &&
+	      !(substr($v2fld, 30, 1) =~ /\s/));
     } else {
 	$error = "Mismatch" if $v1fld ne $v2fld;
     }
@@ -167,20 +221,20 @@ sub mapv1 {
 }
 
 register 'v1title', sub { mapv1 'TIT2', \&MP3::Tag::ID3v1::title, 'Title' },
-    synopsis => 'incorrect v2 to v1 Title mapping',
-    ;
+  synopsis => 'incorrect v2 to v1 Title mapping',
+  ;
 register 'v1album', sub { mapv1 'TALB', \&MP3::Tag::ID3v1::album, 'Album' },
-    synopsis => 'incorrect v2 to v1 Album mapping',
-    ;
+  synopsis => 'incorrect v2 to v1 Album mapping',
+  ;
 register 'v1perf', sub { mapv1 'TPE1', \&MP3::Tag::ID3v1::artist, 'Artist' },
-    synopsis => 'incorrect v2 Performer to v1 Artists mapping',
-    ;
+  synopsis => 'incorrect v2 Performer to v1 Artists mapping',
+  ;
 register 'v1comp', sub { mapv1 'TCOM', \&MP3::Tag::ID3v1::comment, 'Comment' },
-    synopsis => 'incorrect v2 Composer to v1 Comment mapping',
-    ;
+  synopsis => 'incorrect v2 Composer to v1 Comment mapping',
+  ;
 register 'v1year', sub { mapv1 'TYER', \&MP3::Tag::ID3v1::year, 'Year' },
-    synopsis => 'incorrect v2 to v1 Year mapping',
-    ;
+  synopsis => 'incorrect v2 to v1 Year mapping',
+  ;
 
 my %tieData;
 
@@ -211,21 +265,8 @@ sub tieFields {
 }
 
 register 'albyear', sub { tieFields 'TALB', 'TYER' },
-    synopsis => 'different years for songs of same album',
-    ;
-
-sub reportFields {
-    my $hash = shift;
-    foreach (keys %$hash) {
-	if (substr ($_, 0, 1) ne '_' && $hash->{$_}) {
-	    my $out = $hash->{$_};
-	    $out =~ /^\s*([^\n]*)(.?)/s;
-	    $out = $1;
-	    $out .= '...' if $2;
-	    report "\t$_: $out" if $out;
-	}
-    }
-}
+  synopsis => 'different years for songs of same album',
+  ;
 
 sub commCheck (;$) {
     my $lang = shift || 'ENG';
@@ -245,8 +286,8 @@ sub commCheck (;$) {
 }
 
 register 'comment', \&commCheck,
-    synopsis => 'description-less and non-english comments',
-    ;
+  synopsis => 'description-less and non-english comments',
+  ;
 
 # Implementation
 
@@ -276,14 +317,36 @@ use Getopt::Long;
 my $all;
 my @checks;
 my @except;
+my @prune;
 
 Getopt::Long::Configure ('gnu_getopt');
 
-sub printPlugins {
+sub optLine ($$;$$$) {
+    my ($long, $desc, $short, $arg, $argopt) = @_;
+    my $left = " ";
+    $left .= "-$short" if $short;
+    $left .= ', ' if ($long && $short);
+    $left .= "--$long" if $long;
+    $left .= ($argopt ? "[=$arg]" : "=$arg") if $arg;
+    printf "%-24s%s\n", $left, $desc;
+}
+
+sub printHelp {
+    print <<END_TEXT;
+id3vfy [OPTIONS] files/dirs
+Verify ID3 tags in given files.
+Options:
+END_TEXT
+    optLine "all", "Perform all checks possible";
+    optLine "check", "Perform the check given", undef, "NAME";
+    optLine "except", "Do not perform the check given", undef, "NAME";
+    optLine "prune", "Exclude given file or directory from search", undef, "FILE";
+    optLine "help", "Display this help";
+    print "\nThe checks available are as follows: \n\n";
     foreach (keys %plugins) {
 	printf '%-8s', $_;
 	print ' - Checks for '.$plugins{$_}->{'synopsis'}
-	if $plugins{$_}->{'synopsis'};
+	  if $plugins{$_}->{'synopsis'};
 	print "\n";
     }
 }
@@ -291,8 +354,9 @@ sub printPlugins {
 GetOptions ('all'	=> \$all,
 	    'check=s'	=> \@checks,
 	    'except=s'	=> \@except,
-	    'list'	=> sub { printPlugins; exit 0; }
-	    ) or die 'Unable to parse command line';
+	    'prune=s'	=> \@prune,
+	    'help'	=> sub { printHelp; exit 0; }
+	   ) or die 'Unable to parse command line';
 
 if ($all || @except) {
     if (@except) {
@@ -333,10 +397,16 @@ sub process ($) {
 	}
 	$tag = $file;
 	execHook 'direnter';
+      outer:
 	# The index call to search for whitespace is a hack.
 	# Surely there must be a better way to glob directories with spaces.
-	process $_ foreach (glob ((index($tag, ' ') == -1 ?
-				   $tag : "'$tag'").'/*'));
+	foreach (glob ((index($tag, ' ') == -1 ? $tag : "'$tag'").'/*')) {
+	    my $dir = $_;
+	    foreach (@prune) {
+		next outer if $_ eq $dir;
+	    }
+	    process $_;
+	}
 	$tag = $file;
 	execHook 'dirleave';
 	return;
