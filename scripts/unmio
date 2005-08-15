@@ -54,7 +54,7 @@ sub unmio_file {
     my $filename = abs_path shift;
     my $file;
     open $file, $filename
-	or do { print STDERR "Unable to read $filename: $!\n"; return };
+      or do { print STDERR "Unable to read $filename: $!\n"; return };
     $data{'Src'} = $filename;
     my $pic = (dirof `dirname $filename`).'1.jpg';
     $data{'Picture'} = $pic if -e $pic;
@@ -78,7 +78,9 @@ sub unmio_file {
 	if (/<span class="t_\w_\d\d_b_b">(.*) <\/span><span class="t_\w_\d\d_b">: (.*)<\/span>/) {
 	    $sync = 1;
 	    $data{$1} = join(', ', link_list ($2));
-	} elsif ($sync || $_ eq "\n") { last }
+	} elsif ($sync || $_ eq "\n") {
+	    last;
+	}
     }
 
     my @songs;
@@ -102,7 +104,10 @@ sub unmio_file {
 			$fields{$key} = join ', ', (link_list $2);
 		    }
 		    redo if $_;
-		} else { $repeat = (eof($file) ? 2 : 1); last; }
+		} else {
+		    $repeat = (eof($file) ? 2 : 1);
+		    last;
+		}
 	    }
 	    push @songs, \%fields;
 	    ($repeat = 1 ? redo : last) if $repeat;
@@ -187,7 +192,7 @@ GetOptions ('list|l!'		=> \$list,
 	    'index|i=s'		=> \$index,
 	    'refbase|r=s'	=> \$refbase,
 	    'dumpfields|d!'	=> \$dflds,
-	    ) or die 'Unable to parse command line';
+	   ) or die 'Unable to parse command line';
 
 ($index && ! $refbase) and die "No reference base specified for index file";
 
@@ -204,27 +209,27 @@ if ($list) {
 
 if ($index) {
     open INDEX, '>', $index or die "Unable to open $index for writing: $!";
-    print INDEX <<EOF;
+    print INDEX <<END_HTML;
 <html>
 <head>
     <title>UnMIO database index</title>
 </head>
 <body>
 <center><b><big>Movie-wise index for the UnMIO database</big></b></center><br><br>
-EOF
+END_HTML
 
     my $index = 1;
     foreach (@db) {
 	print INDEX "<a href='$refbase#movie$index'>$_->{'Name'}</a><br>\n";
 	$index ++;
     }
-    printf INDEX <<EOF;
+    printf INDEX <<END_HTML;
 </body>
 </html>
-EOF
+END_HTML
 }
 
-print <<EOF;
+print <<END_HTML;
 <html>
 <head>
     <title>UnMIO database</title>
@@ -232,7 +237,7 @@ print <<EOF;
 <body>
 <center><b><big>Movie-wise index of files:</big></b></center><br><br>
 <table border="1" width="100%">
-EOF
+END_HTML
 
 my @globalExcl = ('Src', 'Name', 'Songs', 'Picture');
 my @localExcl = ('Name', 'Singer');
@@ -260,10 +265,10 @@ foreach (@db) {
 	foreach (keys %$song) {
 	    $fnames{$_} = '';
 	    pprint ($_, $song->{$_}, "&nbsp;&nbsp;")
-		if ($song->{$_} && ! (memq $_, @localExcl));
+	      if ($song->{$_} && ! (memq $_, @localExcl));
 	}
 	print '</td><td width="50%" align="right"><i>'
-	    .$song->{'Singer'}.'</i></td>' if $song->{'Singer'};
+	  .$song->{'Singer'}.'</i></td>' if $song->{'Singer'};
 	print "</tr>\n";
     }
     print "</table>\n";
@@ -275,10 +280,10 @@ foreach (@db) {
     $i ++;
 }
 
-printf <<EOF;
+printf <<END_HTML;
 </body>
 </html>
-EOF
+END_HTML
 
 if ($dflds) {
     print STDERR "Fields found:\n";
