@@ -1,0 +1,9 @@
+#!/usr/bin/zsh
+# Toggles paused state of mpd.
+
+zmodload zsh/net/tcp
+ztcp ${MPD_HOST:-127.0.0.1} ${MPD_PORT:-6600}
+FD=$REPLY
+
+echo pause >&$FD
+ztcp -c $FD
