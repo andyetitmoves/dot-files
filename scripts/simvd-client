@@ -1,0 +1,28 @@
+#!/usr/bin/perl
+# Client for simvd, a simple image viewing daemon.
+
+use strict;
+use warnings;
+use IO::Socket;
+use Getopt::Long;
+
+my $sock = ($ENV{SIMVD_SOCKET} || "/tmp/simvd");
+
+Getopt::Long::Configure ('gnu_getopt');
+
+GetOptions ('socket|s=s'	=> \$sock,
+	   ) or die 'Unable to parse command line';
+
+my $str = "";
+
+foreach (@ARGV) {
+    $str .= "Picture: $_\n" if $_;
+}
+
+$str .= "\n";
+
+my $remote = IO::Socket::UNIX->new (Type => SOCK_DGRAM,
+				    Peer => $sock,)
+  or die "Cannot connect to simvd at $sock";
+print $remote $str;
+close $remote;
