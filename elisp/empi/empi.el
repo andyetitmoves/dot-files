@@ -431,17 +431,20 @@ The minimum was %d.\nMaybe you should rely on %d."
   (with-empi-cache
     (let ((curt (time-ms-format (empi-query :qtime)))
 	  (tott (time-ms-format (empi-query :qsonglength)))
-	  (state (empi-query :pausedp)))
+	  (state (empi-query :pausedp))
+	  (bitrate (empi-query :qbitrate)))
       (setq state (if (numberp state)
 		      (if (not (= state 0)) 2
 			(if (numberp (setq state (empi-query :playingp)))
 			    (if (= state 0) 0 1)))))
-      (and (or state curt tott)
+      (setq bitrate (and (numberp bitrate) bitrate))
+      (and (or state curt tott bitrate)
 	   (concat (if (and curt (not (and state (= state 0))))
-		       (concat "[" curt (and tott (concat "/" tott)) "]"))
+		       (concat " (" curt (and tott (concat "/" tott)) ")"))
 		   (when (and state (not (= state 1)))
-		     (concat "< " (if (= state 2) "Paused" "Stopped")
-			     " > ")))))))
+		     (concat " " (if (= state 2) "Paused" "Stopped")))
+		   (when bitrate
+		     (format "%4d Kbps" bitrate)) " ")))))
 
 ;;;###autoload
 (defun empi-caption-update ()
