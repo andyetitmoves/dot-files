@@ -1,7 +1,12 @@
-#!/bin/bash
+#!/bin/zsh
 # Uses less to print pretty printed output of ID3 tags in the given file
 
-ID3FILE="/tmp/.id3less-out-$USER"
-
-id3info "$@" | id3fmt > "$ID3FILE"
-exec less -f -q -~ -S -R -c -P "" "$ID3FILE"
+id3file="/tmp/.id3less-out-$USER"
+lesscmd=(less -f -q -~ -S -R -c -P "")
+rm -f "$id3file"
+if tempfile -n "$id3file" > /dev/null; then
+    id3info "$@" | id3fmt > "$id3file"
+    exec "${lesscmd[@]}" "$id3file"
+else
+    id3info "$@" | id3fmt | "${lesscmd[@]}"
+fi
