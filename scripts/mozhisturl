@@ -1,0 +1,31 @@
+#!/usr/bin/perl
+# Generates a list of URLs from the mozilla history file.
+
+use warnings;
+use strict;
+
+my %matches;
+
+sub mozhist {
+    my $file = shift;
+    my $fcont;
+    {
+	$/ = undef;
+	$fcont = <$file>;
+    }
+    foreach ($fcont =~ m,=(https?://[^)?]*)\??[^)]*\),mg) {
+	s/\\\n//g;
+	s,/$,,;
+	$matches{$_}++ ;
+    }
+}
+
+foreach (@ARGV) {
+    my $file;
+    open $file, $_;
+    mozhist $file;
+}
+
+foreach (keys %matches) {
+    print "$_\n";
+}
