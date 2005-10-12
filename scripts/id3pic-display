@@ -13,6 +13,14 @@ PICMASK=$PICPREF*
 
 USEREMOTE=
 
+if [ -z "$DPROG" ]; then
+    if [ -x "`which imlib2_view`" ]; then
+	DPROG='imlib2_view'
+    else
+	DPROG='display -immutable'
+    fi
+fi
+
 {
     rm -f $PICMASK
     [ x"$1" != x ] && id3pic -p $PICPREF "$1"
@@ -33,7 +41,7 @@ USEREMOTE=
 		EXISTING=-remote
 	    fi
 	fi
-	display -immutable $EXISTING $PICPREF.jpg &
+	$DPROG $EXISTING $PICPREF.jpg &
 	[ x$EXISTING != x-remote ] && echo $! > $PIDFILE
     else
 	[ $DISP -gt 0 ] && kill $DISP
