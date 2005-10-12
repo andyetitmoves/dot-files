@@ -1,24 +1,77 @@
-#!/usr/bin/perl -w
-# Sends the current mpd title to the osd daemon. Needs mpc.
+#!/usr/bin/env perl
+# Sends the current mpd title to the osd daemon. Needs MPD.pm.
 
 use strict;
 use warnings;
 use IO::Socket;
+use Getopt::Long;
+use Text::Wrap;
+use MPD::MPD;
 
-open TITLE, 'mpc --format "[[%title%]|[%file%]][ - %artist%][ - %album%]'
-  .'[ - Track %track%]" |';
-my $title = <TITLE>;
-close TITLE;
+sub max_length {
+    my $max = 0;
+    foreach ($@) {
+	next unless defined $_;
+	my $len = (length $_);
+	$max = $len if $len > $max;
+    }
+    return $max;
+}
 
-# Well, just dump out the title in case someone needs it.
-open TFILE, '> /tmp/.mpd.curtitle';
-print TFILE $title;
-close TFILE;
+my $cols = 80;
+my $flush = 5;
+my ($mhost, $mport);
+my $ohost = 'localhost';
+my $oport = 7600;
+my $fldsep = ' - ';
+my $dumpfile;
+
+Getopt::Long::Configure ('gnu_getopt');
+
+GetOptions ('columns|c=i'	=> \$cols,
+	    'flush|f=i'		=> \$flush,
+	    'mpd-host|h=s'	=> \$mhost,
+	    'mpd-port|p=i'	=> \$mport,
+	    'osd-host|H=s'	=> \$ohost,
+	    'osd-port|P=i'	=> \$oport,
+	    'separator|s=s'	=> \$fldsep,
+	    'dump|d=s'		=> \$dumpfile,
+	   ) or die 'Unable to parse command line';
+
+$Text::Wrap::columns = $cols;
+
+my $mpd = MPD->new ($mhost, $mport);
+my %data = $mpd->get_current_song_info();
+
+$Text::Wrap::break = $fldsep
+  if (max_length $data{Title}, $data{file},
+      $data{Artist}, $data{Album}, $data{Track}) < $cols;
+
+my $title = ($data{Title} ? $data{Title} : $data{file});
+$title .= $fldsep.$data{Artist} if $data{Artist};
+$title .= $fldsep.$data{Album} if $data{Album};
+$title .= $fldsep."Track $data{Track}" if $data{Track};
+
+if (defined $dumpfile) {
+    open TFILE, "> $dumpfile";
+    print TFILE $title;
+    close TFILE;
+}
+
+$title = wrap("", "", $title);
+my @lines = (split /\n/, $title);
+$title = "";
+foreach (@lines) {
+    s/^\s*(.*)/$1/;
+    $title .= "$_\n";
+}
+
+$title = ("\n" x $flush).$title."\n";
 
 my $remote = IO::Socket::INET->new (Proto => 'udp',
-				    PeerAddr => '127.0.0.1',
-				    PeerPort => '7600',)
-  or die "Cannot connect to osd port at ".($ENV{HOSTNAME} || '127.0.0.1');
+				    PeerAddr => $ohost,
+				    PeerPort => $oport,)
+  or die "Cannot connect to osd port at $ohost";
 
 print $remote $title;
 close $remote;
