@@ -1,0 +1,6 @@
+#!/bin/sh
+# Wrapper for programs to use transconnect for network connections.
+
+export LD_PRELOAD=${TCONN_LIBRARY:-"$HOME/.tconn/tconn.so"}
+
+exec "$@"
