@@ -1,0 +1,25 @@
+#!/usr/bin/env perl
+# Feeds information to be displayed on a XOSD daemon.
+
+use strict;
+use warnings;
+use IO::Socket;
+use Getopt::Long;
+
+my $ohost = 'localhost';
+my $oport = 7600;
+
+Getopt::Long::Configure ('gnu_getopt');
+
+GetOptions ('host|h=s'		=> \$ohost,
+	    'port|p=i'		=> \$oport,
+	   ) or die 'Unable to parse command line';
+
+my $remote = IO::Socket::INET->new (Proto => 'udp',
+				    PeerAddr => $ohost,
+				    PeerPort => $oport,)
+  or die "Cannot connect to port $oport at $ohost";
+
+$/ = undef;
+print $remote scalar(<>);
+close $remote;
