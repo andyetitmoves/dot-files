@@ -1,0 +1,34 @@
+#!/usr/bin/env perl
+# Distributes input to multiple instances of a command in a round robin fashion.
+# The distribution is done line by line.
+
+use strict;
+use warnings;
+use IO::Handle;
+
+my $num = shift;
+my @fds = ();
+
+for (my $i = 1; $i <= $num; $i++) {
+    my $file;
+    my $fname = '| ';
+    foreach (@ARGV) {
+	my $arg = $_;
+	$arg =~ s/{}/$i/g;
+	$fname .= " \"$arg\"";
+    }
+    open $file, $fname;
+    $file->autoflush(1);
+    push @fds, $file;
+}
+
+my $ctr = 0;
+
+while (<STDIN>) {
+    print { $fds[$ctr] } $_;
+    $ctr = ($ctr + 1) % $num;
+}
+
+# Crude hack.. How else do we signal end of input to all processes without
+# waiting for them to finish processing their input?
+kill 9, $$;
