@@ -18,6 +18,11 @@ sub max_length {
     return $max;
 }
 
+sub field_valid {
+    $_ = shift;
+    return ($_ && m/[[:alnum:]]/);
+}
+
 my $cols = 80;
 my $flush = 5;
 my ($mhost, $mport);
@@ -47,15 +52,18 @@ $Text::Wrap::break = $fldsep
   if (max_length $data{Title}, $data{file},
       $data{Artist}, $data{Album}, $data{Track}) < $cols;
 
-my $title = ($data{Title} ? $data{Title} : $data{file});
-$title .= $fldsep.$data{Artist} if $data{Artist};
-$title .= $fldsep.$data{Album} if $data{Album};
-$title .= $fldsep."Track $data{Track}" if $data{Track};
+my $title = ((field_valid $data{Title}) ? $data{Title} : $data{file});
+$title .= $fldsep.$data{Artist} if (field_valid $data{Artist});
+$title .= $fldsep.$data{Album} if (field_valid $data{Album});
+$title .= $fldsep."Track $data{Track}" if (field_valid $data{Track});
 
 if (defined $dumpfile) {
-    open TFILE, "> $dumpfile";
-    print TFILE $title;
-    close TFILE;
+    if (open TFILE, "> $dumpfile") {
+	print TFILE $title if defined $title;
+	close TFILE;
+    } else {
+	print STDERR "Unable to open file $dumpfile: $!\n";
+    }
 }
 
 $title = wrap("", "", $title);
