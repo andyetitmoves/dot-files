@@ -7,5 +7,4 @@ opts=()
 for ((i=$1;i<=$2;i++)); do
     url="http://www.tamilnapster.com/download.php?id=$i"
     d4x "${opts[@]}" "$url"
-    fi
 done
