@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # Wrapper for rpm to check for files not owned by any package
 
 rpm -qf "$@" 2>&1 | grep "is not owned by any package" | \

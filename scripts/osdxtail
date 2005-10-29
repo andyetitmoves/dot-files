@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # Displays new system log messages on to screen using xtail and osd_cat
 
 xtail /var/log/messages /var/log/acpid /var/log/mpd | \

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # Checks a directory for presence of given file basenames.
 
 CHECK="$1"

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # Recursively extract links from a file using the spider mode of wget
 
 tar --ignore-failed-read -c -f - "$1" | \
