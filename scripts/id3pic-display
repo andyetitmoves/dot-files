@@ -1,50 +1,55 @@
-#!/bin/bash
+#!/bin/sh
 # Displays pictures in the given mp3 file.
 
 SCRSIZE=`xwininfo -metric -root | grep -m1 "Height:" | awk '{ print $2; }'`
-[ $SCRSIZE -gt 0 ] || SCRSIZE=768
+[ "$SCRSIZE" -gt 0 ] || SCRSIZE=768
 
 MAXSIZE=96
 
-PREFIX=/tmp/.dispinfo
-PIDFILE=$PREFIX-pid
-PICPREF=$PREFIX-pic
-PICMASK=$PICPREF*
+PREFIX=${IDD_PREFIX:="/tmp/id3pic-display-$USER"}
+mkdir "$PREFIX" 2> /dev/null || \
+    # Race condition here:
+    # 1. Joe touches $PREFIX before the script starts
+    # After the first test...
+    # 2. Deletes it, replaces it with a symlink to user owned directory.
+    # Now we can replace files in an arbitrary dir
+    # Can we test a file for -O without dereferencing? (or)
+    # Can we atomically make two tests on the file?
+    { [ ! -L "$PREFIX" ] && [ -O "$PREFIX" ] && [ -d "$PREFIX" ]; } || \
+    # Ah well.. A DoS... can't help it...
+    { echo "Unable to create directory $PREFIX" 1>&2; exit 1; }
 
-USEREMOTE=
+PIDFILE="$PREFIX/pid"
+PICPREF="$PREFIX/pic"
 
-if [ -z "$DPROG" ]; then
-    if [ -x "`which imlib2_view`" ]; then
-	DPROG='imlib2_view'
-    else
-	DPROG='display -immutable'
-    fi
+if [ -z "$IDD_DPROG" ]; then
+    IDD_DPROG='display'
+    [ -z "$IDD_REMOTE" ] && IDD_REMOTE=yes
+    [ -z "$IDD_RFLAG" ] && IDD_RFLAG='-remote'
 fi
 
-{
-    rm -f $PICMASK
-    [ x"$1" != x ] && id3pic -p $PICPREF "$1"
-    IMGS=`ls $PICMASK | wc -l`
+rm -f "$PICPREF"*
+[ -n "$1" ] && IMGS=`id3pic -p "$PICPREF" "$1"`
 
-    DISP=`cat $PIDFILE`
+DISP=`cat "$PIDFILE" 2> /dev/null`
 
-    if [ $IMGS -gt 0 ]; then
-	let SIZE='(SCRSIZE - 1)/IMGS + 1';
-	[ $SIZE -gt $MAXSIZE ] && SIZE=$MAXSIZE;
-	SIZE=$SIZE'x'$SIZE;
-	montage -geometry $SIZE -tile 1x$IMGS -background "rgba(0,0,0,255)" \
-	    $PICMASK $PICPREF.jpg
-	if [ $DISP -gt 0 ] && kill -s 0 $DISP; then
-	    if [ x$USEREMOTE != xyes ]; then
-		kill $DISP
-	    else
-		EXISTING=-remote
-	    fi
+if [ $IMGS -gt 0 ]; then
+    SIZE=`expr \( $SCRSIZE - 1 \) / $IMGS + 1`
+    [ $SIZE -gt $MAXSIZE ] && SIZE=$MAXSIZE;
+    SIZE=$SIZE'x'$SIZE;
+    montage -geometry $SIZE -tile 1x$IMGS -background "rgba(0,0,0,255)" \
+	"$PICPREF"* "$PICPREF".jpg
+    EXISTING=
+    if kill -s 0 $DISP 2> /dev/null; then
+	if [ x$IDD_REMOTE != xyes ]; then
+	    kill $DISP 2> /dev/null
+	else
+	    EXISTING="$IDD_RFLAG"
 	fi
-	$DPROG $EXISTING $PICPREF.jpg &
-	[ x$EXISTING != x-remote ] && echo $! > $PIDFILE
-    else
-	[ $DISP -gt 0 ] && kill $DISP
-	rm -f $PIDFILE
     fi
-} 2> /dev/null
+    $IDD_DPROG $EXISTING "$PICPREF".jpg &
+    [ -z "$EXISTING" ] && echo $! > "$PIDFILE"
+else
+    kill $DISP 2> /dev/null
+    rm -f "$PIDFILE"
+fi
