@@ -1,9 +1,15 @@
-#!/bin/bash
+#!/bin/sh
 # Executes a command with its first argument pushed after all the remaining
 # arguments, to facilitate use in programs like xargs.
 
+if [ $# -lt 2 ]; then
+    echo Usage: $0 '<command>' '<last-arg>' args... >&2
+    exit 1
+fi
+
 CMD="$1"
 TO="$2"
-shift
-shift
+
+shift 2
+
 exec "$CMD" "$@" "$TO"
