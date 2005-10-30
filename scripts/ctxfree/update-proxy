@@ -1,4 +1,5 @@
 #!/bin/sh
+# Using a config file, print shell code to update proxy environment variables
 
 . ~/.proxy
 

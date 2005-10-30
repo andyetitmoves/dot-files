@@ -1,4 +1,5 @@
 #!/bin/sh
+# Moves one file to another while retaining any id3 tags originally present
 
 if [ $# -ne 2 ]; then
     echo Usage: $0 '<infile>' '<outfile>' >&2

@@ -1,4 +1,5 @@
 #!/bin/sh
+# Convert given gzip compressed files to bzip2 format
 
 for i in "$@"; do
     gunzip "$i" && bzip2 "${i%.gz}"
