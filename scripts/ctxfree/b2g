@@ -1,0 +1,5 @@
+#!/bin/sh
+
+for i in "$@"; do
+    bunzip2 "$i" && gzip "${i%.bz2}"
+done
