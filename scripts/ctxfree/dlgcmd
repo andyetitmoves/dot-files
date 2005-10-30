@@ -1,0 +1,21 @@
+#!/bin/sh
+# Asks for a command in a dialog, sync exec's it, and displays results.
+
+local prog
+
+prog=`zenity --title 'Select Program' --entry --text 'Select program to run'`
+if [ -n "$prog" ]; then
+    if [ x"$1" = x"-n" ]; then
+	eval exec $prog
+    else
+	{
+	    local res
+	    eval "$prog"
+	    res=$?
+	    if [ $res -ne 0 ]; then
+		echo
+		echo Program exited with status $res
+	    fi
+	} 2>&1 | zenity --title "Output of '$prog'" --text-info
+    fi
+fi

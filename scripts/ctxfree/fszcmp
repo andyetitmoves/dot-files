@@ -1,0 +1,14 @@
+#!/bin/sh
+# Checks differences in filestamps between files in the current directory and an
+# another specified directory.
+
+local check osz nsz
+
+check="$1"
+shift
+
+for i in "$@"; do
+    osz=`stat -c "%s" "$i"`
+    nsz=`stat -c "%s" "$check/$i"`
+    [ $osz -ne $nsz ] && echo $i
+done

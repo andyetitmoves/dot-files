@@ -1,0 +1,7 @@
+#!/bin/sh
+# Displays new system log messages on to screen using xtail and osd_cat
+
+xtail /var/log/messages /var/log/acpid /var/log/mpd | \
+    sed -u "s/^... [0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9] [^ ]* //" | \
+    osd_cat -c green -O 2 -p bottom -o 150 -l 10 -d 10 \
+    -A center -a 15 -f "-*-fixed-*-*-*-*-*-*-*-*-*-100-iso8859-1"

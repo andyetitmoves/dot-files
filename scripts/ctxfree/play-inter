@@ -1,0 +1,19 @@
+#!/bin/zsh
+# Pauses mpd if necessary to play some file, and then resumes.
+
+local fd
+
+zmodload zsh/net/tcp
+ztcp "${MPD_HOST:-127.0.0.1}" "${MPD_PORT:-6600}"
+fd=$REPLY
+
+echo status >&$fd
+if [ x"$(grep -m1 'state: ' <&$fd)" = 'xstate: play' ]; then
+    echo pause 1 >&$fd
+    "$@"
+    echo pause 0 >&$fd
+else
+    "$@"
+fi
+
+ztcp -c $fd

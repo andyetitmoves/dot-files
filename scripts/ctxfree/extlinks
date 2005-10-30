@@ -1,0 +1,7 @@
+#!/bin/sh
+# Recursively extract links from a file using the spider mode of wget
+
+tar --ignore-failed-read -c -f - "$1" | \
+    wget --spider -p --force-html -i - 2>&1 | \
+    sed -n -e "s/--[0-9][0-9]:[0-9][0-9]:[0-9][0-9]--[ \t]*\\(.*\\)/\\1/p" | \
+    grep -v "FINISHED" | sort | uniq > "$2"
