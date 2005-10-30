@@ -1,0 +1,17 @@
+#!/bin/sh
+# Rips a chapter from a dvd and saves it as an MPEG4 file
+
+local OUT
+
+if [ $# -ne 1 ] && [ $# -ne 2 ]; then
+    echo Usage: $0 '<chapter#>' '[output file]' >&2
+    exit 1
+fi
+
+OUT="${2:-$1.avi}"
+
+schedtool -B -e mencoder "dvd://$1" -ovc lavc \
+    -lavcopts vcodec=mpeg4:vpass=1 -oac copy -quiet -o "$OUT" && \
+    schedtool -B -e mencoder "dvd://$1" -ovc lavc \
+    -lavcopts vcodec=mpeg4:vpass=2 -oac copy -quiet -o "$OUT" && \
+    rm -f divx2pass.log
