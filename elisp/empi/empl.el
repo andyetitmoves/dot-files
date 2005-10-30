@@ -194,9 +194,9 @@ marking and the anchoring actions themselves, which acts on a selection."
       [M-left] 		'empl-do-set-anchor
       [M-S-left] 	'empl-unset-anchor
       [return] 		'empl-play
-      [down-mouse-2] 	'empl-mouse-move
-      [mouse-2]		'empl-noop
-      [double-mouse-2] 	'empl-mouse-play
+      [down-mouse-1] 	'empl-mouse-move
+      [mouse-1]		'empl-noop
+      [double-mouse-1] 	'empl-mouse-play
       [delete] 		'empl-delete
       [?C] 		'empl-crop
       [M-up] 		'empl-move-selection-up
