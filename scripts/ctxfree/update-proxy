@@ -1,0 +1,12 @@
+#!/bin/sh
+
+. ~/.proxy
+
+prvar () { echo export "$1"="$2"; }
+
+prvar http_proxy "${http_proxy:=$PROXY}"
+prvar https_proxy "${https_proxy:=$PROXY}"
+prvar ftp_proxy "${ftp_proxy:=$PROXY}"
+prvar HTTP_PROXY "${HTTP_PROXY:=$PROXY}"
+prvar HTTPS_PROXY "${HTTPS_PROXY:=$PROXY}"
+prvar FTP_PROXY "${FTP_PROXY:=$PROXY}"
