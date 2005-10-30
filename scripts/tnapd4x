@@ -1,5 +1,7 @@
-#!/bin/bash
+#!/bin/zsh
 # Queues TamilNapster music downloads on d4x.
+
+local opts i url
 
 opts=()
 [ -n "$3" ] && opts=(-d "$3")
