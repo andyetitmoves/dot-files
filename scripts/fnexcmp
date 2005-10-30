@@ -1,9 +1,11 @@
 #!/bin/sh
 # Checks a directory for presence of given file basenames.
 
-CHECK="$1"
+local check
+
+check="$1"
 shift
 
 for i in "$@"; do
-    [ -e "$CHECK/$i" ] || echo $i
+    [ -e "$check/$i" ] || echo $i
 done

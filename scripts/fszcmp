@@ -2,11 +2,13 @@
 # Checks differences in filestamps between files in the current directory and an
 # another specified directory.
 
-CHECK="$1"
+local check osz nsz
+
+check="$1"
 shift
 
 for i in "$@"; do
-    OSZ=`stat -c "%s" "$i"`
-    NSZ=`stat -c "%s" "$CHECK/$i"`
-    [ $OSZ -ne $NSZ ] && echo $i
+    osz=`stat -c "%s" "$i"`
+    nsz=`stat -c "%s" "$check/$i"`
+    [ $osz -ne $nsz ] && echo $i
 done

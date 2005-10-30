@@ -1,8 +1,10 @@
 #!/bin/sh
 # Extracts pictures from nowrunning.com
 
+local i ifile
+
 for i in "$@"; do
-    IFILE="http://nowrunning.com/movieStills.asp?lang=$i"
+    ifile="http://nowrunning.com/movieStills.asp?lang=$i"
     wget "$IFILE" -q -O - 2> /dev/null | tee "$i-ihtml" | \
 	sed -u "s,http://nowrunning\\.com/film/slideshow1.asp?movieNo=[0-9]\\+,\\0\\n,g" | tee "$i-mlist-pre" | \
 	sed -u -n "s,^.*\\(http://nowrunning\\.com/.*?movieNo=[0-9]\\+\\).*,\\1,pg" | tee "$i-mlist" | \
