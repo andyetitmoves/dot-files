@@ -253,4 +253,18 @@ already non-nil.  Return non-nil if the search succeeds."
   :tag "Range" :value 0 :size 10
   :match 'widget-numrange-validate)
 
+(defun find-key-field (key desc)
+  (let ((offset 0) (len (length desc)))
+    (while (and (< offset len) (not (string= (aref desc offset) key)))
+      (setq offset (1+ offset)))
+    (and (not (= offset len)) offset)))
+
+(defsubst vput (vect desc key val)
+  "Set element in sequence based on description sequence and key.
+Set the first element in VECT, for which the corresponding element in DESC
+matches KEY, to VAL, calling REFILL with VECT if the element at that position is
+already non-nil.  Return non-nil if the search succeeds."
+  (let ((offset (find-key-field key desc)))
+    (and offset (aset vect offset val))))
+
 ;;; CODE-SNIPPETS.EL ends here
