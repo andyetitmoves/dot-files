@@ -30,15 +30,23 @@
 (require 'flexi-print)
 
 (defun mpd-jump-to-time (conn time)
+  (interactive
+   (list mpd-inter-conn
+	 (read-item "Time in seconds"
+		    (and (eq (mpd-connection-status mpd-inter-conn) 'ready)
+			 (plist-get (mpd-get-status mpd-inter-conn)
+				    'time-elapsed)) t)))
   (let ((status (mpd-get-status conn)))
-    (and status (and (mpd-seek conn (aref status 6) time) status))))
+    (and status (and (mpd-seek conn (plist-get status 'song) time) status))))
 
 (defun mpd-skip-time (conn time)
+  (interactive (list mpd-inter-conn (read-item "Seconds to skip by" 0 t t)))
   (assert-numberp time)
   (let ((status (mpd-get-status conn)))
     (and status
-	 (mpd-seek conn (aref status 6)
-		   (if (< (setq time (+ (aref status 9) time)) 0)
+	 (mpd-seek conn (plist-get status 'song)
+		   (if (< (setq time
+				(+ (plist-get status 'time-elapsed) time)) 0)
 		       0 time)) status)))
 
 (defsubst mpd-jump-to-time-msec (conn time)
@@ -48,32 +56,36 @@
   (mpd-adjust-volume conn (- by)))
 
 (defsubst mpd-get-volume (conn)
-  (aref (mpd-get-status conn) 0))
+  (plist-get (mpd-get-status conn) 'volume))
 
 (defun mpd-compat-play (conn)
   (interactive (list mpd-inter-conn))
   (let ((status (and (eq (mpd-connection-status conn) 'ready)
 		     (mpd-get-status conn))))
-    (and (mpd-play conn (and status (aref status 6))) status)))
+    (and (mpd-play conn (and status (plist-get status 'song))) status)))
 
 (defun mpd-compat-stop (conn)
   (interactive (list mpd-inter-conn))
   (let ((status (and (eq (mpd-connection-status conn) 'ready)
 		     (mpd-get-status conn))) state (ret t))
-    (setq state (if status (aref status 8) 'stop))
+    (setq state (if status (plist-get status 'state) 'stop))
     (if (eq state 'play) (setq ret (mpd-pause conn)))
-    (or (eq state 'stop) (setq ret (mpd-seek conn (aref status 6))))
+    (or (eq state 'stop) (setq ret (mpd-seek conn (plist-get status 'song))))
     (and ret status)))
 
 (defsubst mpd-convert-compat-pausedp (status)
-  (and (eq (aref status 8) 'pause)
-       (not (= (aref status 9) 0))))
+  (and (eq (plist-get status 'state) 'pause)
+       (not (= (plist-get status 'time-elapsed) 0))))
 
 (defun mpd-compat-pausedp (conn)
   (interactive (list mpd-inter-conn))
   (mpd-convert-compat-pausedp (mpd-get-status conn)))
 
 (defun mpd-fs-enqueue (conn file)
+  (interactive
+   (list mpd-inter-conn
+	 (read-file-name "Enqueue what: "
+			 (file-name-as-directory mpd-db-root) nil t)))
   (and (stringp file)
        (setq file (file-truename file))
        (mpd-enqueue conn
@@ -87,16 +99,9 @@
     (format "%d:%02d" (/ time 60) (mod time 60))))
 
 (defun mpd-song-data-query (data query)
-  (let ((offset 0))
-    (while (and (< offset (mpd-song-data-length))
-		(not (eq (compare-strings (aref mpd-song-data offset) nil nil
-					  query nil nil t) t)))
-      (setq offset (1+ offset)))
-    (and (not (= offset (mpd-song-data-length)))
-	 (if (= offset (eval-when-compile
-			 (find-key-field "Time" mpd-song-data)))
-	     (mpd-time-ms-format (aref data offset))
-	   (aref data offset)))))
+  (let ((value (plist-get data (intern query))))
+    (and value (string= query "Time")
+	 (setq value (mpd-time-ms-format value))) value))
 
 (defvar mpd-song-data-flexi-scheme
   (eval-when-compile
@@ -104,25 +109,24 @@
      :default '(lambda ()
 		 (mpd-song-data-query flexi-print-cookie flexi-print-query)))))
 
-(defun mpd-format-title (conn fmt &optional pos)
-  (or pos (setq pos (aref (mpd-get-status conn) 6)))
-  (let ((flexi-print-cookie (car (mpd-get-playlist-entry conn pos))))
+(defun mpd-format-title (conn fmt &optional song)
+  (let ((flexi-print-cookie song))
     (flexi-print mpd-song-data-flexi-scheme fmt)))
 
 (defsubst mpd-pausedp (conn)
-  (eq (aref (mpd-get-status conn) 8) 'pause))
+  (eq (plist-get (mpd-get-status conn) 'state) 'pause))
 
 (defsubst mpd-playingp (conn)
-  (eq (aref (mpd-get-status conn) 8) 'play))
+  (eq (plist-get (mpd-get-status conn) 'state) 'play))
 
 (defsubst mpd-get-elapsed-time (conn)
-  (aref (mpd-get-status conn) 9))
+  (plist-get (mpd-get-status conn) 'time-elapsed))
 
 (defsubst mpd-repeat-flag (conn)
-  (aref (mpd-get-status conn) 1))
+  (plist-get (mpd-get-status conn) 'repeat))
 
 (defsubst mpd-random-flag (conn)
-  (aref (mpd-get-status conn) 2))
+  (plist-get (mpd-get-status conn) 'random))
 
 ;;;###autoload
 (defun mpd-enqueue-from-log (conn)
