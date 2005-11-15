@@ -18,34 +18,38 @@
 
 (defcustom empi-mpd-title-flexi
   '(flexi-print-backend-format
-    "%{title}%(!{title}%{file}%)%({artist} | %{artist}%)%({album} | %{album}%)\
-%({track} | Track #%{track}%)")
+    "%{Title}%(!{Title}%{file}%)%({Artist} | %{Artist}%)%({Album} | %{Album}%)\
+%({Track} | Track %{Track}%)")
   "Format to be used for titles by the elisp MPD backend for EMPI."
   :type 'flexi-print-format :group 'empi-mpd-backend)
 
 (defcustom empi-mpd-plentry-flexi
   '(flexi-print-backend-format
-    "[%({time}%{time}%)%(!{time}-:--%)] %{title}%(!{title}%{file}%)%({artist} - \
-%{artist}%)%({album} - %{album}%)%({track} - Track #%{track}%)")
+    "< %({Time}%{Time}%)%(!{Time}-:--%) > %{Title}%(!{Title}%{file}%)%({Artist} - \
+%{Artist}%)%({Album} - %{Album}%)%({Track} - Track %{Track}%)")
   "Format to be used for playlist entries by the elisp MPD backend for EMPI."
   :type 'flexi-print-format :group 'empi-mpd-backend)
 
 (defun empi-mpd-status-to-output-list (status)
   (let (slist)
     (setq slist
-	  (list :qvolume (make-list 2 (aref status 0)) :qrepeat (aref status 1)
-		:qshuffle (aref status 2) :qplid (aref status 3)
-		:qpllength (aref status 4) :qcrossfade (aref status 7)
-		:playingp (numpred (eq (aref status 8) 'play))
-		:pausedp (numpred (mpd-convert-compat-pausedp status))))
-    (setq slist (append slist (and (aref status 6) (list :qplpos (aref status 6)))))
-    (when (aref status 9)
+	  (list :qvolume (make-list 2 (plist-get status 'volume))
+		:qrepeat (plist-get status 'repeat)
+		:qshuffle (plist-get status 'shuffle)
+		:qplid (plist-get status 'playlist)
+		:qpllength (plist-get status 'playlistlength)
+		:qcrossfade (plist-get status 'xfade)
+		:playingp (numpred (eq (plist-get status 'state) 'play))
+		:pausedp (numpred (eq (plist-get status 'state) 'pause))))
+    (setq slist (append slist (and (plist-get status 'song)
+				   (list :qplpos (plist-get status 'song)))))
+    (when (plist-get status 'time-elapsed)
       (setq status
-	    (list :qbitrate (aref status 5)
-		  :qtime (* (aref status 9) 1000)
-		  :qsonglength (* (aref status 10) 1000)
-		  :qfrequency (aref status 11)
-		  :qbits-per-sample (aref status 12)))
+	    (list :qbitrate (plist-get status 'bitrate)
+		  :qtime (* (plist-get status 'time-elapsed) 1000)
+		  :qsonglength (* (plist-get status 'time-total) 1000)
+		  :qfrequency (plist-get status 'sample-rate)
+		  :qbits-per-sample (plist-get status 'bits-per-sample)))
       (setq slist (nconc slist status))) slist))
 
 (defmacro empi-mpd-with-status (cmd func &rest args)
@@ -58,13 +62,14 @@
     (if status (empi-mpd-status-to-output-list status))))
 
 (defun empi-mpd-get-title (conn)
-  (let ((status (mpd-get-status conn)))
+  (let ((status (mpd-get-status conn)) song)
     (when status
       (nconc
-       (if (aref status 6)
-	   (list :qtitle (mpd-format-title empi-mpd-conn
-					   empi-mpd-title-flexi
-					   (aref status 6))))
+       (and (plist-get status 'song)
+	    (setq song (car (mpd-get-playlist-entry
+			       conn (plist-get status 'song))))
+	    (list :qtitle (mpd-format-title empi-mpd-conn
+					    empi-mpd-title-flexi song)))
        (empi-mpd-status-to-output-list status)))))
 
 (setplist 'empi-mpd
