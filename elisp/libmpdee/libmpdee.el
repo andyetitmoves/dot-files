@@ -209,20 +209,6 @@ for leading and trailing newlines."
 	  (nconc packets (list ""))
 	packets))))
 
-(defun find-key-field (key desc)
-  (let ((offset 0) (len (length desc)))
-    (while (and (< offset len) (not (string= (aref desc offset) key)))
-      (setq offset (1+ offset)))
-    (and (not (= offset len)) offset)))
-
-(defsubst vput (vect desc key val)
-  "Set element in sequence based on description sequence and key.
-Set the first element in VECT, for which the corresponding element in DESC
-matches KEY, to VAL, calling REFILL with VECT if the element at that position is
-already non-nil.  Return non-nil if the search succeeds."
-  (let ((offset (find-key-field key desc)))
-    (and offset (aset vect offset val))))
-
 ;;; Modified from the pcomplete package.
 (defun sort-uniq-list (l lessp eqp)
   "Sort and remove multiples in list L.
@@ -305,7 +291,7 @@ Return (STR . nil) on a parse failure."
 ;;;                till the next end of line. No filtering occurs after this
 ;;;                stage is reached.
 ;;;     numberp -> Intermediate state, when OK/ACK has been got
-;;;                but no and of line found. Then store start pos of the OK/ACK.
+;;;                but no end of line found. Then store start pos of the OK/ACK.
 ;;;                Hope that eol will come in a subsequent packet.
 ;;;     listp   -> In commandlist mode, the list is what is to be sent to the
 ;;;                server after the commandlist gets over.
@@ -670,74 +656,7 @@ state, and 'command-list to indicate being in command-list mode."
    (t 'busy)))
 (put 'mpd-connection-status 'side-effect-free t)
 
-;;; Returned data descriptions for high level functions.
-
-(eval-and-compile
-  (defconst mpd-status-data ["volume" "repeat" "random" "playlist" "playlistlength"
-			     "bitrate" "song" "xfade" "state" "time-elapsed"
-			     "time-total" "sample-rate" "bits-per-sample"
-			     "channels" "error"]
-    "Descriptions of the status vector received by a call to `mpd-get-status'.
-Some of the less obvious descriptions are:
-  - playlist : A \"checksum\" for the current playlist, guaranteed to change
-    after a change in the playlist.
-  - xfade : The number of seconds over which crossfade between two songs occurs.
-    This value could be zero as well.
-  - error : A description of the error, if one occurs, could be nil.
-  - song : Position of the current song in the playlist.
-  - state : Could be one of 'play, 'pause or 'stop.
-All fields except error and state are whole numbers.  \"repeat\" and \"random\"
-are in addition, bi-state variables (0/1)")
-
-  (defconst mpd-stats-data ["artists" "albums" "songs" "uptime"
-			    "playtime" "db_playtime" "db_update"]
-    "Description of the stats vector received by a call to `mpd-get-stats'.
-\"artists\", \"albums\", \"songs\", \"db_playtime\" correspond to the number of
-artists, albums and songs and the total time in seconds of all songs in the
-database respectively. \"db_update\" is the time stamp of the last update to the
-database. \"playtime\" is the total time for which music has been played and
-\"uptime\", the server uptime, both in seconds.")
-
-  (defconst mpd-song-data ["file" "Artist" "Album" "Title" "Track" "Time"]
-    "Description of a song got from the mpd server.
-All fields except time, which is the total number of seconds in the song, are
-strings.  All fields could be nil, in the absence of information pertaining to
-the request sent to the server.")
-
-  (defconst mpd-directory-data ["file" "playlist" "directory"]
-    "Description of the data corresponding to a directory in the mpd database.
-\"file\" is a list of songs, each of which is represented as described by
-`mpd-song-data' in the directory. \"playlist\" and \"directory\" is the list of
-playlists and subdirectories respectively."))
-
-(defmacro mpd-song-data-length () (length mpd-song-data))
-
 ;;; High level public interface helper functions.
-
-(defun mpd-status-receiver (vect cell)
-  "Output handler for the \"status\" command to the mpd server.
-See `mpd-execute-command' for a description of output handlers.
-This is an internal function, do not use this in your code."
-  (let ((sym (car cell)))
-    (cond
-     ((string= sym "state")
-      (aset vect 8
-	    (cond
-	     ((string= (cdr cell) "play") 'play)
-	     ((string= (cdr cell) "pause") 'pause)
-	     ((string= (cdr cell) "stop") 'stop))))
-     ((string= sym "time")
-      (when (string-match "^\\([0-9]*\\):\\([0-9]*\\)$" (cdr cell))
-	(aset vect 9 (string-to-number (match-string 1 (cdr cell))))
-	(aset vect 10 (string-to-number (match-string 2 (cdr cell))))))
-     ((string= sym "audio")
-      (when (string-match "^\\([0-9]*\\):\\([0-9]*\\):\\([0-9]*\\)$" (cdr cell))
-	(aset vect 11 (string-to-number (match-string 1 (cdr cell))))
-	(aset vect 12 (string-to-number (match-string 2 (cdr cell))))
-	(aset vect 13 (string-to-number (match-string 3 (cdr cell))))))
-     ((string= sym "error")
-      (aset vect 14 (cdr cell)))
-     (t (vput vect mpd-status-data sym (string-to-number (cdr cell)))))))
 
 ;;; Silence the compiler.
 (defvar mpd-song-receiver)
@@ -748,30 +667,30 @@ This is an internal function, do not use this in your code."
   "Handle song data output from the mpd server.
 See `mpd-execute-command' for a description of output handlers.
 This is an internal function, do not use this in your code."
-  (let ((offset (find-key-field (car cell) mpd-song-data)))
-    (when offset
-      (when (aref mpd-song-receiver offset)
-	(setq foreach (apply 'mpd-seq-add mpd-song-receiver
-			     foreach mpd-song-receiver-args))
-	(let ((i (1- (mpd-song-data-length))))
-	  (while (>= i 0)
-	    (aset mpd-song-receiver i nil)
-	    (setq i (1- i)))))
-      (aset mpd-song-receiver offset
-	    (if (string= (car cell) "Time")
-		(string-to-number (cdr cell)) (cdr cell))))))
+  (let ((key (car cell)))
+    (when (plist-get mpd-song-receiver (intern key))
+      (setq foreach (apply 'mpd-seq-add mpd-song-receiver
+			   foreach mpd-song-receiver-args))
+      (setq mpd-song-receiver nil))
+    (setq mpd-song-receiver
+	  (plist-put mpd-song-receiver (intern key)
+		     (if (member key '("Time" "Pos" "Id"))
+			 (string-to-number (cdr cell)) (cdr cell))))))
 
 (defun mpd-get-songs (conn cmd &optional foreach)
   "Get details of songs from the mpd server using connection CONN.
 Command CMD is used to get the songs. FOREACH is the function to call for each
 song provided as the argument. Return list of all songs if FOREACH is not
-specified and FOREACH otherwise. `mpd-song-data' describes the song vector."
+specified and FOREACH otherwise. When a list is returned, each element of the
+list is a property list, the known keys being `file', `Artist', `Album',
+`Track', `Title', `Time', `Pos' and `Id'. The last three keys have integers as
+their value. `Time' refers to the total length of the song. `Pos' and `Id' are
+present only when the song retrieved is a part of a playlist."
   (or (functionp foreach) (setq foreach nil))
-  (let ((mpd-song-receiver (make-vector (mpd-song-data-length) nil))
-	mpd-song-receiver-args)
+  (let (mpd-song-receiver mpd-song-receiver-args)
     (mpd-execute-command conn cmd 'mpd-song-receiver)
-    (or (equal mpd-song-receiver (make-vector (mpd-song-data-length) nil))
-	(setq foreach (mpd-seq-add mpd-song-receiver foreach)))
+    (and mpd-song-receiver
+	 (setq foreach (mpd-seq-add mpd-song-receiver foreach)))
     (safe-nreverse foreach)))
 
 (defun mpd-make-cmd-concat (cmd arg &optional normal-nil)
@@ -855,18 +774,19 @@ The separating colon is output unless NOSEP is non-nil."
 
 (defun mpd-display-song (song)
   "Display mpd song data SONG in the output buffer."
-  (or (equal song (eval-when-compile (make-vector (mpd-song-data-length) nil)))
-      (mpd-line-to-buffer
-       (concat (mpd-render-field "Title       " (aref song 3))
-	       (mpd-render-field "Artist      " (aref song 1))
-	       (mpd-render-field "Album       " (aref song 2))
-	       (mpd-render-field "Track       " (aref song 4))
-	       (mpd-render-field
-		"Song Length "
-		(and (aref song 5) (concat (number-to-string (aref song 5))
-					   " seconds.")))
-	       (mpd-render-field "Filename    " (aref song 0))
-	       "\n" (mpd-separator-line)))))
+  (and song
+       (mpd-line-to-buffer
+	(concat (mpd-render-field "Title       " (plist-get song 'Title))
+		(mpd-render-field "Artist      " (plist-get song 'Artist))
+		(mpd-render-field "Album       " (plist-get song 'Album))
+		(mpd-render-field "Track       " (plist-get song 'Track))
+		(mpd-render-field
+		 "Song Length "
+		 (and (plist-get song 'Time)
+		      (concat (number-to-string (plist-get song 'Time))
+			      " seconds.")))
+		(mpd-render-field "Filename    " (plist-get song 'file))
+		"\n" (mpd-separator-line)))))
 
 (defun mpd-display-playlist-item (title num)
   "Display playlist item with TITLE and index NUM in mpd buffer."
@@ -893,18 +813,18 @@ The separating colon is output unless NOSEP is non-nil."
   "Display a bulleted line to the mpd output buffer"
   (mpd-line-to-buffer (mpd-render-field "o " str t)))
 
-(defun read-item (prompt &optional default zero)
+(defun read-item (prompt &optional default zero allowneg)
   "Read a number from the minibuffer.
 PROMPT is the prompt string prefix to display. Append the DEFAULT value,
 if present, in brackets. Return the number read. Unless ZERO is non-nil,
 add default value by one before operation, and decrement number read
-by 1 before returning."
+by 1 before returning. If ALLOWNEG is non-nil, allow negative numbers."
   (let (num str)
     (and default (setq str (number-to-string (if zero default (1+ default)))))
     (setq
      num (string-to-number-strict
 	  (read-string (concat prompt (if default (concat " (" str ")")) ": ")
-		       nil nil str)))
+		       nil nil str) allowneg))
     (if (and num (not zero)) (1- num) num)))
 
 ;;;; High level public interface.
@@ -912,23 +832,88 @@ by 1 before returning."
 ;;;  These functions require output, and hence cannot be queued by using the
 ;;;  command-line mode.
 
+(defun mpd-status-receiver (lsym cell)
+  "Output handler for the \"status\" command to the mpd server.
+See `mpd-execute-command' for a description of output handlers.
+This is an internal function, do not use this in your code."
+  (let ((sym (car cell)))
+    (cond
+     ((member sym '("volume" "repeat" "random" "playlist" "playlistlength"
+		    "bitrate" "song" "songid" "xfade"))
+      (put lsym (intern sym) (string-to-number (cdr cell))))
+     ((string= sym "state")
+      (and (member (cdr cell) '("play" "pause" "stop"))
+	   (put lsym (intern sym) (intern (cdr cell)))))
+     ((string= sym "time")
+      (when (string-match "^\\([0-9]*\\):\\([0-9]*\\)$" (cdr cell))
+	(put lsym 'time-elapsed (string-to-number (match-string 1 (cdr cell))))
+	(put lsym 'time-total (string-to-number (match-string 2 (cdr cell))))))
+     ((string= sym "audio")
+      (when (string-match "^\\([0-9]*\\):\\([0-9]*\\):\\([0-9]*\\)$" (cdr cell))
+	(put lsym 'sample-rate (string-to-number (match-string 1 (cdr cell))))
+	(put lsym 'bits-per-sample (string-to-number (match-string 2 (cdr cell))))
+	(put lsym 'channels (string-to-number (match-string 3 (cdr cell))))))
+     ;; currently only "error"
+     (t (put lsym (intern sym) (cdr cell))))))
+
 (defun mpd-get-status (conn)
   "Get status of the mpd server, using connection CONN.
-See `mpd-status-data' for a description of the vector returned."
-  (let ((vect (make-vector (eval-when-compile (length mpd-status-data)) nil)))
-    (mpd-execute-command
-     conn "status" '(lambda (conn cell) (mpd-status-receiver vect cell))) vect))
+Return a property list, the known keys being `volume', `repeat', `random',
+`playlist', `playlistlength', `bitrate', `song', `songid', `xfade', `state',
+`time-elapsed', `time-total', `sample-rate', `bits-per-sample', `channels'
+and `error'. Other keys might be present in the plist depending on the version
+of MPD used. Some of the less obvious descriptions are:
+
++----------+-------------------------------------------------------------------+
+| playlist |The playlist version number - a 'checksum' for the current         |
+|          |playlist, guaranteed to change after a change in the playlist.     |
++----------+-------------------------------------------------------------------+
+|  xfade   |The crossfade time in seconds between two songs occurs. This value |
+|          |could be zero in case of no crossfade.                             |
++----------+-------------------------------------------------------------------+
+|   song   |Position of the current song in the playlist.                      |
++----------+-------------------------------------------------------------------+
+|  songid  |Song ID of the current song in the playlist.                       |
++----------+-------------------------------------------------------------------+
+|  state   |Could be one of 'play, 'pause or 'stop                             |
++----------+-------------------------------------------------------------------+
+|  error   |A description of the error, if one occurs.  Could be nil, in case  |
+|          |there is no error.                                                 |
++----------+-------------------------------------------------------------------+
+
+All fields except error and state are whole numbers. `repeat' and `random' are
+in addition, bi-state variables (0/1)"
+  (setplist 'mpd-get-status-local-sym nil)
+  (mpd-execute-command
+   conn "status" '(lambda (conn cell)
+		    (mpd-status-receiver 'mpd-get-status-local-sym cell)))
+  (symbol-plist 'mpd-get-status-local-sym))
+
+(defun mpd-stats-receiver (lsym cell)
+  "Output handler for the \"stats\" command to the mpd server.
+See `mpd-execute-command' for a description of output handlers.
+This is an internal function, do not use this in your code."
+  (let ((sym (car cell)))
+    (cond
+     ((member sym '("artists" "albums" "songs" "uptime"
+		    "playtime" "db_playtime" "db_update"))
+      (put lsym (intern sym) (string-to-number (cdr cell))))
+     (t (put lsym (intern sym) (cdr cell))))))
 
 (defun mpd-get-stats (conn)
   "Get statistics for the mpd server connected using CONN.
-See `mpd-stats-data' for a description of the vector returned."
-  (let ((stat (make-vector (eval-when-compile (length mpd-stats-data)) nil)))
-    (mpd-execute-command conn "stats"
-			 '(lambda (conn cell)
-			    (vput stat mpd-stats-data (car cell)
-				  (string-to-number (cdr cell)))))
-    (message (prin1-to-string stat))
-    stat))
+Return a property list, the known keys being `artists', `albums', `songs',
+`db_playtime' corresponding to the number of artists, albums and songs and the
+total time in seconds of all songs in the database respectively; `db_update',
+the time stamp of the last update to the database; `playtime', the total time
+for which music has been played in seconds and `uptime', the server uptime,
+in seconds as well. Other keys might be present in the plist depending on the
+version of MPD used."
+  (setplist 'mpd-get-stats-local-sym nil)
+  (mpd-execute-command
+   conn "stats" '(lambda (conn cell)
+		   (mpd-stats-receiver 'mpd-get-stats-local-sym cell)))
+  (symbol-plist 'mpd-get-stats-local-sym))
 
 ;;;###autoload
 (defun mpd-get-playlist (conn &optional foreach)
@@ -953,7 +938,7 @@ rather than not doing this. Return the list of songs or FOREACH depending on
 FOREACH."
   (interactive
    (let ((item (read-item "Enter item number"
-			  (aref (mpd-get-status mpd-inter-conn) 6))))
+			  (plist-get (mpd-get-status mpd-inter-conn) 'song))))
      (mpd-init-buffer "" (format "MPD Playlist Item # %d" (1+ item)) "")
      (list mpd-inter-conn item 'mpd-display-song)))
   (mpd-get-songs
@@ -985,16 +970,16 @@ FOREACH is a song object, directory string or playlist string and one of the
 symbols 'file, 'playlist or 'directory describing the data sent. DIRECTORY
 could be a list as well, the action then corresponds information for all the
 directories. Note that a `nil' for DIRECTORY corresponds to the database
-toplevel rather than an empty list. The return value is the directory info as
-specified by `mpd-directory-data', if FOREACH is not used, and FOREACH
-otherwise."
+toplevel rather than an empty list. Return FOREACH, if non-nil; else a vector of
+three elements: a list of songs in the directory (see `mpd-get-songs' for how a
+song is represented), a list of playlists and a list of subdirectories."
   (interactive
    (let ((str (read-string "Enter relative directory: ")))
      (progn (mpd-init-buffer "" (concat "Information on directory " str) "")
 	    (list mpd-inter-conn str 'mpd-display-dir-info))))
   (or (functionp foreach) (setq foreach nil))
-  (let (filemode (pl foreach) (dir foreach) (mpd-song-receiver-args '(file))
-		 (mpd-song-receiver (make-vector (length mpd-song-data) nil)))
+  (let (filemode (pl foreach) (dir foreach)
+		 (mpd-song-receiver-args '(file)) mpd-song-receiver)
     (mpd-execute-command
      conn (mpd-make-cmd-concat "lsinfo" directory)
      '(lambda (conn cell)
@@ -1003,8 +988,8 @@ otherwise."
 	  (if (string= (car cell) "playlist")
 	      (setq pl (mpd-elt-add (cdr cell) pl 'playlist))
 	    (mpd-song-receiver conn cell)))))
-    (or (equal mpd-song-receiver (make-vector (length mpd-song-data) nil))
-	(setq foreach (mpd-seq-add mpd-song-receiver foreach 'file)))
+    (and mpd-song-receiver
+	 (setq foreach (mpd-seq-add mpd-song-receiver foreach 'file)))
     (if (functionp foreach) foreach
       (vector (nreverse foreach) (nreverse pl) (nreverse dir)))))
 
@@ -1219,8 +1204,9 @@ See also `mpd-move'."
      (and (eq (mpd-connection-status mpd-inter-conn) 'ready)
 	  (setq status (mpd-get-status mpd-inter-conn)))
      (list mpd-inter-conn
-	   (read-item "Seek to song" (and status (aref status 6)))
-	   (read-item "Time in seconds" (and status (aref status 9)) t))))
+	   (read-item "Seek to song" (and status (plist-get status 'song)))
+	   (read-item "Time in seconds"
+		      (and status (plist-get status 'time-elapsed)) t))))
   (assert-wholenump song)
   (if time (assert-wholenump time) (setq time 0))
   (mpd-simple-exec conn (format "seek %d %d" song time)))
@@ -1231,7 +1217,7 @@ See also `mpd-move'."
 With ARG, set random on iff ARG is positive."
   (interactive (list mpd-inter-conn current-prefix-arg))
   (setq arg (if arg (> (prefix-numeric-value arg) 0)
-	      (= (aref (mpd-get-status conn) 2) 0)))
+	      (= (plist-get (mpd-get-status conn) 'random) 0)))
   (mpd-simple-exec conn (concat "random " (if arg "1" "0"))))
 
 ;;;###autoload
@@ -1240,7 +1226,7 @@ With ARG, set random on iff ARG is positive."
 With ARG, set repeat on iff ARG is positive."
   (interactive (list mpd-inter-conn current-prefix-arg))
   (setq arg (if arg (> (prefix-numeric-value arg) 0)
-	      (= (aref (mpd-get-status conn) 1) 0)))
+	      (= (plist-get (mpd-get-status conn) 'repeat) 0)))
   (mpd-simple-exec conn (concat "repeat " (if arg "1" "0"))))
 
 ;;;###autoload
@@ -1250,7 +1236,8 @@ With ARG, set repeat on iff ARG is positive."
    (list mpd-inter-conn
 	 (read-item "New volume"
 		    (and (eq (mpd-connection-status mpd-inter-conn) 'ready)
-			 (aref (mpd-get-status mpd-inter-conn) 0)) t)))
+			 (plist-get (mpd-get-status mpd-inter-conn) 'volume))
+		    t)))
   (assert-wholenump vol)
   (mpd-simple-exec conn (format "setvol %d" vol)))
 
@@ -1270,7 +1257,8 @@ VOL could be positive for a volume increase and negative otherwise."
 Zero TIME turns off cross-fading."
   (interactive (list mpd-inter-conn
 		     (read-item "New crossfade time in seconds"
-				(aref (mpd-get-status mpd-inter-conn) 7) t)))
+				(plist-get (mpd-get-status mpd-inter-conn)
+					   'xfade) t)))
   (assert-wholenump time)
   (mpd-simple-exec conn (format "crossfade %d" time)))
 
