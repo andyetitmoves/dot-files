@@ -437,7 +437,7 @@ The minimum was %d.\nMaybe you should rely on %d."
 		      (if (not (= state 0)) 2
 			(if (numberp (setq state (empi-query :playingp)))
 			    (if (= state 0) 0 1)))))
-      (setq bitrate (and (numberp bitrate) bitrate))
+      (setq bitrate (and (numberp bitrate) (> bitrate 0) bitrate))
       (and (or state curt tott bitrate)
 	   (concat (if (and curt (not (and state (= state 0))))
 		       (concat " (" curt (and tott (concat "/" tott)) ")"))
