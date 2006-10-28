@@ -3,7 +3,7 @@
 
 if [ $# -ne 2 ]; then
     echo Usage: $0 '<infile>' '<outfile>' >&2
-    exit 1
+    return 1
 fi
 
 copytag "$1" "$2" && mv "$2" "$1"
