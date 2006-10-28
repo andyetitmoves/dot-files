@@ -6,9 +6,9 @@
 unset PROXY http_proxy https_proxy ftp_proxy HTTP_PROXY \
     HTTPS_PROXY FTP_PROXY NO_PROXY no_proxy
 
-[ -r "$SHOME/.proxy" ] || exit 0
+[ -r "$SHOME/.proxy" ] || return 0
 
-. "$SHOME/.proxy" || exit 0
+. "$SHOME/.proxy" || return 0
 
 prvar () {
     if [ -n "$2" ]; then
