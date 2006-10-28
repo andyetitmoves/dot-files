@@ -79,7 +79,9 @@
   :play ,(empi-mpd-with-status :play mpd-compat-play) :pause mpd-pause
   :stop ,(empi-mpd-with-status :stop mpd-compat-stop) :repeat mpd-toggle-repeat
   :shuffle mpd-toggle-random :plback mpd-prev :plnext mpd-next
-  :enqueue mpd-fs-enqueue :plclear mpd-clear-playlist
+  :enqueue (lambda (conn file)
+	     (mpd-enqueue conn (mpd-file-to-mpd-resource file)))
+  :plclear mpd-clear-playlist
   :qplfiles (lambda (conn) (list :qplfiles (mpd-get-playlist conn)))
   :jumptime ,(empi-mpd-with-status :jumptime mpd-jump-to-time-msec time)
   :qtitle empi-mpd-get-title :qvolume nil :qrepeat nil :qshuffle nil :qplid nil
