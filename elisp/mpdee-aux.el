@@ -81,18 +81,6 @@
   (interactive (list mpd-inter-conn))
   (mpd-convert-compat-pausedp (mpd-get-status conn)))
 
-(defun mpd-fs-enqueue (conn file)
-  (interactive
-   (list mpd-inter-conn
-	 (read-file-name "Enqueue what: "
-			 (file-name-as-directory mpd-db-root) nil t)))
-  (and (stringp file)
-       (setq file (file-truename file))
-       (mpd-enqueue conn
-		    (and (not (string= (file-name-as-directory mpd-db-root)
-				       (file-name-as-directory file)))
-			 (file-relative-name file mpd-db-root)))))
-
 (defun mpd-time-ms-format (time)
   (if (not (numberp time))
       nil
