@@ -267,4 +267,14 @@ already non-nil.  Return non-nil if the search succeeds."
   (let ((offset (find-key-field key desc)))
     (and offset (aset vect offset val))))
 
+(defun load-all ()
+  "Load all features of emacs."
+  (interactive)
+  (mapatoms
+   '(lambda (atom)
+      (let ((def (and (fboundp atom) (symbol-function atom))) file-name)
+	(and (eq (car-safe def) 'autoload)
+	     (setq file-name (nth 1 def)))
+	(and file-name (condition-case nil (load file-name t) (error t)))))))
+
 ;;; CODE-SNIPPETS.EL ends here
