@@ -1,0 +1,19 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+my %fwarn;
+
+while (<>) {
+    chomp;
+    /^WARNING: "(.*)":? ?(.*)$/ or next;
+    $fwarn{$1} = () unless exists $fwarn{$1};
+    push @{$fwarn{$1}}, $2;
+}
+
+foreach (sort keys %fwarn) {
+    print $_."\n\n";
+    print "\t".$_."\n" foreach (@{$fwarn{$_}});
+    print "\n";
+}

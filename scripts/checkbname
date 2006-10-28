@@ -1,0 +1,21 @@
+#!/usr/bin/perl
+
+use warnings;
+use strict;
+
+my %names;
+
+while (<>) {
+    chomp;
+    my $fname = $_;
+    s,.*/(.*),$1,;
+    if (exists $names{$_}) {
+	if ($names{$_}) {
+	    print "$_: ".$names{$_}."\n";
+	    $names{$_} = undef;
+	}
+	print "$_: ".$fname."\n";
+    } else {
+	$names{$_} = $fname;
+    }
+}

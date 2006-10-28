@@ -1,0 +1,4 @@
+#!/bin/sh
+
+find "$1" \( -iname '*Theme*.mp3' -or -iname '*Instr*.mp3' -or -exec \
+    sh -c 'id3info "{}" | grep "^=== TPE1.*: --$" > /dev/null' \; \) -print

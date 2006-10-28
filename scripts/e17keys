@@ -1,0 +1,40 @@
+#!/bin/zsh
+
+ga () {
+    enlightenment_remote -binding-key-add "$@"
+}
+
+gd () {
+    enlightenment_remote -binding-key-del "$@"
+}
+
+ka () {
+#    kd "$@"
+    ga ANY "$1" "$2" 0 "$3" "$4"
+}
+
+ea () {
+    ka "$1" "$2" exec "$3"
+}
+
+sa () {
+    ka "$1" "$2" sock "$3"
+}
+
+kd () {
+    gd ANY "$1" "$2" 0 "$3" "$4"
+}
+
+ep () {
+    kd "$1" "$2" exec "$3"
+}
+
+sd () {
+    kd "$1" "$2" sock "$3"
+}
+
+cfg="${1:-$HOME/.e17keys}"
+
+enlightenment_remote -binding-key-clear
+
+. "$cfg"

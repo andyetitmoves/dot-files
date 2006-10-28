@@ -1,0 +1,39 @@
+#!/bin/sh
+
+if [ "$1" != - ]; then
+    "$0" - "$1" "$2" "$$" &
+    shift 2
+    exec "$@"
+fi
+
+low=$2
+high=$3
+pid=$4
+
+ival=1
+maxl=2
+
+stopped=0
+state=0
+
+sleep $ival
+while true; do
+    temp=`sensors | sed -n "s/^CPU Temp:[ \\t]*+\\([0-9]\\+\\).*/\\1/p" | head -n1`
+    if [ $temp -gt $high ]; then
+	if [ $state -lt $maxl ]; then state=`expr $state + 1`; fi
+	if [ $state -eq $maxl ] && [ $stopped -eq 0 ]; then
+	    kill -STOP $pid > /dev/null 2>&1 || exit 1
+	    stopped=1
+	    echo Critical: Temperature is $temp
+	fi
+    elif [ $temp -lt $low ]; then
+	if [ $state -gt 0 ]; then state=`expr $state - 1`; fi
+	if [ $state -eq 0 ] && [ $stopped -eq 1 ]; then
+	    echo Temperature back to normal: $temp
+	    kill -CONT $pid > /dev/null 2>&1 || exit 1
+	    stopped=0
+	fi
+    fi
+    sleep $ival
+    kill -0 $pid > /dev/null 2>&1 || exit 1
+done

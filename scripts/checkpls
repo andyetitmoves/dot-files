@@ -1,0 +1,6 @@
+#!/bin/bash
+
+cd `dirname "$1"`
+
+cat "$1" | grep -v "^\s*#" | tr \\n \\0 | \
+    xargs -0 ls 2>&1 > /dev/null | sed "s/ls: \(.*\): No such.*/\1/"
