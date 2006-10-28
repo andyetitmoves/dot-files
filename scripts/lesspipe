@@ -1,0 +1,347 @@
+#!/bin/sh
+#
+# lessfile/lesspipe
+# $Id: lessopen,v 1.4 1998/05/12 09:37:46 torin Exp $
+# Plus POSIX sh changes by Y.Dirson
+#
+# Less filter for viewing non text files.
+#
+# Written by: Behan Webster <behanw@pobox.com>
+# Many Modifications by Darren Stalder
+# Further Modifications by Thomas Schoepf <schoepf@debian.org>
+#
+# combined lessfile and lesspipe to avoid duplication of decode stage
+# shell is sure icky.  I'm real tempted to rewrite the whole thing in Perl 
+#
+# Unfortunately, this means that I have filename dependencies sprinkled
+# throughout the code.  If you don't want lessfile to be called that,
+# you'll need to change the LESSFILE envar below.
+#
+# Usage: eval `lessfile`  or eval `lesspipe`
+#
+# less passes in:
+#    $1  filename to be viewed with less  (used by LESSOPEN)
+# and possibly (if used by lessfile)
+#    $2  filename that was created during LESSOPEN
+
+TMPDIR=${TMPDIR:-/tmp}
+BASENAME=`basename $0`
+LESSFILE=lessfile
+
+# Helper function to list contents of ISO files (CD images)
+iso_list() {
+	isoinfo -d -i "$1"
+	isoinfo -d -i "$1" | grep -q ^Rock\.Ridge && iiopts="$iiopts -R"
+	isoinfo -d -i "$1" | grep -q ^Joliet && iiopts="$iiopts -J"
+	echo
+	isoinfo -f $iiopts -i "$1"
+}
+
+ms_summary () {
+	if [ -x "`which wvSummary`" ]; then
+		echo; echo --; echo Summary for "$1":; echo
+		wvSummary "$1"
+	fi
+}
+
+html_dump () {
+	if [ -x "`which html2text`" ]; then
+		local cols="${COLUMNS:-79}"
+		html2text -style pretty -width "$cols"
+	elif [ -x "`which links`" ]; then
+		links -force-html -dump
+	elif [ -x "`which lynx`" ]; then
+		lynx -dump
+	fi
+}
+
+video_props () {
+	if [ -x `which mplayer` ] && [ -x `which perl` ]; then
+		MPLAYER_VERBOSE=-1 mplayer -vo null -ao null -frames 0 \
+			-identify "$1" -msglevel all=-1:identify=9 | \
+			perl -ne '
+/ID_([^=]*)=(.*)/ or next;
+print join(" ", map { ucfirst(lc($_)) } split(/_/, $1)).": $2\n"'
+	fi
+}
+
+if [ $# -eq 1 ] ; then
+	# we were called as LESSOPEN
+
+	# if the file doesn't exist, we don't do anything
+	if [ ! -r "$1" ]; then
+		exit 0
+	fi
+
+	# generate filename for possible use by lesspipe
+	umask 077
+	if [ $BASENAME = $LESSFILE ]; then
+		TMPFILE=`tempfile -d $TMPDIR -p lessf`
+		if [ -z "$TMPFILE" ]; then
+			echo >&2 "Could not find essential program 'tempfile'. Exiting"
+			exit 1
+		fi
+	fi
+
+	(
+		# possibly redirect stdout to a file for lessfile
+		if [ $BASENAME = $LESSFILE ]; then exec > $TMPFILE; fi
+
+		# Allow for user defined filters
+		#if [ -x ~/.lessfilter -a -O ~/.lessfilter ]; then
+		if [ -x ~/.lessfilter ]; then
+			~/.lessfilter "$1"
+			if [ $? -eq 0 ]; then
+				if [ $BASENAME = $LESSFILE ]; then
+					if [ -s $TMPFILE ]; then
+						echo $TMPFILE
+					else
+						rm -f $TMPFILE
+					fi
+				fi
+				exit 0
+			fi
+		fi
+
+		# Decode file for less
+		case `echo "$1" | tr '[:upper:]' '[:lower:]'` in
+			*.arj)
+				if [ -x "`which unarj`" ]; then unarj l "$1"
+				else echo "No unarj available"; fi ;;
+
+			*.tar.bz2)
+				if [ -x "`which bunzip2`" ]; then
+					bunzip2 -dc "$1" | tar tvvf -
+				else echo "No bunzip2 available"; fi ;;
+
+			*.bz)
+				if [ -x "`which bunzip`" ]; then bunzip -c "$1"
+				else echo "No bunzip available"; fi ;;
+
+			*.bz2)
+				if [ -x "`which bunzip2`" ]; then bunzip2 -dc "$1"
+				else echo "No bunzip2 available"; fi ;;
+
+			*.deb|*.udeb)
+				echo "$1:"; dpkg --info "$1"
+				echo
+				echo '*** Contents:'; dpkg-deb --contents "$1"
+				;;
+
+			*.doc)
+				if [ -x "`which catdoc`" ]; then catdoc "$1"
+				elif [ -x "`which wvText`" -a -e /dev/stdout ]; then
+					wvText "$1" /dev/stdout
+					ms_summary "$1"
+				fi
+				;;
+
+			*.ppt)
+				if [ -x "`which ppthtml`" ] && [ -x "`which links`" ]; then
+					ppthtml "$1" | html_dump
+					ms_summary "$1"
+				fi
+				;;
+			*.xls)
+				if [ -x "`which xlhtml`" ]; then
+					xlhtml -c -te -fw "$1" | html_dump
+				elif [ -x "`which xls2csv`" ]; then
+					xls2csv "$1"
+				fi
+				ms_summary "$1"
+				;;
+
+			*.sxw|*.sxd|*.sxc|*.sxi|*.odt|*.odg)
+				if [ -x "`which o3tohtml`" ]; then
+					unzip -p "$1" content.xml | o3tohtml | html_dump
+				fi
+				;;
+
+			*.gif|*.jpeg|*.jpg|*.pcd|*.png|*.tga|*.tiff|*.tif)
+				if [ -x "`which identify`" ]; then
+					case "$LFILE" in
+						*.jpeg|*.jpg)
+							identify -verbose "$1" | grep -v ^0x ;;
+						*)
+							identify -verbose "$1" ;;
+					esac
+				else
+					echo "No identify available"
+					echo "Install ImageMagick to browse images"
+				fi
+				;;
+
+			*.mp3)
+				if [ -x "`which mp3info`" ]; then
+					mp3info -xFra "$1"
+				else echo "No mp3info available"; fi
+				if [ -x "`which id3info`" ]; then
+					if [ -x "`which id3fmt`" ]
+					then id3info "$1" | id3fmt -nc
+					else id3info "$1"; fi
+				else echo "No id3info available"; fi ;;
+
+			*.ogg)
+				if [ -x "`which ogginfo`" ]; then ogginfo "$1"
+				else echo "No ogginfo available"; fi ;;
+
+			*.avi|*.mpg|*.asf|*.wmv|*.vob|*.mov|*.mp4|*.rm|*.wma|*.ogm|*.flv|*.divx)
+				video_props "$1"
+				;;
+			*.iso)
+				if [ -x "`which isoinfo`" ]; then iso_list "$1"
+				else
+					echo "No isoinfo available"
+					echo "Install mkisofs to view ISO images"
+				fi
+				;;
+
+			*.o|*.a|*.so|*.so.*)
+				if [ -x "`which nm`" ]; then nm "$1"
+				else echo "No nm available"; fi ;;
+
+			*.bin|*.raw)
+				if [ -x "`which isoinfo`" ]; then
+					file "$1" | grep -q ISO\.9660 && iso_list "$1"
+				else
+					echo "No isoinfo available"
+					echo "Install mkisofs to view ISO images"
+				fi
+				;;
+
+			*.lha|*.lzh)
+				if [ -x "`which lha`" ]; then lha v "$1"
+				else echo "No lha available"; fi ;;
+
+			*.dvi)
+				if [ -x "`which catdvi`"]; then catdvi "$1"; fi ;;
+
+			*.pdf)
+				if [ -x "`which pdftotext`" ]; then
+					pdftotext -layout -nopgbrk "$1" -
+					if [ -x "`which pdfinfo`" ]; then
+						echo; echo --
+						echo Document information for "$1"
+						echo
+						pdfinfo -meta "$1"
+					fi
+				else echo "No pdftotext available"; fi ;;
+
+			*.rar|*.r[0-9][0-9])
+				if [ -x "`which rar`" ]; then rar v "$1"
+				elif [ -x "`which unrar`" ]; then unrar v "$1"
+				else echo "No rar or unrar available"; fi ;;
+
+			*.rpm)
+				if [ -x "`which rpm`" ]; then
+					echo "$1:"; rpm -q -i -p "$1"
+					echo
+					echo '*** Contents:'
+					rpm -q -l -p "$1"
+				else echo "rpm isn't available, no query on rpm package possible"; fi ;;
+
+			*.tar.gz|*.tgz|*.tar.z|*.tar.dz)
+				tar tzvf "$1" ;;
+
+			# Note that this is out of alpha order so that we don't catch
+			# the gzipped tar files.
+			*.gz|*.z|*.dz)
+				gzip -dc "$1" ;;
+
+			*.tar)
+				tar tvf "$1" ;;
+
+			*.jar|*.war|*.ear|*.xpi|*.zip)
+				if [ -x "`which unzip`" ]; then unzip -v "$1";
+				elif [ -x "`which miniunzip`" ]; then miniunzip -l "$1";
+				elif [ -x "`which miniunz`" ]; then miniunz -l "$1";
+				else echo "No unzip, miniunzip or miniunz available"; fi ;;
+
+			*.cab)
+				if [ -x "`which cabextract`" ]; then cabextract -l "$1"; fi ;;
+
+			*.7z)
+				if [ -x "`which 7zr`" ]; then 7zr l "$1"
+				elif [ -x "`which 7z`" ]; then 7z l "$1"
+				elif [ -x "`which 7za`" ]; then 7za l "$1"
+				else echo "No 7zr, 7z or 7za available"; fi ;;
+
+			*.zoo)
+				if [ -x "`which zoo`" ]; then zoo v "$1";
+				elif [ -x "`which unzoo`" ]; then unzoo -l "$1";
+				else echo "No unzoo or zoo available"; fi ;;
+
+		esac
+	) 2>/dev/null
+
+	if [ $BASENAME = $LESSFILE ]; then
+		if [ -s $TMPFILE ]; then
+			echo $TMPFILE
+		else
+			rm -f $TMPFILE
+		fi
+	fi
+
+elif [ $# -eq 2 ] ; then
+	#
+	# we were called as LESSCLOSE
+	# delete the file created if we were lessfile
+	#
+	if [ $BASENAME = $LESSFILE ]; then
+    if [ -n "$BASH" ]; then
+      if [ ! -O "$2" ]; then
+        echo "Error in deleting $2" > /dev/tty
+      fi
+    fi
+
+		if [ -f "$2" ]; then
+			rm -f "$2"
+		else
+			echo "Error in deleting $2" > /dev/tty
+		fi
+	fi
+
+elif [ $# -eq 0 ] ; then
+	#
+	# must setup shell to use LESSOPEN/LESSCLOSE
+	#
+	# I have no idea how some of the more esoteric shells (es, rc) do
+	# things. If they don't do things in a Bourne manner, send me a patch
+	# and I'll incorporate it.
+	#
+
+	# first determine the full path of lessfile/lesspipe
+	# if you can determine a better way to do this, send me a patch, I've
+	# not shell-scripted for many a year.
+	FULLPATH=`cd \`dirname $0\`;pwd`/$BASENAME
+
+	case "$SHELL" in
+		*csh)
+			if [ $BASENAME = $LESSFILE ]; then
+				echo "setenv LESSOPEN \"$FULLPATH %s\";"
+				echo "setenv LESSCLOSE \"$FULLPATH %s %s\";"
+			else
+				echo "setenv LESSOPEN \"| $FULLPATH %s\";"
+				echo "setenv LESSCLOSE \"$FULLPATH %s %s\";"
+			fi
+			;;
+		*)
+			if [ $BASENAME = $LESSFILE ]; then
+				echo "export LESSOPEN=\"$FULLPATH %s\";"
+				echo "export LESSCLOSE=\"$FULLPATH %s %s\";"
+			else
+				echo "export LESSOPEN=\"| $FULLPATH %s\";"
+				echo "export LESSCLOSE=\"$FULLPATH %s %s\";"
+			fi
+			;;
+	esac
+
+	#echo "# If you tried to view a file with a name that starts with '#', you"
+	#echo "# might see this message instead of the file's contents."
+	#echo "# To view the contents, try to put './' ahead of the filename when"
+	#echo "# calling less."
+
+else
+	echo "Usage: eval \`$BASENAME\`"
+	exit
+fi
