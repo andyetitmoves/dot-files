@@ -7,7 +7,7 @@ zmodload -i zsh/net/tcp
 ztcp ${MPD_HOST:-127.0.0.1} ${MPD_PORT:-6600}
 fd=$REPLY
 
-if [ -n $fd ]; then
+if [[ -n $fd ]]; then
     echo pause >&$fd
-    [ $fd -gt 0 ] && ztcp -c $fd
+    [[ $fd -gt 0 ]] && ztcp -c $fd
 fi
