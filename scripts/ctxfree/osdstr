@@ -1,0 +1,9 @@
+#!/bin/sh
+# Send a string to a user-configurable osd program
+
+local osdprog
+
+osdprog="$HOME/.osd-serve"
+[ -x "$osdprog" ] || osdprog=osd_cat
+
+echo "$1" | "$osdprog" -n /tmp/mposd-ramk

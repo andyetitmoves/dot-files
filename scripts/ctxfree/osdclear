@@ -1,8 +1,0 @@
-#!/bin/sh
-
-local osdprog
-
-osdprog="$HOME/.osd-serve"
-[ -x "$osdprog" ] || osdprog=osd_cat
-
-echo "\n\n\n\n\n" | "$osdprog" -n /tmp/mposd-ramk &
