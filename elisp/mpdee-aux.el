@@ -87,9 +87,22 @@
     (format "%d:%02d" (/ time 60) (mod time 60))))
 
 (defun mpd-song-data-query (data query)
-  (let ((value (plist-get data (intern query))))
-    (and value (string= query "Time")
-	 (setq value (mpd-time-ms-format value))) value))
+  (cond
+   ((string-match "^file:\\(.*\\)" query)
+    (let ((file (plist-get data 'file)) comps
+	  (num (string-to-number (match-string 1 query))))
+      (when (and file (not (zerop num)))
+	;; I guess mpd works currently only on POSIX systems:
+	;; The / for the directory separator should not be a problem
+	(setq comps (split-string file "/" t))
+	(cond
+	 ((> (abs num) (length comps)))
+	 ((> num 0) (setq file (nth (1- num) comps)))
+	 ((< num 0) (setq file (car (last comps (- num))))))) file))
+   ((string-equal "fmttime" query)
+    (let ((time (plist-get data 'Time)))
+      (and time (mpd-time-ms-format time))))
+   (t (plist-get data (intern query)))))
 
 (defvar mpd-song-data-flexi-scheme
   (eval-when-compile
