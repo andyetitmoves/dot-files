@@ -1,7 +1,9 @@
 #!/bin/sh
 # Using a config file, print shell code to update proxy environment variables
 
-. ~/.proxy || exit 0
+[ -z "$SHOME" ] && SHOME="$HOME"
+
+. "$SHOME/.proxy" || exit 0
 
 prvar () {
     if [ -n "$2" ]; then
