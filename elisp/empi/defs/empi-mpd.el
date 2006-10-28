@@ -19,14 +19,15 @@
 (defcustom empi-mpd-title-flexi
   '(flexi-print-backend-format
     "%{Title}%(!{Title}%{file}%)%({Artist} | %{Artist}%)%({Album} | %{Album}%)\
-%({Track} | Track %{Track}%)")
+%({Track} | Track %{Track}%)%({Composer} | %{Composer}%)")
   "Format to be used for titles by the elisp MPD backend for EMPI."
   :type 'flexi-print-format :group 'empi-mpd-backend)
 
 (defcustom empi-mpd-plentry-flexi
   '(flexi-print-backend-format
-    "< %({Time}%{Time}%)%(!{Time}-:--%) > %{Title}%(!{Title}%{file}%)%({Artist} - \
-%{Artist}%)%({Album} - %{Album}%)%({Track} - Track %{Track}%)")
+    "< %({fmttime}%{fmttime}%)%(!{fmttime}-:--%) > %{Title}%(!{Title}%{file}%)\
+%({Artist} - %{Artist}%)%({Album} - %{Album}%)%({Track} - Track %{Track}%)\
+%({Composer} - %{Composer}%)")
   "Format to be used for playlist entries by the elisp MPD backend for EMPI."
   :type 'flexi-print-format :group 'empi-mpd-backend)
 
