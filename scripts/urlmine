@@ -1,0 +1,213 @@
+#!/usr/bin/perl
+# Generates a list of URLs from the mozilla history file.
+
+use warnings;
+use strict;
+use Getopt::Long;
+use Fcntl;
+
+my $verbose = 0;
+
+sub register_ifmt ($&%);
+sub register_ofmt ($&%);
+
+sub input_mozhist {
+    my ($file, $matches) = @_;
+    my $fcont;
+    {
+	$/ = undef;
+	$fcont = <$file>;
+    }
+#    foreach ($fcont =~ m,=(https?://[^)?]*)\??[^)]*\),mg) {
+    foreach ($fcont =~ m,=([^:)]*://[^)]*)\),mg) {
+	s/\\\n//g;
+	s/\?.*//g;
+	s,/$,,;
+#	print STDERR "$_\n";
+	$matches->{$_}++ ;
+    }
+}
+
+register_ifmt 'mozhist', \&input_mozhist,
+  synopsis => 'Mozilla History File',
+  ;
+
+sub output_file {
+    my ($matches, $output) = @_;
+    my $out = \*STDOUT;
+    if ($output) {
+	open $out, '>', $output or die "Unable to open file $output";
+    }
+    foreach (keys %$matches) {
+	print $out "$_\n";
+    }
+    close $out if $output;
+}
+
+register_ofmt 'file', \&output_file,
+  synopsis => 'URL list in file',
+  outdesc => 'Output file',
+  outdef => 'Standard Output',
+  ;
+
+sub output_null {}
+
+register_ofmt 'null', \&output_null,
+  synopsis => 'No output',
+  ;
+
+sub output_tree {
+    my ($matches, $output) = @_;
+    my %ocache;
+    $output or die "Output directory not specified";
+    unless (-d $output) {
+	mkdir $output || die "Unable to create directory $output: $!\n";
+    }
+    if (-f "$output/.urls") {
+	my $ofile;
+	open $ofile, "$output/.urls";
+	while (<$ofile>) {
+	    chomp;
+	    $ocache{$_}++;
+	}
+	close $ofile;
+    }
+    foreach (keys %$matches) {
+	next if $ocache{$_};
+	my $cdir = $output;
+	/(.*?):\/\/(.*)/ or next;
+	$cdir .= "/$1";
+	foreach (split /\//, $2) {
+	    $_ or next;
+	    unless (-d $cdir) {
+		my $fail;
+		if ((-f $cdir) && ! (unlink $cdir)) {
+		    print STDERR "Unable to unlink file $cdir: $!\n";
+		    $fail = 1;
+		}
+		unless ($fail) {
+		    mkdir $cdir ||
+		      print STDERR "Unable to create directory $cdir: $!\n";
+		}
+	    }
+	    $cdir .= "/$_";
+	}
+	unless ((-d $cdir) || (-f $cdir)) {
+	    my $dummy;
+	    if (sysopen $dummy, $cdir, O_WRONLY|O_CREAT) {
+		close $dummy;
+	    } else {
+		print STDERR "Unable to create file $cdir: $!\n";
+	    }
+	}
+    }
+    output_file $matches, "$output/.urls";
+}
+
+register_ofmt 'tree', \&output_tree,
+  synopsis => 'URL hierarchy in a tree',
+  outdesc => 'Output directory',
+  outdef => 'None (Output needs to be specified)',
+  ;
+
+my %ifmts;
+
+my @ifmtinfo = (
+		'name', 'Name',
+		'synopsis', 'Description',
+	       );
+
+sub register_ifmt ($&%) {
+    my ($name, $func, %args) = @_;
+    $args{'name'} = $name;
+    $args{'handler'} = $func;
+    $ifmts{$name} = \%args;
+}
+
+my %ofmts;
+
+my @ofmtinfo = (
+		'name', 'Name',
+		'synopsis', 'Description',
+		'outdesc', 'Output Parameter',
+		'outdef', 'Default Output',
+	       );
+
+sub register_ofmt ($&%) {
+    my ($name, $func, %args) = @_;
+    $args{'name'} = $name;
+    $args{'handler'} = $func;
+    $ofmts{$name} = \%args;
+}
+
+sub optLine ($$;$$$) {
+    my ($long, $desc, $short, $arg, $argopt) = @_;
+    my $left = " ";
+    $left .= "-$short" if $short;
+    $left .= ', ' if ($long && $short);
+    $left .= "--$long" if $long;
+    $left .= ($argopt ? "[=$arg]" : "=$arg") if $arg;
+    printf "%-24s%s\n", $left, $desc;
+}
+
+sub print_plugins {
+    my ($out, $ptype, $plugs, $pinfo) = @_;
+    my $pisize = scalar(@$pinfo);
+    my $maxsize = 0;
+    for (0..($pisize/2 - 1)) {
+	my $cur = (length $pinfo->[2*$_+1]);
+	$maxsize = $cur if $maxsize < $cur;
+    }
+    print $out "The $ptype available are: \n\n";
+    foreach my $plug (keys %$plugs) {
+	for (0..($pisize/2 - 1)) {
+	    printf $out '%-'.$maxsize.'s : %s'."\n",
+	      $pinfo->[2*$_+1], $plugs->{$plug}->{$pinfo->[2*$_]}
+		if exists $plugs->{$plug}->{$pinfo->[2*$_]};
+	}
+	print $out "\n";
+    }
+}
+
+sub printHelp {
+    print <<END_TEXT;
+urlmine [OPTIONS] {--in-format FMT1 files...}...
+Mines for URLs
+Options:
+END_TEXT
+    optLine 'out-format', 'Output format (default file)', undef, 'FORMAT';
+    optLine 'in-format', 'Input format', undef, 'FORMAT';
+    optLine 'output', 'Output resource (meaning depends on format)', 'o', 'RES';
+    optLine 'help', 'Display this help';
+    print "\n";
+    print_plugins \*STDOUT, 'input formats', \%ifmts, \@ifmtinfo;
+    print_plugins \*STDOUT, 'output formats', \%ofmts, \@ofmtinfo;
+}
+
+my $ofmt = 'file';
+my $output;
+my $ifmt;
+
+my %matches;
+
+sub process_file {
+    my $file = shift;
+    my $ifd;
+    $ifmt or die 'No input format specified';
+    printf STDERR "Processing [$ifmt] $file\n" if $verbose > 0;
+    open $ifd, $file;
+    $ifmts{$ifmt}->{handler}->($ifd, \%matches);
+    close $ifd;
+}
+
+Getopt::Long::Configure ('gnu_getopt', 'permute');
+
+GetOptions ('out-format=s'	=> \$ofmt,
+	    'in-format=s'	=> \$ifmt,
+	    'output|o=s'	=> \$output,
+	    'verbose|v+'	=> \$verbose,
+	    '<>'		=> \&process_file,
+	    'help'	=> sub { printHelp; exit 0; }
+	   ) or die 'Unable to parse command line';
+
+$ofmts{$ofmt}->{handler}->(\%matches, $output);
