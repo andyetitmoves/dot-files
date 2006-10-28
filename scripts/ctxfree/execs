@@ -1,0 +1,28 @@
+#!/bin/sh
+
+local profdir state_file pid
+
+if [ -z "$1" ]; then
+    echo Usage: "$0" '<profile>' >&2
+    return 1
+fi
+
+profdir=~/.execs/"$1"
+state_file="$profdir"/state
+
+lexec () {
+    "$@" &
+    echo $! >> "$state_file"
+}
+
+if [ -r "$state_file" ]; then
+    while read pid; do
+	kill "$pid" > /dev/null 2>&1
+    done < "$state_file"
+fi
+
+: > "$state_file"
+
+. "$profdir"/config
+
+unset -f lexec
