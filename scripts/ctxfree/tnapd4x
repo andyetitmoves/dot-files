@@ -1,7 +1,8 @@
 #!/bin/zsh
 # Queues TamilNapster music downloads on d4x.
 
-local opts i url
+local i url
+typeset -a opts
 
 opts=()
 [[ -n "$3" ]] && opts=(-d ${${3:#[^/]*}:-~/downloads/$3})
