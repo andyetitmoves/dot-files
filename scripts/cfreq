@@ -1,0 +1,22 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+my %freqs;
+
+while (<>) {
+    /^([0-9.]+).*/ or next;
+    $freqs{$1}++;
+}
+
+my $cnt = 0;
+
+my %cumu;
+
+foreach (sort {$b <=> $a} (keys %freqs)) {
+    $cnt += $freqs{$_};
+    $cumu{$_} = $cnt;
+}
+
+print $_."\t".$cumu{$_}."\t".($cumu{$_} / $cnt)."\n" foreach (keys %cumu);

@@ -1,0 +1,27 @@
+#!/bin/sh
+
+[ $# -lt 2 ] && {
+    echo Usage: $0 '<video file>' '<sub file>' >&2
+    exit 1
+}
+
+vid="$1"
+sub="$2"
+
+if [ -z "$3" ]; then
+    base="${2%.*}"
+    fps="${base##*-}"
+    [ "$base" = "$fps" ] && fps=
+else
+    fps="$3"
+fi
+
+if [ $# -lt 3 ]; then
+    shift 2
+else
+    shift 3
+fi
+
+[ -n "$fps" ] && fps="-subfps $fps"
+
+exec mplayer -subfont-text-scale 3 $fps -sub "$sub" "$@" "$vid"
