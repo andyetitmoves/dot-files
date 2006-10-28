@@ -4,10 +4,11 @@
 local i url
 typeset -a opts
 
-opts=()
+{ pidof d4x || pidof nt || { d4x &; sleep 1; } } > /dev/null 2>&1
+
 [[ -n "$3" ]] && opts=(-d ${${3:#[^/]*}:-~/downloads/$3})
 
 for ((i=$1;i<=$2;i++)); do
     url="http://www.tamilnapster.com/download.php?id=$i"
-    d4x "${opts[@]}" "$url"
+    d4x "${opts[@]}" $url
 done
