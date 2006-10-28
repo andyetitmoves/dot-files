@@ -32,16 +32,16 @@
 (defun mpd-jump-to-time (conn time)
   (interactive
    (list mpd-inter-conn
-	 (read-item "Time in seconds"
-		    (and (eq (mpd-connection-status mpd-inter-conn) 'ready)
-			 (plist-get (mpd-get-status mpd-inter-conn)
-				    'time-elapsed)) t)))
+	 (mpd-read-item "Time in seconds"
+			(and (eq (mpd-connection-status mpd-inter-conn) 'ready)
+			     (plist-get (mpd-get-status mpd-inter-conn)
+					'time-elapsed)) t)))
   (let ((status (mpd-get-status conn)))
     (and status (and (mpd-seek conn (plist-get status 'song) time) status))))
 
 (defun mpd-skip-time (conn time)
-  (interactive (list mpd-inter-conn (read-item "Seconds to skip by" 0 t t)))
-  (assert-numberp time)
+  (interactive (list mpd-inter-conn (mpd-read-item "Seconds to skip by" 0 t t)))
+  (mpd-assert-numberp time)
   (let ((status (mpd-get-status conn)))
     (and status
 	 (mpd-seek conn (plist-get status 'song)
@@ -131,7 +131,7 @@
 ;;;###autoload
 (defun mpd-enqueue-from-log (conn)
   (interactive (list mpd-inter-conn))
-  (with-free-buffer
+  (with-mpd-free-buffer
     (forward-line 0)
     (if (looking-at "\\w+ +[0-9]+ +[0-9]+:[0-9]+ : \
 \\(?:added\\|updating\\) \\(.*\\)")
