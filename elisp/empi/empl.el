@@ -891,6 +891,7 @@ suspect. See `empl-no-id-update-flag' for when this occurs automatically."
     (empi-update-unregister empl-update-timer)
     (setq empl-update-timer nil)))
 
+;;;###autoload
 (defun empl-mode ()
   "Major mode for displaying playlists for EMPI.
 Use `empl' to display a playlist, this is not to be used directly.
@@ -909,6 +910,7 @@ Use `empl' to display a playlist, this is not to be used directly.
 		  (:eval (if (eq empl-range-mode t) " Group" " Line"))))
 	       minor-mode-alist))
   (put 'empl-mode 'mode-class 'special)
+  (setq desktop-save-buffer t)
   (setq truncate-lines t buffer-undo-list t)
   (if (overlayp empl-playing-overlay)
       (delete-overlay empl-playing-overlay)
@@ -934,13 +936,27 @@ Use `empl' to display a playlist, this is not to be used directly.
   (use-local-map empl-mode-map)
   (run-hooks 'empl-mode-hook))
 
+(defvar empl-buffer-name "*empl-buffer*")
+
 ;;;###autoload
 (defun empl ()
+  "Display the EMPI playlist."
   (interactive)
   (or (prog1
-	  (get-buffer "*empl-buffer*")
-	(switch-to-buffer "*empl-buffer*"))
+	  (get-buffer empl-buffer-name)
+	(switch-to-buffer empl-buffer-name))
       (empl-mode)))
+
+(defun empl-restore (filename name misc)
+  "Restore the EMPI playlist.
+This function exists for integration with the `desktop' package."
+  (let ((empl-buffer (get-buffer-create name)))
+    (with-current-buffer empl-buffer
+      (or (eq major-mode 'empl-mode) (empl-mode))) empl-buffer))
+
+;;; We don't need to bother autoloading this.
+;;; desktop anyway tries to load empl before restoring.
+(add-to-list 'desktop-buffer-mode-handlers '(empl-mode . empl-restore))
 
 ;;;; Moving items
 
