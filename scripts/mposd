@@ -1,5 +1,6 @@
 #!/usr/bin/env perl
-# Sends the current mpd title to the osd daemon. Needs MPD.pm.
+# Sends the current mpd title to the osd daemon.
+# Needs MPD.pm and MP3::Info.
 
 use strict;
 use warnings;
@@ -7,6 +8,7 @@ use IO::Socket;
 use Getopt::Long;
 use Text::Wrap;
 use MPD::MPD;
+use MP3::Info;
 
 sub max_length {
     my $max = 0;
@@ -30,6 +32,7 @@ my $ohost = 'localhost';
 my $oport = 7600;
 my $fldsep = ' - ';
 my $dumpfile;
+my $dbroot = ($ENV{MPD_DB_ROOT} || '/');
 
 Getopt::Long::Configure ('gnu_getopt');
 
@@ -41,6 +44,7 @@ GetOptions ('columns|c=i'	=> \$cols,
 	    'osd-port|P=i'	=> \$oport,
 	    'separator|s=s'	=> \$fldsep,
 	    'dump|d=s'		=> \$dumpfile,
+	    'db-root|r=s'	=> \$dbroot,
 	   ) or die 'Unable to parse command line';
 
 $Text::Wrap::columns = $cols;
@@ -48,14 +52,26 @@ $Text::Wrap::columns = $cols;
 my $mpd = MPD->new ($mhost, $mport);
 my %data = $mpd->get_current_song_info();
 
+my $tinf;
+
+if (defined $data{file}) {
+    my $mdat = get_mp3info($dbroot.'/'.$data{file});
+    $tinf = "";
+    $tinf .= $mdat->{TIME}.' @ ' if defined $mdat->{TIME};
+    $tinf .= $mdat->{BITRATE}.' KBps' if defined $mdat->{BITRATE};
+    $tinf .= ' (VBR '.$mdat->{VBR_SCALE}.')' if defined $mdat->{VBR_SCALE};
+}
+
 $Text::Wrap::break = $fldsep
-  if (max_length $data{Title}, $data{file},
-      $data{Artist}, $data{Album}, $data{Track}) < $cols;
+  if (max_length $data{Title}, $tinf, $data{file}, $data{Artist},
+      $data{Album}, $data{Track}, $data{Composer}) < $cols;
 
 my $title = ((field_valid $data{Title}) ? $data{Title} : $data{file});
+$title .= $fldsep.$tinf if (field_valid $tinf);
 $title .= $fldsep.$data{Artist} if (field_valid $data{Artist});
 $title .= $fldsep.$data{Album} if (field_valid $data{Album});
 $title .= $fldsep."Track $data{Track}" if (field_valid $data{Track});
+$title .= $fldsep.$data{Composer} if (field_valid $data{Composer});
 
 if (defined $dumpfile) {
     if (open TFILE, "> $dumpfile") {
