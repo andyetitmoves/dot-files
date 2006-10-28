@@ -5,9 +5,9 @@
 
 prvar () {
     if [ -n "$2" ]; then
-	echo export "$1"="$2"
+	echo export "$1"="$2"\;
     else
-	echo unset "$1"
+	echo unset "$1"\;
     fi
 }
 
