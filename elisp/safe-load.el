@@ -87,13 +87,14 @@ NOFIND is non-nil, an attempt is made to locate the file using `locate-library'.
 (require 'advice)
 
 (defadvice load
-  (before safe-load (file &optional noerror nomessage nosuffix must-suffix))
+  (before safe-load (file &optional noerror nomessage nosuffix must-suffix)
+	  disable preactivate)
   "Check load file if byte-compiled and old, before load.
 The load-file is checked with `check-load-file' before proceeding with the load."
   (check-load-file file must-suffix))
 
 (defadvice require
-  (before safe-load (feature &optional filename noerror) activate)
+  (before safe-load (feature &optional filename noerror) disable preactivate)
   "Check if require needs load of old byte-compiled file.
 The file is checked with `check-load-file' before proceeding with require."
   (and (symbolp feature)
