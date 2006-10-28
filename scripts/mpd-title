@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Sends the current mpd title to the osd daemon.
+# Constructs a title for the song currently playing on MPD.
 # Needs MPD.pm and MP3::Info.
 
 use strict;
@@ -28,8 +28,6 @@ sub field_valid {
 my $cols = 80;
 my $flush = 5;
 my ($mhost, $mport);
-my $ohost = 'localhost';
-my $oport = 7600;
 my $fldsep = ' - ';
 my $dumpfile;
 my $dbroot = ($ENV{MPD_DB_ROOT} || '/');
@@ -40,8 +38,6 @@ GetOptions ('columns|c=i'	=> \$cols,
 	    'flush|f=i'		=> \$flush,
 	    'mpd-host|h=s'	=> \$mhost,
 	    'mpd-port|p=i'	=> \$mport,
-	    'osd-host|H=s'	=> \$ohost,
-	    'osd-port|P=i'	=> \$oport,
 	    'separator|s=s'	=> \$fldsep,
 	    'dump|d=s'		=> \$dumpfile,
 	    'db-root|r=s'	=> \$dbroot,
@@ -92,10 +88,4 @@ foreach (@lines) {
 
 $title = ("\n" x $flush).$title."\n";
 
-my $remote = IO::Socket::INET->new (Proto => 'udp',
-				    PeerAddr => $ohost,
-				    PeerPort => $oport,)
-  or die "Cannot connect to osd port at $ohost";
-
-print $remote $title;
-close $remote;
+print $title;
