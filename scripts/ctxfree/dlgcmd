@@ -3,9 +3,9 @@
 
 local prog
 
-prog=`zenity --title 'Select Program' --entry --text 'Select program to run'`
+prog="`zenity --title 'Select Program' --entry --text 'Select program to run'`"
 if [ -n "$prog" ]; then
-    if [ x"$1" = x"-n" ]; then
+    if [ "$1" = "-n" ]; then
 	eval exec $prog
     else
 	{
