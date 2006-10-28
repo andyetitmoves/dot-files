@@ -35,7 +35,7 @@
     (setq slist
 	  (list :qvolume (make-list 2 (plist-get status 'volume))
 		:qrepeat (plist-get status 'repeat)
-		:qshuffle (plist-get status 'shuffle)
+		:qshuffle (plist-get status 'random)
 		:qplid (plist-get status 'playlist)
 		:qpllength (plist-get status 'playlistlength)
 		:qcrossfade (plist-get status 'xfade)
