@@ -1,0 +1,11 @@
+#!/bin/sh
+
+if [ -z "$1" ]; then
+    echo Usage: $0 \<name\> \[dir\] >&2
+    return 1
+fi
+
+mkdir -p "$HOME/.aub/$1"
+
+[ -e "$HOME/.aub/$1/conf" ] || \
+    echo srcbase=\""${2:-$PWD}"\" > "$HOME/.aub/$1/conf"

@@ -1,0 +1,3 @@
+#!/bin/sh
+
+mplayer -af ladspa=/usr/lib/ladspa/tap_pitch.so:tap_pitch:12:100:-90:0 -speed 0.5 "$@"

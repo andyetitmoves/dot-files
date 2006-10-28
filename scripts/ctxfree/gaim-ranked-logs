@@ -1,0 +1,10 @@
+#!/bin/zsh
+
+emulate -L zsh
+
+setopt extendedglob
+
+autoload -Uz zargs
+
+zargs ~/.gaim/logs/**/*~*.chat/*(.) -- ls -l | \
+    awk '{ print $5 "\t" $8 }' | sort -nr | cat -n

@@ -1,0 +1,19 @@
+#!/bin/sh
+
+[ -z "$1" ] && {
+    echo Usage: $0 \<device\|mountpoint\> ... >&2
+    return 127
+}
+
+local ret=0 dev
+
+for dev in "$@"; do
+    sudo fuser -mv "$dev" && {
+	echo The above processes seem to be using the device $dev, not unplugging...
+	ret=`expr $ret + 1`
+	continue
+    }
+    sudo mount -oremount,ro "$dev"
+done
+
+return $ret

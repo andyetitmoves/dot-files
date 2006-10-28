@@ -1,0 +1,41 @@
+#!/bin/sh
+
+local tmpfile rangle file somefailed
+
+if [ $# -lt 2 ]; then
+    echo Usage: $0 \<rotation angle\> \<jpeg file\>... >&2
+    return 1
+fi
+
+rangle="$1"
+shift
+
+if ! test "$rangle" -gt 0 2> /dev/null; then
+    echo Rotation angle must be a positive integer >&2
+    return 2
+fi
+
+tmpfile=`tempfile -p jrot -s .jpg`
+
+if [ $? -ne 0 ]; then
+    echo Unable to create temporary file >&2
+    return 3
+fi
+
+for file in "$@"; do
+    if jpegtran -copy all -rotate "$rangle" "$file" > "$tmpfile"; then
+	cat "$tmpfile" > "$file"
+    else
+	echo jpegtran on file "$file" failed with error code $? >&2
+	somefailed=yes
+    fi
+done
+
+if [ "$somefailed" = yes ]; then
+    echo Some files could not be rotated >&2
+    echo Leaving the original files unchanged in such cases >&2
+fi
+
+rm -f "$tmpfile"
+
+return 0

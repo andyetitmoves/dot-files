@@ -1,0 +1,253 @@
+#!/bin/zsh
+
+emulate -L zsh
+
+setopt extendedglob
+
+local profile=$1
+
+if [[ -z $profile ]]; then
+    echo Usage: $0 '<profile>' >&2
+    return 1
+fi
+
+local confbase=~/.aub
+local confdir=$confbase/$1
+
+if [[ ! -d $confdir ]]; then
+    echo Profile $profile does not exist. Please create $confdir/conf >&2
+    return 2
+fi
+
+local logfile=$confdir/log
+
+[[ -n $nolog ]] || {
+    local nolog
+    nolog=yes $0 $@ 4>&1 1>&1 5>&2 2>&2 3> $logfile 1>&3 2>&3
+    return $?
+}
+
+[[ -e /dev/fd/3 ]] || exec 3>&1
+[[ -e /dev/fd/4 ]] || exec 4> /dev/null
+
+# echo Starting redirections > $TTY
+# exec 3> $logfile 4>&1 5>&2
+# echo Opened additional files > $TTY
+# exec 1>&- 2>&-
+# echo Closed standard outputs > $TTY
+# exec 1>&3 1>&4
+# echo Redirected standard output > $TTY
+# exec 2>&3 2>&5
+# echo Redirected standard error > $TTY
+
+# exec 4>&1 1>&1 5>&2 2>&2 3> $logfile 1>&3 2>&3
+
+trap "cd $PWD; exec 1>&- 2>&- 1>&4 2>&5 3>&- 4>&- 5>&-" EXIT
+
+typeset -a dirs
+
+[[ -n $dirs ]] || dirs=(".")
+
+local noupdate onlyupdate forceinst srcbase
+typeset -a vcupcmd mkcmd instcmd
+typeset -A vcfilter
+
+[[ -r $confbase/conf ]] && . $confbase/conf
+[[ -r $confdir/conf ]] && . $confdir/conf
+
+aub_set_array () {
+    local var=$1
+    [[ -z $var ]] && return
+    shift
+    while [[ $# -gt 0 && $1 != -- ]]; do
+	if [[ -n ${(P)1} ]]; then
+	    set -A $var "${(P@)1}"
+	    return
+	fi
+	shift
+    done
+    shift
+    set -A $var "$@"
+}
+
+aub_set_array vcupcmd AUB_VCUPCMD vcupcmd -- cvs update
+[[ -n $vcfilter ]] || vcfilter=(
+    P '[PU] (#b)(*)' C 'C (#b)(*)'
+    I '([M?] |*: Updating |RCS file:|retrieving)*'
+)
+aub_set_array mkcmd AUB_MKCMD mkcmd -- make
+aub_set_array mkfilter AUB_MKFILTER mkfilter -- \
+    grep -vqm1 -e '^make:\? \+\|^make\[[0-9]*\]:\|^Making .* in'
+aub_set_array instcmd AUB_INSTCMD instcmd -- make install
+
+noupdate=${AUB_NOUPDATE:-$noupdate}
+forceinst=${AUB_FORCEINST:-$forceinst}
+onlyupdate=${AUB_ONLYUPDATE:-$onlyupdate}
+
+if ! cd "$srcbase"; then
+    echo Unable to change directory to source base $srcbase >&2
+    return 3
+fi
+
+aubl () { echo ------------------------------------------------------------; }
+aubs () { echo; aubl; }
+aube () { aubl; echo; }
+aubb () { aubs; echo $@; aube; }
+
+echo Log started at `date` >&3
+
+aubs
+echo '>>>>>>>>>>>>>>>>>' Auto Update Build Script '<<<<<<<<<<<<<<<<<'
+echo
+echo Profile: $profile
+echo Base Directory: $PWD
+echo Modules to be built:
+echo
+ls -dC $dirs 2>&1 | sed 's/^ls: \+//'
+echo
+if [[ $noupdate = (y|yes) ]]; then
+    echo Skip VC update
+else
+    echo VC update using '`'$vcupcmd"'"
+fi
+echo Install Prefix: ${prefix:-None specified}
+echo Make command: $mkcmd
+echo Install command: $instcmd
+echo
+aube
+
+typeset -a chfiles cffiles
+typeset -A modinfo midesc vcfilter
+
+midesc=(
+    P "source changed"
+    C "has conflicting files"
+    U "clean"
+    D "possibly dirty dependencies"
+    F "compilation requested"
+)
+
+local dir dirty
+
+if [[ $noupdate != (y|yes) ]]; then
+    aubb Updating from version control
+    $vcupcmd 2>&1 | {
+	while read line; do
+	    if [[ -n ${vcfilter[C]} && $line == ${~vcfilter[C]} ]]; then
+		cffiles=($cffiles $match[1])
+	    elif [[ -n ${vcfilter[P]} && $line == ${~vcfilter[P]} ]]; then
+		chfiles=($chfiles $match[1])
+	    elif [[ -n ${vcfilter[I]} && $line == ${~vcfilter[I]} ]]; then
+		echo $line >&3
+		continue
+	    fi
+	    echo $line >&3 >&4
+	done
+    }
+    dirty=
+    for dir in $dirs; do
+	if [[ $cffiles[(I)${dir:#.}*] -gt 0 ]]; then
+	    modinfo[$dir]=C
+	elif [[ $chfiles[(I)${dir:#.}*] -gt 0 ]]; then
+	    modinfo[$dir]=P
+	    dirty=yes
+	elif [[ -n $dirty ]]; then
+	    modinfo[$dir]=D
+	else
+	    modinfo[$dir]=U
+	fi
+    done
+else
+    for dir in $dirs; do modinfo[$dir]=F; done
+fi
+
+for dir in $dirs; do
+    if [[ ! -d $dir ]]; then
+	aubs
+	echo Module '`'$dir"'" is missing
+	echo This is probably not the source tree for profile $profile
+	echo Cowardly refusing to continue
+	aube
+	return 16
+    fi
+done
+
+aub_add_to_path () {
+    3="${(P)1}:$2"
+    : ${(P)1::=${(pj,:,)${(u)${(ps,:,)3}}}}
+}
+
+if [[ -n $prefix ]]; then
+    aub_add_to_path PKG_CONFIG_PATH $prefix/lib/pkgconfig
+    aub_add_to_path LD_RUN_PATH $prefix/lib
+fi
+
+local finst_file=$confdir/force-install
+
+typeset -a finst ifailed
+
+[[ -r $finst_file ]] && finst=(${(fu)$(<$finst_file)})
+
+aubb Starting build processes >&3 >&4
+
+local makeout result
+local AUB_CURRENT_MODULE AUB_SOURCE_BASE AUB_CONF_DIR
+
+makeout=`tempfile -p aub.`
+
+if [[ $? -ne 0 ]]; then
+    echo "Unable to create temporary file"
+    return 17
+fi
+
+for dir in $dirs; do
+    aubs >&3
+    echo Checking $dir... $midesc[$modinfo[$dir]] >&3 >&4
+    if [[ $modinfo[$dir] = [UC]* ]]; then aube >&3; continue; fi
+    echo Building $dir >&3
+    aube >&3
+    echo -n Building $dir...' ' >&4
+    if [[ $finst[(I)$dir] -gt 0 || $forceinst = yes ]]; then
+	result='ok, installation forced'
+    else
+	result='ok, output changed'
+    fi
+    export AUB_CURRENT_MODULE=$dir \
+	AUB_SOURCE_BASE=$srcbase AUB_CONF_DIR=$confdir
+    if [[ -n $makeout && $forceinst != yes && $modinfo[$dir] = [PDF]* ]]; then
+	if $mkcmd -C $dir 2>&3 >&3 > $makeout; then
+	    $mkfilter $makeout || result=unchanged
+	else
+	    result=FAILED
+	fi
+    else
+	$mkcmd -C $dir 2>&3 >&3 || result=FAILED
+    fi
+    echo "\nBuilding $dir: $result\n" >&3
+    echo $result >&4
+    if [[ $result = ok* ]]; then
+	aubb Installing $dir >&3
+	echo -n Installing $dir...' ' >&4
+	result=ok
+	$instcmd -C $dir >&3 2>&3 || {
+	    result=FAILED
+	    echo $dir >> $finst_file
+	    ifailed=($ifailed $dir)
+	}
+	echo "\nInstalling $dir: $result\n" >&3
+	echo $result >&4
+    fi
+done
+[[ -n $makeout ]] && rm -f $makeout
+
+if [[ $#ifailed -gt 0 ]]; then
+    : > $finst_file
+    for dir in $ifailed; do
+	echo $dir > $finst_file
+    done
+else
+    rm -f $finst_file
+fi
+
+aubb All done, have a nice day\!
+echo Log ended at `date` >&3

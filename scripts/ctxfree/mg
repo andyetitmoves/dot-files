@@ -1,0 +1,15 @@
+#!/bin/sh
+
+local dir
+
+[ -n "$1" ] && dir="$1"/
+
+{
+    local file
+    for file in "$dir"*.mp3; do
+	echo '===' $file '==='
+	echo
+	mp3guessenc "$file"
+	echo
+    done
+} | "${PAGER:-pager}"

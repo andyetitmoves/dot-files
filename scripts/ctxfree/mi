@@ -1,0 +1,7 @@
+#!/bin/sh
+
+local dir
+
+[ -n "$1" ] && dir="$1"/
+
+mp3info -xFra "$dir"*.mp3 | less

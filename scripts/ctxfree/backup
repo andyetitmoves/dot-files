@@ -1,0 +1,22 @@
+#!/bin/sh
+
+local hdir bkdir rbkdir ropts
+
+nback ()
+{
+    tar -jcf "$bkdir/$1.tar.bz2" -C "$2" "$@" || echo "Backup $1 failed" >&2;
+}
+
+hdir="${SHOME:-$HOME}"
+
+[ -r "$hdir/.proxy" ] || return 0
+
+. "$hdir/.proxy" || return 0
+
+bkdir="${bkdir:-${TMPDIR:-/tmp}}"
+
+if [ -n "$rbkdir" ]; then
+    [ -n "$NOSCP" ] || scp -Bq "$ropts" "$bkdir"/* "$rbkdir"
+fi
+
+unset -f nback
