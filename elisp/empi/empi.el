@@ -90,16 +90,41 @@ The keys in the map are as follows:
   (interactive)
   (empi-simple-action :plnext))
 
-(defvar empi-enqueue-history nil)
+(defun read-file-name-with-private-history (label &rest args)
+  "Read a file name from the minibuffer with private history.
+LABEL is an unique label to associate with the history, and ARGS are passed to
+`read-file-name'. This hack preserves private histories for reading so that the
+history presented retains its context. The function does a lot of other similar
+hacks if the `ido' package is used for reading filenames with `ido-everywhere'.
+It is to be noted that `ido' still does not save these variables across sessions
+as the `ido-save-directory-list-file' option does. Other packages like `session'
+might be needed for the same."
+  (let* ((history-var (intern (concat label "-file-name-history")))
+	 (ido-wdirs (intern (concat label "-ido-work-directory-list-history")))
+	 (ido-wfiles (intern (concat label "-ido-work-file-list-history")))
+	 (file-name-history
+	  (if (boundp history-var) (symbol-value history-var) nil)))
+    (prog1
+	(if (eq read-file-name-function 'ido-read-file-name)
+	    (let ((ido-work-directory-list
+		   (if (boundp ido-wdirs) (symbol-value ido-wdirs) nil))
+		  (ido-work-file-list
+		   (if (boundp ido-wfiles) (symbol-value ido-wfiles) nil))
+		  result basename)
+	      (setq result (apply 'read-file-name args))
+	      (ido-record-work-directory (file-name-directory result))
+	      (ido-record-work-file (file-name-nondirectory result))
+	      (set ido-wdirs ido-work-directory-list)
+	      (set ido-wfiles ido-work-file-list) result)
+	  (apply 'read-file-name args))
+      (set history-var file-name-history))))
 
 ;;;###autoload
 (defun empi-enqueue (fil)
   "Enqueue a file to the EMPI playlist."
   (interactive
-   (let ((file-name-history empi-enqueue-history))
-     (prog1
-	 (list (read-file-name "Enqueue what: "))
-       (setq empi-enqueue-history file-name-history))))
+   (list (read-file-name-with-private-history
+	  "empi-enqueue" "Enqueue what: ")))
   (empi-simple-action :enqueue fil))
 
 ;;;###autoload
