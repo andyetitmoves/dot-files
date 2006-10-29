@@ -359,15 +359,74 @@ The minimum was %d.\nMaybe you should rely on %d."
 
 (require 'easy-mmode)
 
-(defvar empi-caption-mode nil)
-(defvar empi-caption-scroll t)
-(defvar empi-caption-scroll-threshold 100)
-(defvar empi-caption-scroll-step 1)
-(defvar empi-caption-end-indicator " *** ")
-(defvar empi-caption-update-interval 1)
-(defvar empi-caption-redisplay-interval 3)
-(defvar empi-caption-capture-all t)
-(defvar empi-caption-capture-dynamic nil)
+(defgroup empi-caption nil
+  "Automatic caption rendering for EMPI."
+  :prefix "empi-caption-" :group 'empi)
+
+(defcustom empi-caption-scroll t
+  "*Scroll EMPI caption if it exceeds a specified length.
+A value of t scrolls the title part of the caption (excluding the time string)
+if long enough. nil means that no scrolling is done. Any other value scrolls the
+entire caption. See also `empi-caption-scroll-threshold'."
+  :type '(choice (const :tag "None" nil)
+		 (const :tag "Title" t)
+		 (other :tag "All" 'all)) :group 'empi-caption)
+
+(defcustom empi-caption-scroll-threshold
+  (if window-system 100 (- (frame-width) 10))
+  "*Maximum length of EMPI caption rendered without scrolling.
+There is no good way (that I know, that is) to find out the number of characters
+the title bar can accomodate without clipping in graphical window systems, hence
+this variable. The default in terminals is a good one.
+Use `empi-test-title-length' for a semi-automatic method to determine a value."
+  :type 'natnum :group 'empi-caption)
+
+(defcustom empi-caption-scroll-step 1
+  "*Number of characters to shift the EMPI caption for each scroll.
+To change the speed of scrolling, use `empi-caption-redisplay-interval'."
+  :type 'natnum :group 'empi-caption)
+
+(defcustom empi-caption-end-indicator " *** "
+  "*String to append to EMPI caption while scrolling.
+The string specified marks the end of the caption when scrolling is on.
+This is not used when scrolling is off or not required."
+  :type 'string :group 'empi-caption)
+
+(defun empi-caption-set-restart (sym val)
+  (set sym val)
+  (when (and (fboundp 'empi-caption-mode) empi-caption-mode)
+    (empi-caption-mode-off)
+    (empi-caption-mode-on)))
+
+(defcustom empi-caption-update-interval 1
+  "*Scale for interval between updates of EMPI caption.
+The actual value in seconds is `empi-update-reference-interval'/<this value>.
+This is independent of the speed with which the display is refreshed,
+see `empi-caption-redisplay-interval'. Don't use nil to disable updates,
+instead use `empi-caption-mode'."
+  :type 'natnum :group 'empi-caption :set 'empi-caption-set-restart)
+
+(defcustom empi-caption-redisplay-interval 3
+  "*Scale for interval between display refresh of the EMPI caption.
+The actual value in seconds is `empi-update-reference-interval'/<this value>.
+If scrolling is on, this value corresponds to the scrolling speed when it is
+required. Otherwise, any value other than `empi-caption-update-interval' is
+sub-optimal."
+  :type 'natnum :group 'empi-caption :set 'empi-caption-set-restart)
+
+(defcustom empi-caption-capture-all t
+  "*If non-nil, EMPI auto caption update occurs for all frames.
+Otherwise, just the selected frame is updated.
+See `empi-caption-capture-dynamic' for when these frames are listed."
+  :type 'boolean :group 'empi-caption :set 'empi-caption-set-restart)
+
+(defcustom empi-caption-capture-dynamic nil
+  "*If non-nil, EMPI caption update frames are dynamically determined.
+That is to say, the frames updated based on the value of
+`empi-caption-capture-all' depend dynamically on the frames visible or the
+selected frame. Otherwise, all frames or the selected frame at the time of
+activation of the auto caption mode is taken for updation."
+  :type 'boolean :group 'empi-caption :set 'empi-caption-set-restart)
 
 (defvar empi-caption-scroll-pos 0)
 
@@ -502,17 +561,6 @@ The minimum was %d.\nMaybe you should rely on %d."
   (set var (if arg (if (> (prefix-numeric-value arg) 0) t)
 	     (if (symbol-value var) nil t))))
 
-(defun empi-caption-set-restart (sym val)
-  (set sym val)
-  (and empi-caption-mode
-       (progn
-	 (empi-caption-mode-off)
-	 (empi-caption-mode-on))))
-
-(defgroup empi-caption nil
-  "Automatic caption rendering for EMPI."
-  :prefix "empi-caption-" :group 'empi)
-
 (define-minor-mode empi-caption-mode
   "Toggle EMPI caption mode.
 With arg, turn mode on iff arg is positive.
@@ -523,79 +571,11 @@ The title bar is set to the playtime followed by the current title."
       (empi-caption-mode-on)
     (empi-caption-mode-off)))
 
-(defcustom empi-caption-scroll t
-  "*Scroll EMPI caption if it exceeds a specified length.
-A value of t scrolls the title part of the caption (excluding the time string)
-if long enough. nil means that no scrolling is done. Any other value scrolls the
-entire caption. See also `empi-caption-scroll-threshold'."
-  :type '(choice (const :tag "None" nil)
-		 (const :tag "Title" t)
-		 (other :tag "All" 'all)) :group 'empi-caption)
-
-(defcustom empi-caption-scroll-threshold 100
-  "*Maximum length of EMPI caption rendered without scrolling.
-There is no good way (that I know, that is) to find out the number of characters
-the title bar can accomodate without clipping in graphical window systems, hence
-this variable. The default in terminals is a good one.
-Use `empi-test-title-length' for a semi-automatic method to determine a value."
-  :type 'natnum :group 'empi-caption
-  :initialize '(lambda (var val)
-		 (or (boundp var)
-		     (set var (if window-system 100 (- (frame-width) 10))))))
-
-(defcustom empi-caption-scroll-step 1
-  "*Number of characters to shift the EMPI caption for each scroll.
-To change the speed of scrolling, use `empi-caption-redisplay-interval'."
-  :type 'natnum :group 'empi-caption)
-
-(defcustom empi-caption-end-indicator " *** "
-  "*String to append to EMPI caption while scrolling.
-The string specified marks the end of the caption when scrolling is on.
-This is not used when scrolling is off or not required."
-  :type 'string :group 'empi-caption)
-
-(defcustom empi-caption-update-interval 1
-  "*Scale for interval between updates of EMPI caption.
-The actual value in seconds is `empi-update-reference-interval'/<this value>.
-This is independent of the speed with which the display is refreshed,
-see `empi-caption-redisplay-interval'. Don't use nil to disable updates,
-instead use `empi-caption-mode'."
-  :type 'natnum :group 'empi-caption :set 'empi-caption-set-restart)
-
-(defcustom empi-caption-redisplay-interval 3
-  "*Scale for interval between display refresh of the EMPI caption.
-The actual value in seconds is `empi-update-reference-interval'/<this value>.
-If scrolling is on, this value corresponds to the scrolling speed when it is
-required. Otherwise, any value other than `empi-caption-update-interval' is
-sub-optimal."
-  :type 'natnum :group 'empi-caption :set 'empi-caption-set-restart)
-
-(defcustom empi-caption-capture-all t
-  "*If non-nil, EMPI auto caption update occurs for all frames.
-Otherwise, just the selected frame is updated.
-See `empi-caption-capture-dynamic' for when these frames are listed."
-  :type 'boolean :group 'empi-caption :set 'empi-caption-set-restart)
-
-(defcustom empi-caption-capture-dynamic nil
-  "*If non-nil, EMPI caption update frames are dynamically determined.
-That is to say, the frames updated based on the value of
-`empi-caption-capture-all' depend dynamically on the frames visible or the
-selected frame. Otherwise, all frames or the selected frame at the time of
-activation of the auto caption mode is taken for updation."
-  :type 'boolean :group 'empi-caption :set 'empi-caption-set-restart)
-
 ;;;; Mode line playback control
 
 (defgroup empi-mode-line nil
   "Mode line interface for EMPI."
   :prefix "empi-mode-line-" :group 'empi)
-
-(define-minor-mode empi-mode-line-control-mode
-  "Toggle EMPI mode-line control mode.
-With arg, turn mode on iff arg is positive.
-When enabled, adds buttons on the mode-line to control EMPI."
-  nil nil nil :global t :group 'empi-mode-line :require 'empi
-  (force-mode-line-update))
 
 (defface empi-mode-line-control-item-face
   '((((background light)) (:background "lightyellow"))
@@ -626,46 +606,25 @@ When enabled, adds buttons on the mode-line to control EMPI."
 	  (empi-mode-line-item "S" 'empi-stop "stop")
 	  (empi-mode-line-item ">" 'empi-next "next")))
 
-(add-to-list 'global-mode-string
-	     '(empi-mode-line-control-mode empi-mode-line-control-string) t)
-(force-mode-line-update)
-
-;; Silence the compiler
-(defvar empi-mode-line-playtime-update-interval 1)
-
-(defvar empi-mode-line-playtime-value nil)
-(defvar empi-mode-line-playtime-timer nil)
-
-(defun empi-mode-line-playtime-value-update ()
-  (interactive)
-  (setq empi-mode-line-playtime-value (empi-playtime-string))
-  (force-mode-line-update))
-
-(define-minor-mode empi-mode-line-playtime-mode
-  "Toggle EMPI mode-line playtime mode.
+(define-minor-mode empi-mode-line-control-mode
+  "Toggle EMPI mode-line control mode.
 With arg, turn mode on iff arg is positive.
-When enabled, shows current playtime on the mode-line."
-  :global t :group 'empi-mode-line :require 'empi
-  (if empi-mode-line-playtime-mode
-      (unless empi-mode-line-playtime-timer
-	(empi-mode-line-playtime-value-update)
-	(setq empi-mode-line-playtime-timer
-	      (empi-update-register 'empi-mode-line-playtime-value-update
-				    empi-mode-line-playtime-update-interval
-				    nil)))
-    (when empi-mode-line-playtime-timer
-      (empi-update-unregister empi-mode-line-playtime-timer)
-      (setq empi-mode-line-playtime-timer nil)
-      (force-mode-line-update))))
+When enabled, adds buttons on the mode-line to control EMPI."
+  nil nil nil :global t :group 'empi-mode-line :require 'empi
+  (or global-mode-string (setq global-mode-string '("")))
+  (if empi-mode-line-control-mode
+      (add-to-list 'global-mode-string 'empi-mode-line-control-string t)
+    (setq global-mode-string
+	  (delq 'empi-mode-line-control-string global-mode-string))))
+
+;;;; Mode line playtime display
 
 (defun empi-mode-line-playtime-set-restart (sym val)
-  (setq sym val)
-  (and empi-mode-line-playtime-mode
-       (empi-mode-line-playtime-mode -1)
-       (empi-mode-line-playtime-mode 1)))
-
-(add-to-list 'global-mode-string
-	     '(empi-mode-line-playtime-mode empi-mode-line-playtime-value) t)
+  (set sym val)
+  (when (and (fboundp 'empi-mode-line-playtime-mode)
+	     empi-mode-line-playtime-mode)
+    (empi-mode-line-playtime-mode -1)
+    (empi-mode-line-playtime-mode 1)))
 
 (defcustom empi-mode-line-playtime-update-interval 1
   "*Scale for interval between updates of EMPI mode-line playtime display.
@@ -673,6 +632,35 @@ The actual value in seconds is `empi-update-reference-interval'/<this value>.
 Don't use nil to disable updates, instead use `empi-mode-line-playtime-mode'."
   :type 'natnum :group 'empi-mode-line
   :set 'empi-mode-line-playtime-set-restart)
+
+(defvar empi-mode-line-playtime-string nil)
+(defvar empi-mode-line-playtime-timer nil)
+
+(defun empi-mode-line-playtime-string-update ()
+  (interactive)
+  (setq empi-mode-line-playtime-string (empi-playtime-string))
+  (force-mode-line-update))
+
+(define-minor-mode empi-mode-line-playtime-mode
+  "Toggle EMPI mode-line playtime mode.
+With arg, turn mode on iff arg is positive.
+When enabled, shows current playtime on the mode-line."
+  :global t :group 'empi-mode-line :require 'empi
+  (or global-mode-string (setq global-mode-string '("")))
+  (if empi-mode-line-playtime-mode
+      (progn
+	(unless empi-mode-line-playtime-timer
+	  (empi-mode-line-playtime-string-update)
+	  (setq empi-mode-line-playtime-timer
+		(empi-update-register
+		 'empi-mode-line-playtime-string-update
+		 empi-mode-line-playtime-update-interval nil)))
+	(add-to-list 'global-mode-string 'empi-mode-line-playtime-string t))
+    (setq global-mode-string
+	  (delq 'empi-mode-line-playtime-string global-mode-string))
+    (when empi-mode-line-playtime-timer
+      (empi-update-unregister empi-mode-line-playtime-timer)
+      (setq empi-mode-line-playtime-timer nil))))
 
 (provide 'empi)
 
