@@ -584,12 +584,11 @@ The title bar is set to the playtime followed by the current title."
   :group 'empi-mode-line)
 
 (defun empi-mode-line-string (str action help)
-  (propertize
-   str 'local-map (list 'keymap
-			(list 'mode-line 'keymap '(down-mouse-1 . ignore)
-			      (cons 'mouse-1 action)))
-   'face 'empi-mode-line-control-item-face
-   'help-echo (concat "mouse-1: " help)))
+  (propertize str
+	      'local-map `(keymap (mode-line keymap ,(cons 'mouse-1 action)))
+	      'mouse-face 'mode-line-highlight
+	      'face 'empi-mode-line-control-item-face
+	      'help-echo (concat "mouse-1: " help)))
 
 (defun empi-half-space ()
   (propertize " " 'display '((space . (:width 0.5)))))
