@@ -319,43 +319,47 @@ shortening the center marker or increasing screen width"))
   (let ((test-str (concat prefix (randcharstr))) (resok -1) (totlen 0) (tries 0)
 	minlen (maxlen 0) (lname (frame-parameter nil 'name)))
     (set-frame-name "")
-    (condition-case nil
-	(while t
-	  (while (< resok 2)
-	    (set-frame-name test-str)
-	    (if (y-or-n-p (concat "Can you see till \""
-				  (if (> (length test-str) 5)
-				      (concat "..." (substring test-str -5))
-				    test-str) "\" "))
-		(if (= resok 1) (setq resok 2) (if (= resok -1) (setq resok 0)))
-	      (if (= resok 0) (setq resok 3) (if (= resok -1) (setq resok 1))))
-	    (or (string= (frame-parameter nil 'name) test-str)
-		(error "Frame title changed unexpectedly, ensure that \
+    (unwind-protect
+	(condition-case nil
+	    (while t
+	      (while (< resok 2)
+		(set-frame-name test-str)
+		(if (y-or-n-p (concat "Can you see till \""
+				      (if (> (length test-str) 5)
+					  (concat "..." (substring test-str -5))
+					test-str) "\" "))
+		    (if (= resok 1) (setq resok 2)
+		      (if (= resok -1) (setq resok 0)))
+		  (if (= resok 0) (setq resok 3)
+		    (if (= resok -1) (setq resok 1))))
+		(or (string= (frame-parameter nil 'name) test-str)
+		    (error "Frame title changed unexpectedly, ensure that \
 no automatic title updation is on"))
-	    (and (not (= resok 2))
-		 (setq test-str
-		       (if (= resok 0)
-			   (concat test-str (randcharstr))
-			 (if (string= test-str "")
-			     (error "Display area too small!")
-			   (substring test-str 0 -1))))))
-	  (setq resok (length test-str))
-	  (setq totlen (+ totlen resok))
-	  (setq tries (1+ tries))
-	  (and (or (not minlen) (< resok minlen)) (setq minlen resok))
-	  (and (> resok maxlen) (setq maxlen resok))
-	  (if (< resok (length prefix))
-	      (error "Prefix too long, try with a shorter one")
-	    (setq test-str (concat prefix (randstr (- resok (length prefix))))))
-	  (setq resok -1))
-      (quit
-       (if (> tries 0)
-	   (message "Number of samples analyzed: %d
+		(and (not (= resok 2))
+		     (setq test-str
+			   (if (= resok 0)
+			       (concat test-str (randcharstr))
+			     (if (string= test-str "")
+				 (error "Display area too small!")
+			       (substring test-str 0 -1))))))
+	      (setq resok (length test-str))
+	      (setq totlen (+ totlen resok))
+	      (setq tries (1+ tries))
+	      (and (or (not minlen) (< resok minlen)) (setq minlen resok))
+	      (and (> resok maxlen) (setq maxlen resok))
+	      (if (< resok (length prefix))
+		  (error "Prefix too long, try with a shorter one")
+		(setq test-str (concat prefix (randstr (- resok (length prefix))))))
+	      (setq resok -1))
+	  (quit
+	   (if (> tries 0)
+	       (display-message-or-buffer
+		(format "Number of samples analyzed: %d
 The maximum title length was %d.
 The minimum was %d.\nMaybe you should rely on %d."
-		    tries maxlen minlen (/ totlen tries))
-	 (message "You should have carried on, try again!"))))
-    (set-frame-name lname)))
+			tries maxlen minlen (/ totlen tries)))
+	     (message "You should have carried on, try again!"))))
+      (set-frame-name lname))))
 
 (require 'easy-mmode)
 
