@@ -604,6 +604,7 @@ The title bar is set to the playtime followed by the current title."
 	  (empi-mode-line-item "#" 'empi-pause "pause")
 	  (empi-mode-line-item "S" 'empi-stop "stop")
 	  (empi-mode-line-item ">" 'empi-next "next")))
+(put 'empi-mode-line-control-string 'risky-local-variable t)
 
 (define-minor-mode empi-mode-line-control-mode
   "Toggle EMPI mode-line control mode.
