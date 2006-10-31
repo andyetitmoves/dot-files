@@ -9,9 +9,9 @@ nback ()
 
 hdir="${SHOME:-$HOME}"
 
-[ -r "$hdir/.proxy" ] || return 0
+[ -r "$hdir/.backup" ] || return 0
 
-. "$hdir/.proxy" || return 0
+. "$hdir/.backup" || return 0
 
 bkdir="${bkdir:-${TMPDIR:-/tmp}}"
 
