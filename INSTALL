@@ -1,0 +1,19 @@
+------------
+Requirements
+------------
+
+This plugin has been developed with Gaim v2 on Debian Linux. It might work with
+previous versions or operating systems, but I am not too sure of that. Do inform
+me if you get it working with other version though :)
+
+Make sure you have the gaim devel package installed.
+
+------------
+Installation
+------------
+
+$ make
+
+and as root...
+
+# make install
