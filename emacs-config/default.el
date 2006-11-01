@@ -3,10 +3,17 @@
 (eval-and-compile
   (defvar ramk-home "/home/ramk")
 
-  (defun add-ramk-subdir (path)
+  (defsubst add-ramk-subdir (path)
     (add-to-list 'load-path (concat ramk-home "/elisp/" path)))
 
-  (mapc 'add-ramk-subdir '("" "libmpdee" "empi" "empi/defs")))
+  (let ((load-shadow-dir (expand-file-name "~/.emacs.d/shadow")))
+    (and (file-directory-p load-shadow-dir)
+	 (add-to-list 'load-path load-shadow-dir)))
+  (mapc 'add-ramk-subdir '("misc" "empi" "empi/defs"))
+  (add-to-list 'load-path (concat ramk-home "/install/devel/libmpdee")))
+
+(defvar query-replace-from-history nil)
+(defvar query-replace-to-history nil)
 
 ;;;; Custom
 
@@ -15,14 +22,26 @@
   ;; If you edit it by hand, you could mess it up, so be careful.
   ;; Your init file should contain only one such instance.
   ;; If there is more than one, they won't work right.
+ '(TeX-PDF-mode t)
+ '(TeX-auto-local "./")
+ '(TeX-auto-save t)
+ '(TeX-auto-untabify t)
+ '(TeX-electric-escape t)
+ '(TeX-insert-braces nil)
+ '(TeX-newline-function (quote reindent-then-newline-and-indent))
+ '(TeX-parse-self t)
  '(abbrev-mode t)
  '(apropos-do-all t)
- '(auto-compression-mode t nil (jka-compr))
- '(auto-image-file-mode t nil (image-file))
+ '(apt-utils-kill-buffer-confirmation-function (quote y-or-n-p))
+ '(apt-utils-show-all-versions t)
+ '(auto-image-file-mode t)
+ '(backup-by-copying-when-mismatch t)
  '(backup-directory-alist (quote (("." . "~/.emacs.d/backup"))))
- '(backward-delete-char-untabify-method nil)
- '(blink-cursor t)
- '(browse-url-browser-function (quote browse-url-w3))
+ '(backward-delete-char-untabify-method (quote hungry))
+ '(bibtex-align-at-equal-sign t)
+ '(bibtex-entry-format (quote (opts-or-alts required-fields numerical-fields page-dashes inherit-booktitle realign last-comma delimiters unify-case)))
+ '(blink-cursor-mode t nil (frame))
+ '(browse-url-browser-function (quote browse-url-firefox))
  '(c-auto-newline t t)
  '(c-basic-offset 4)
  '(c-cleanup-list (quote (brace-catch-brace empty-defun-braces defun-close-semi list-close-comma scope-operator space-before-funcall)))
@@ -35,6 +54,8 @@
  '(calendar-remove-frame-by-deleting t)
  '(case-fold-search t)
  '(column-number-mode t)
+ '(comment-multi-line t)
+ '(comment-style (quote multi-line))
  '(compile-prompt "Compile [%w] ")
  '(confirm-kill-emacs nil)
  '(cperl-auto-newline t)
@@ -45,22 +66,32 @@
  '(cperl-lazy-help-time 2)
  '(cperl-pod-here-scan nil)
  '(cperl-under-as-char t)
+ '(debian-bug-From-address "\"Ramkumar R\" <ramk@cse.iitm.ernet.in>")
+ '(debian-bug-display-help nil)
+ '(debian-bug-download-directory "~/downloads")
+ '(default-input-method "tamil-itrans")
  '(delete-old-versions t)
+ '(delete-selection-mode t)
  '(desktop-base-file-name "desktop")
  '(desktop-globals-to-save nil)
  '(desktop-locals-to-save nil)
  '(desktop-path (quote ("~/.emacs.d")))
- '(desktop-save-mode t nil (desktop))
+ '(desktop-save-mode t)
+ '(dictionary-proxy-port 8080)
+ '(dictionary-proxy-server "127.0.0.1")
+ '(dictionary-use-http-proxy t)
+ '(dig-program "host")
+ '(dired-dwim-target t)
  '(dired-recursive-copies (quote top))
- '(ecb-download-delete-archive nil)
- '(ecb-options-version "2.26")
- '(ecb-tip-of-the-day-file "~/.emacs.d/ecb-tip-of-day")
- '(ecb-windows-width 0.25)
- '(ede-project-placeholder-cache-file "~/.emacs.d/projects.ede")
+ '(display-time-24hr-format t)
+ '(display-time-default-load-average nil)
+ '(display-time-mode t)
+ '(display-time-use-mail-icon t)
+ '(ediff-window-setup-function (quote ediff-setup-windows-plain))
  '(eldoc-mode t t)
  '(elp-reset-after-results nil)
  '(elp-sort-by-function (quote elp-sort-by-total-time))
- '(emacs-lisp-mode-hook (quote (semantic-default-elisp-setup)))
+ '(empi-caption-scroll-threshold 160)
  '(empi-default-player "mpd")
  '(empi-initial-backends (quote (empi-mpd empi-mpc empi-forwarder empi-dummy)))
  '(empi-mode-line-playtime-mode t nil (empi))
@@ -68,65 +99,122 @@
  '(empl-playlist-locked t)
  '(fill-column 80)
  '(global-font-lock-mode t nil (font-lock))
- '(global-semantic-highlight-by-attribute-mode nil nil (semantic-util-modes))
- '(global-semantic-show-unmatched-syntax-mode nil nil (semantic-util-modes))
+ '(gnus-article-button-face (quote button))
  '(gnus-directory "~/.emacs.d/gnus")
+ '(gnus-extract-address-components (quote mail-extract-address-components))
+ '(gnus-fetch-old-headers t)
+ '(gnus-gcc-mark-as-read t)
+ '(gnus-home-directory "~/.emacs.d/")
+ '(gnus-init-file "~/.emacs.d/gnus/init")
+ '(gnus-message-archive-group "nnml:mail.sent")
+ '(gnus-message-replyencrypt t)
+ '(gnus-message-replysign t)
+ '(gnus-read-newsrc-file nil)
+ '(gnus-save-newsrc-file nil)
+ '(gnus-startup-file "~/.emacs.d/gnus/newsrc")
+ '(gnus-thread-sort-functions (quote (gnus-thread-sort-by-number gnus-thread-sort-by-date)))
+ '(gnus-topic-display-empty-topics nil)
+ '(gnus-treat-date-local (quote head))
+ '(gnus-treat-display-x-face (quote head))
+ '(gnus-visible-headers (quote ("^From:" "^Newsgroups:" "^Subject:" "^Date:" "^Followup-To:" "^Reply-To:" "^Organization:" "^Summary:" "^Keywords:" "^To:" "^[BGF]?Cc:" "^Posted-To:" "^Mail-Copies-To:" "^Mail-Followup-To:" "^Apparently-To:" "^Gnus-Warning:" "^Resent-From:" "^X-Sent:" "^User-Agent:" "^X-Mailer:")))
  '(goto-address-url-face (quote bold))
  '(grep-find-prompt "Find [%w] ")
  '(grep-highlight-matches t)
  '(grep-prompt "Grep [%w] ")
- '(hfy-optimisations (quote (merge-adjacent-tags zap-string-links keep-overlays)))
- '(hippie-expand-try-functions-list (quote (try-complete-file-name-partially try-complete-file-name try-expand-all-abbrevs try-expand-list try-expand-line try-expand-dabbrev try-expand-dabbrev-all-buffers try-expand-dabbrev-from-kill try-complete-lisp-symbol-partially try-complete-lisp-symbol)))
- '(ido-mode (quote buffer) nil (ido))
+ '(gud-tooltip-mode t)
+ '(hfy-optimisations (quote (merge-adjacent-tags zap-string-links kill-context-leak div-wrapper keep-overlays)))
+ '(ido-enable-flex-matching t)
+ '(ido-everywhere t)
+ '(ido-mode (quote both) nil (ido))
  '(ido-save-directory-list-file "~/.emacs.d/ido.last")
- '(ido-use-filename-at-point t)
- '(inhibit-startup-message t)
+ '(ido-use-filename-at-point (quote guess))
+ '(ido-use-url-at-point t)
+ '(inhibit-splash-screen t)
  '(ispell-program-name "aspell")
+ '(kept-new-versions 5)
+ '(kept-old-versions 1)
  '(kill-whole-line t)
+ '(lookup-init-file "~/.emacs.d/lookup")
+ '(mail-envelope-from (quote header))
+ '(mail-extr-guess-middle-initial t)
+ '(mail-extr-ignore-realname-equals-mailbox-name nil)
+ '(mail-source-crash-box "~/.emacs.d/gnus/mail-crash-box")
+ '(mail-specify-envelope-from t)
+ '(mail-user-agent (quote gnus-user-agent))
+ '(makefile-electric-keys t)
+ '(mark-even-if-inactive t)
  '(menu-bar-mode nil nil (menu-bar))
+ '(message-directory "~/.mail")
+ '(message-from-style (quote angles))
  '(message-log-max 1000)
- '(mouse-wheel-mode nil nil (mwheel))
- '(next-error-highlight t)
+ '(message-send-mail-function (quote message-smtpmail-send-it))
+ '(message-user-organization "Indian Institute of Technology Madras")
+ '(message-wash-forwarded-subjects t)
+ '(minibuf-isearch-always-with-complete t)
+ '(minibuf-isearch-message-on-right t)
+ '(minibuf-isearch-use-migemo nil)
+ '(mmm-global-mode (quote maybe) nil (mmm-mode))
+ '(mmm-mode-ext-classes-alist (quote ((cperl-mode "" here-doc) (sh-mode "" here-doc) (html-helper-mode "" html-js) (html-helper-mode "" embedded-css))) nil (mmm-mode))
+ '(mmm-mode-string "")
+ '(mouse-highlight 1)
+ '(mouse-wheel-mode t nil (mwheel))
+ '(nnmail-message-id-cache-file "~/.emacs.d/gnus/nnmail-cache")
  '(pc-select-meta-moves-sexps t)
  '(pc-select-selection-keys-only t)
  '(pc-selection-mode t nil (pc-select))
+ '(pgg-default-user-id "\"Ramkumar R\" <andyetitmoves@gmail.com>")
+ '(predictive-auto-learn t)
+ '(predictive-dict-autosave nil)
  '(proj-c++ t)
  '(proj-description "Lab Information Management System")
  '(proj-library t)
  '(proj-name "Lims")
  '(proj-toplevel "~/programs/lims/src/")
  '(proj-use-relative-paths t)
+ '(ps-use-face-background t)
+ '(query-replace-from-history-variable (quote query-replace-from-history))
+ '(query-replace-to-history-variable (quote query-replace-to-history))
+ '(reftex-plug-into-AUCTeX t)
+ '(reftex-save-parse-info t)
+ '(reftex-toc-split-windows-horizontally t)
  '(scroll-bar-mode nil)
- '(semantic-which-function-use-color t)
- '(semanticdb-default-save-directory "~/.emacs.d/semantic-cache")
- '(semanticdb-project-roots (quote ("~/programs")))
- '(session-locals-include (quote (buffer-read-only view-mode)))
+ '(server-mode t)
+ '(session-initialize t nil (session))
+ '(session-locals-include (quote (buffer-read-only view-mode buffer-undo-list)))
  '(session-save-file "~/.emacs.d/session")
  '(session-undo-check -1)
  '(sh-shell-arg (quote ((bash . "-i") (csh . "-f") (pdksh) (ksh88) (rc . "-p") (wksh) (zsh . "-f"))))
- '(shell-command-completion-mode t)
+ '(shell-command-completion-mode t nil (shell-command))
  '(shell-command-on-region-prompt "CmdReg [%w] ")
  '(shell-command-prompt "Cmd [%w] ")
- '(show-paren-mode t nil (paren))
+ '(show-paren-mode t)
  '(show-paren-style (quote expression))
  '(show-trailing-whitespace t)
- '(speedbar-show-unknown-files t)
- '(speedbar-track-mouse-flag t)
- '(speedbar-use-tool-tips-flag nil)
+ '(size-indication-mode t)
+ '(smtpmail-queue-dir "~/.emacs.d/queued-mail/")
+ '(ssl-view-certificate-program-arguments (quote ("x509" "-text" "-inform" "DER")))
+ '(ssl-view-certificate-program-name "openssl")
  '(table-time-before-reformat 0)
  '(table-time-before-update 0)
  '(tempbuf-minimum-timeout 60)
+ '(template-auto-update-disable-regexp "\\.el$")
+ '(template-default-directories (quote ("~/.emacs.d/templates/")))
+ '(template-initialize (quote (auto ffap cc-mode de-html-helper keys)))
  '(thumbs-thumbsdir "~/.emacs.d/thumbs")
- '(tool-bar-mode nil nil (tool-bar))
- '(tooltip-gud-tips-p t nil (tooltip))
+ '(tool-bar-mode nil)
+ '(tooltip-gud-tips-p t t (tooltip))
  '(tooltip-mode t nil (tooltip))
  '(tramp-auto-save-directory "~/.emacs.d/tramp-autosave")
  '(tramp-backup-directory-alist (quote (("." . "~/.emacs.d/backup"))))
+ '(tramp-default-method-alist (quote (("\\`localhost\\'" "\\`root\\'" "sudo"))))
  '(transient-mark-mode t)
  '(truncate-lines t)
+ '(uniquify-buffer-name-style (quote post-forward-angle-brackets) nil (uniquify))
  '(url-automatic-caching t)
  '(user-mail-address "andyetitmoves@gmail.com")
+ '(vc-make-backup-files t)
  '(version-control t)
+ '(view-inhibit-help-message t)
  '(view-read-only t)
  '(view-remove-frame-by-deleting t)
  '(w3-configuration-directory "~/.emacs.d/w3/")
@@ -135,6 +223,7 @@
  '(w3-horizontal-rule-char 45)
  '(w3-use-terminal-characters t)
  '(w3-user-colors-take-precedence t)
+ '(windmove-wrap-around t)
  '(x-select-enable-clipboard t))
 
 (custom-set-faces
@@ -142,24 +231,47 @@
   ;; If you edit it by hand, you could mess it up, so be careful.
   ;; Your init file should contain only one such instance.
   ;; If there is more than one, they won't work right.
- '(default ((((type tty)) (:background "black" :foreground "white")) (t (:background "black" :foreground "white" :slant normal :weight bold :height 101 :width normal :family "adobe-courier"))))
- '(bold ((t (:foreground "lightyellow" :underline t :weight bold :width semi-expanded))))
- '(bold-italic ((t (:foreground "grey80" :slant italic :weight bold :width semi-expanded))))
- '(border ((t (:background "grey70"))) t)
- '(cperl-array-face ((((class color) (background dark)) (:inherit font-lock-variable-name-face :slant italic))))
+ '(default ((t (:background "black" :foreground "white" :weight bold :height 98 :width normal :family "misc-fixed"))))
+ '(bold ((t (:weight extra-bold :height 0.9 :family "verdana"))))
+ '(bold-italic ((t (:inherit (bold italic)))))
+ '(border ((t (:background "grey70"))))
+ '(button ((t (:foreground "yellow1" :underline t))))
+ '(comint-highlight-input ((t (:inherit bold))))
+ '(completions-common-part ((t (:foreground "grey"))))
+ '(completions-first-difference ((t (:foreground "coral"))))
+ '(cperl-array-face ((((class color) (background dark)) (:inherit (font-lock-variable-name-face italic)))))
  '(cperl-hash-face ((((class color) (background dark)) (:inherit font-lock-variable-name-face :underline t))))
- '(cursor ((t (:background "lightgreen"))) t)
- '(fixed-pitch ((t (:family "fixedsys"))))
+ '(cursor ((t (:background "lightgreen"))))
+ '(custom-documentation ((t (:inherit font-lock-doc-face))))
+ '(custom-variable-button ((t (:inherit (bold underline)))))
+ '(escape-glyph ((((background dark)) (:foreground "cyan4"))))
+ '(font-lock-regexp-grouping-backslash ((t (:inherit escape-glyph))))
+ '(font-lock-regexp-grouping-construct ((t (:foreground "yellow"))))
  '(fringe ((((class color) (background dark)) (:background "grey20"))))
+ '(gnus-cite-attribution ((t (:inherit italic))))
+ '(gnus-emphasis-bold ((t (:inherit bold))))
+ '(gnus-emphasis-bold-italic ((t (:inherit (gnus-emphasis-bold gnus-emphasis-italic)))))
+ '(gnus-emphasis-highlight-words ((t (:inherit highlight))))
+ '(gnus-emphasis-italic ((t (:inherit italic))))
+ '(gnus-emphasis-underline-bold ((t (:inherit (gnus-emphasis-underline gnus-emphasis-bold)))))
+ '(gnus-emphasis-underline-bold-italic ((t (:inherit (gnus-emphasis-underline gnus-emphasis-bold gnus-emphasis-italic)))))
+ '(gnus-emphasis-underline-italic ((t (:inherit (gnus-emphasis-underline gnus-emphasis-italic)))))
+ '(gnus-header-content ((t (:inherit italic :foreground "forest green"))))
+ '(gnus-header-newsgroups ((t (:inherit italic :foreground "yellow"))))
+ '(gnus-signature ((t (:foreground "CadetBlue"))))
  '(header-line ((((class color grayscale) (background dark)) (:inherit mode-line :background "grey30" :box (:line-width 4 :color "cyan" :style released-button) :width semi-expanded))))
  '(highlight ((((class color) (background dark)) (:background "cyan" :foreground "darkblue"))))
- '(highlight-changes-delete-face ((((class color)) (:foreground "yellow" :underline t))))
- '(highlight-changes-face ((((class color)) (:foreground "lightyellow"))))
- '(info-node ((((class color) (background dark)) (:foreground "cyan" :weight bold))))
- '(info-xref ((t (:foreground "yellow" :underline t :weight bold))))
+ '(highlight-beyond-fill-column-face ((t (:background "grey20"))))
+ '(highlight-changes ((((min-colors 88) (class color)) (:foreground "lightgoldenrod"))))
+ '(highlight-changes-delete ((((class color)) (:foreground "yellow" :underline t))))
+ '(highlight-current-line ((t (:background "grey20"))))
+ '(ido-first-match ((t (:foreground "yellow"))))
+ '(info-node ((((class color) (background dark)) (:inherit bold :foreground "cyan"))))
+ '(italic ((((supports :underline t)) (:slant italic :height 0.9 :family "verdana"))))
  '(menu ((((type x-toolkit)) (:background "black" :foreground "cyan"))))
- '(mode-line ((((type x w32 mac) (class color)) (:foreground "cyan" :box (:line-width -1 :style released-button)))))
- '(mouse ((t (:background "white" :foreground "blue"))) t)
+ '(mmm-default-submode-face ((t (:background "gray10"))))
+ '(mode-line ((t (:foreground "cyan" :box (:line-width -1 :style released-button)))))
+ '(mode-line-buffer-id ((t (:foreground "gold"))))
  '(next-error ((t (:background "yellow" :foreground "red"))))
  '(region ((t (:background "cyan" :foreground "darkblue"))))
  '(rfcview-headname-face ((t (:inherit info-node))))
@@ -167,22 +279,41 @@
  '(rfcview-mouseover-face ((t (:inherit highlight))))
  '(rfcview-rfcnum-face ((t (:foreground "orange"))))
  '(rfcview-stdnum-face ((t (:foreground "lightsteelblue"))))
- '(rfcview-title-face ((t (:inherit (Info-title-2-face bold)))))
- '(scroll-bar ((t (:background "grey30" :foreground "lightyellow"))) t)
- '(semantic-tag-boundary-face ((((class color) (background dark)) (:weight semi-bold :width semi-expanded))))
- '(show-paren-match-face ((((class color)) (:background "grey28"))))
- '(show-paren-mismatch-face ((((class color)) (:background "lightpink" :foreground "white"))))
- '(table-cell-face ((t (:background "grey10" :foreground "cyan" :inverse-video nil))))
- '(tooltip ((((class color)) (:background "black" :foreground "green" :weight bold))))
- '(trailing-whitespace ((t (:background "grey20"))))
- '(underline ((t (:foreground "lightblue" :underline t)))))
+ '(sh-heredoc ((((min-colors 88) (class color) (background dark)) (:inherit bold :foreground "yellow1"))))
+ '(show-paren-match ((((class color)) (:background "grey28"))))
+ '(show-paren-mismatch ((((class color)) (:background "lightpink" :foreground "darkblue"))))
+ '(table-cell ((t (:background "grey10" :foreground "skyblue"))))
+ '(template-message-face ((t (:inherit bold))))
+ '(todoo-item-header-face ((t (:inherit bold :foreground "goldenrod"))))
+ '(tooltip ((t (:inherit variable-pitch :background "black" :foreground "green"))))
+ '(trailing-whitespace ((t (:background "grey20")))))
+
+;;;; Font Setup
+
+;;; Terminal specific
 
 (custom-theme-set-faces
  'user
  '(default
     ((((type tty)) (:background "black" :foreground "white"))
      (t (:background "black" :foreground "white" :slant normal :weight bold
-		     :height 101 :width normal :family "adobe-courier")))))
+		     :height 120 :width normal :family "fixed")))))
+
+;;; Language specific
+
+;; Method:
+;; Open gucharmap to find the beginning and ending character codes
+;; Locate a font for the language and set
+
+(when (eq window-system 'x)
+  (set-fontset-font
+   nil
+   (cons (decode-char 'ucs #x0900) (decode-char 'ucs #x097f))
+   "-unknown-gargi-medium-r-normal--0-0-0-0-p-0-iso10646-1")
+  (set-fontset-font
+   nil
+   (cons (decode-char 'ucs #x0b80) (decode-char 'ucs #x0bff))
+   "-unknown-tscu times-medium-r-normal--0-0-0-0-p-0-iso10646-1"))
 
 ;;;; Disabled
 
@@ -195,9 +326,7 @@
      (or (file-writable-p generated-autoload-file)
 	 (setq generated-autoload-file "~/.emacs.d/loaddefs.el")))
 
-(and (file-exists-p "~/.emacs.d/loaddefs.el")
-     (let ((load-path (cons "~/.emacs.d" load-path)))
-       (load "loaddefs")))
+(load "~/.emacs.d/loaddefs" t)
 
 ;;;; Binding Helpers
 
@@ -209,12 +338,9 @@
 
 (defun smart-home ()
   (interactive)
-  (if (bolp)
-      (back-to-indentation)
-    (let ((bpos (line-beginning-position)) nwpos)
-      (or (setq nwpos (string-match "[^ \t]" (buffer-substring bpos (point))))
-	  (setq nwpos 0))
-      (goto-char (+ bpos nwpos)))))
+  (let ((point (point)))
+    (back-to-indentation)
+    (and (= point (point)) (beginning-of-line))))
 
 (defun switch-to-other-buffer ()
   (interactive)
@@ -224,11 +350,10 @@
   (interactive (list (read-library "Find Library: ")))
   (find-library lib))
 
-(or (fboundp 'define-keys)
-    (defun define-keys (map &rest args)
-      (while (cadr args)
-	(define-key map (car args) (cadr args))
-	(setq args (cddr args)))))
+(defun define-keys (map &rest args)
+  (while (cadr args)
+    (define-key map (car args) (cadr args))
+    (setq args (cddr args))))
 
 ;;;; Bindings
 
@@ -238,10 +363,12 @@
   [remap backward-delete-char-untabify]	'hi-backspace
   [remap beginning-of-line]		'smart-home
   [remap find-library]	                'read-library-find-library
+  [remap newline]			'reindent-then-newline-and-indent
   [?\t]					'hippie-expand
   [C-f3]				'find-grep-dired
   [f4]					'kill-this-buffer
   [(control ?x) ?k]			'kill-this-buffer
+  [(control f5)]			'font-lock-fontify-buffer
   [f7]					'compile
   [(control ?`)]			'indent-according-to-mode
   [insert]				'back-to-indentation
@@ -249,7 +376,6 @@
   [(control ?n)]			'open-line
   [(control ?o)]			'other-window
   [C-escape]				'switch-to-other-buffer
-  [(control ?a)]			'mark-whole-buffer
   [?\(]					'insert-parentheses
   [(meta ?f)]				'find-function
   [(meta ?v)]				'find-variable
@@ -260,21 +386,29 @@
   [(control mouse-3)]			'mouse-save-then-kill
   [(control return)]			'source-jump-at-point
   [M-return]				'show-doc-at-point
+  [(meta ?d)]				'dictionary-lookup-definition
+  [XF86Back]				'undo
+  [XF86Forward]				'redo
+  [(control super up)]			'windmove-up
+  [(control super down)]		'windmove-down
+  [(control super left)]		'windmove-left
+  [(control super right)]		'windmove-right
   )
 
-(eval-after-load "empi" '(global-set-key [(control ?e)] empi-map))
+(eval-after-load "empi"
+  '(progn
+     (global-set-key [(control e)] empi-map)
+     (define-key empi-map [(control e)] 'move-end-of-line)))
 
-(require 'ffap)
-(eval (cons 'progn (cons '(global-set-key [M-S-mouse-3] 'ffap-at-mouse)
-			 (cdr ffap-bindings))))
+;; (require 'ffap)
+;; (eval (cons 'progn (cons '(global-set-key [M-S-mouse-3] 'ffap-at-mouse)
+;; 			 (cdr ffap-bindings))))
 
 (define-keys emacs-lisp-mode-map
   [?\t]			'hippie-expand
-  [return]		'newline-and-indent
   [f8]			'emacs-lisp-byte-compile
   [(control f8)]	'emacs-lisp-byte-compile-and-load
   [f9]			'edebug-defun
-  [return]		'newline-and-indent
   )
 
 (defvar view-mode-map)
@@ -291,9 +425,27 @@
 
 (eval-after-load "view" '(view-after-load-hook))
 
+(eval-after-load "tex"
+  '(define-keys TeX-mode-map
+     [(control return)]	'reftex-view-crossref))
+
+(add-hook 'LaTeX-mode-hook
+	  '(lambda ()
+	     (local-set-key [remap fill-paragraph] 'LaTeX-fill-paragraph)))
+
 ;;; isearch quits on backspace, if not for the code below
 ;;; due to a global key binding to hi-backspace above.
 (define-key isearch-mode-map [backspace] 'isearch-delete-char)
+
+(eval-after-load "minibuf-isearch"
+  '(define-key minibuf-isearch-mode-map [backspace] 'minibuf-isearch-backspace))
+
+(add-hook 'ido-setup-hook '(lambda ()
+			     (define-keys ido-completion-map
+			       [up]		'ido-prev-work-directory
+			       [down]		'ido-next-work-directory
+			       [(meta up)]	'ido-prev-match-dir
+			       [(meta down)]	'ido-next-match-dir)))
 
 (defvar dired-file-visit-hook nil)
 (defvar dired-from-buffer)
@@ -352,6 +504,15 @@
 
 (eval-after-load "cperl-mode" '(cperl-mode-after-load-hook))
 
+(defvar dictionary-mode-map)
+(defun dictionary-after-load-hook ()
+  (define-key dictionary-mode-map [mouse-1] 'link-mouse-click)
+  (add-hook 'dictionary-mode-hook
+	    '(lambda ()
+	       (define-key view-mode-map [return] 'link-selected))))
+
+(eval-after-load "dictionary" '(dictionary-after-load-hook))
+
 (defvar xray-map
   (let ((map (make-sparse-keymap)))
     (define-keys map
@@ -375,6 +536,21 @@
 (add-to-list 'auto-mode-alist '("\\.tcc$" . c++-mode))
 (add-to-list 'auto-mode-alist '("\\.elc$" . emacs-lisp-mode))
 (add-to-list 'auto-mode-alist '("\\.svn-base$" nil t))
+(add-to-list 'auto-mode-alist '("\\.tpl$" nil t))
+
+(eval-when-compile (require 'sh-script))
+
+(defun shell-zsh-mode ()
+  (sh-mode)
+  (sh-set-shell "zsh"))
+
+(defun shell-zsh-script-mode ()
+  (interactive)
+  (shell-zsh-mode)
+  (setq sh-basic-offset 2))
+
+(add-to-list 'magic-mode-alist
+	     '("#\\(?:autoload\\|compdef\\)" . shell-zsh-script-mode))
 
 (defun executable-file-p (filename)
   (let ((ext (file-name-extension filename)))
@@ -397,27 +573,32 @@
   )
 (eval-after-load "shell-convert" '(shell-conv-after-load-hook))
 
-(fset 'perl-mode 'cperl-mode)
+(defalias 'perl-mode 'cperl-mode)
 
 ;;;; File / Mode hooks
 
-(add-hook 'find-file-hooks 'shell-conv-find-file-hook)
+;; (add-hook 'find-file-hooks 'shell-conv-find-file-hook)
 
 ;;;(add-hook 'find-file-hooks 'autovc-find-file-hook)
 
 (eval-when-compile (require 'cc-mode))
 (add-hook 'c-mode-common-hook
 	  (lambda ()
-	    (c-toggle-auto-hungry-state 1)))
+	    (c-toggle-auto-hungry-state 1)
+	    (highlight-beyond-fill-column)))
 (add-hook 'c-mode-hook (lambda () (setq c-basic-offset 8)))
+
+(add-hook 'text-mode-hook 'turn-on-auto-fill)
 
 (add-hook
  'emacs-lisp-mode-hook
  '(lambda ()
     (if (and buffer-file-name
-	     (string= "elc" (downcase (file-name-extension buffer-file-name))))
+	     (string-equal
+	      "elc" (downcase (or (file-name-extension buffer-file-name) ""))))
 	(toggle-read-only 1)
-      (auto-fill-mode))))
+      (highlight-beyond-fill-column)
+      (turn-on-auto-fill))))
 
 (defun disable-trw ()
   (interactive)
@@ -425,12 +606,21 @@
 
 (add-hook 'term-mode-hook 'disable-trw)
 (add-hook 'custom-mode-hook 'disable-trw)
+(add-hook 'w3-mode-hook 'disable-trw)
+(add-hook 'gnus-group-mode-hook 'disable-trw)
 
-;; The option to scan for pods at startup doesn't seem to work
-(add-hook 'cperl-mode-hook
+(add-hook 'gnus-article-mode-hook
 	  '(lambda ()
-	     (cperl-find-pods-heres)
-	     (font-lock-fontify-buffer)))
+	     (setq truncate-lines nil)
+	     (setq show-trailing-whitespace nil)))
+
+(add-hook 'message-mode-hook
+	  '(lambda ()
+	     (setq fill-column 68)
+	     (setq truncate-lines nil)
+	     (setq show-trailing-whitespace nil)))
+
+(add-hook 'LaTeX-mode-hook 'turn-on-reftex)
 
 ;;;; Editing
 
@@ -461,8 +651,8 @@
 
 (defvar selective-buflist-exclusion-regexp
   (eval-when-compile
-    (require 'make-regexp)
-    (make-regexp '("\\*Messages?\\*"))))
+    (require 'regexp-opt)
+    (regexp-opt '("*Message*" "*Messages*" "*tramp"))))
 
 (add-hook 'ido-make-buffer-list-hook
 	  '(lambda ()
@@ -474,10 +664,10 @@
 
 (defun user-buffer-list ()
   (let (buflist)
-    (mapcar '(lambda (item)
-	       (or (string= (substring (buffer-name item) 0 1) " ")
-		   (setq buflist (cons item buflist))))
-	    (buffer-list)) buflist))
+    (mapc '(lambda (item)
+	     (or (string= (substring (buffer-name item) 0 1) " ")
+		 (setq buflist (cons item buflist))))
+	  (buffer-list)) buflist))
 
 (global-set-key [(control tab)] 'ibs-select)
 (defvar ibs-cycle-buffer-function)
@@ -485,9 +675,9 @@
 
 (defvar tempbuf-exclusion-regexp
   (eval-when-compile
-    (require 'make-regexp)
-    (make-regexp '("\\*Messages?\\*" "\\*scratch\\*" "\\*Echo Area"
-		   "\\*Minibuf-" "\\*info tag table\\*" "\\*empl-buffer\\*"))))
+    (require 'regexp-opt)
+    (regexp-opt '("*Message*" "*Messages*" "*scratch*" "*Echo Area"
+		  "*Minibuf-" "*info tag table*" "*empl-buffer*"))))
 
 (defvar tempbuf-inclusion-regexp "^\\*.*\\*$")
 
@@ -508,9 +698,9 @@
 		     (turn-on-tempbuf-mode)))))
 	  (buffer-list))))
 
-(run-with-idle-timer 2 t 'make-all-temp-bufs)
+;(run-with-idle-timer 2 t 'make-all-temp-bufs)
 
-(fset 'orig-quit-window (symbol-function 'quit-window))
+(defalias 'orig-quit-window (symbol-function 'quit-window))
 (defun quit-window (&optional nokill window)
   (interactive "P")
   (orig-quit-window (not nokill) window))
@@ -527,32 +717,52 @@
 (defun session-locals-predicate (var buf)
   (let ((orig (intern-soft (concat "buffer-original-" (symbol-name var)))))
     (and (local-variable-p var)
-	 (or (not orig)
-	     (not (boundp orig))
-	     (not (equal (symbol-value orig) (symbol-value var)))))))
+	 (not (and orig (boundp orig)
+		   (equal (symbol-value orig) (symbol-value var)))))))
+
+(defun session-before-store-buffer ()
+  (let ((cur buffer-undo-list) last)
+    (while cur
+      (if (and (listp cur) (listp (car cur))
+	       (or (markerp (caar cur))
+		   (and (eq (caar cur) 'apply)
+			(condition-case nil
+			    (progn
+			      (read (prin1-to-string (car cur))) nil)
+			  (error t)))))
+	  (if last
+	      (setcdr last (cdr cur))
+	    (setq buffer-undo-list (cdr buffer-undo-list)))
+	(setq last cur))
+      (setq cur (cdr-safe cur)))))
+
+(eval-when-compile (require 'session))
 
 (setq session-locals-predicate 'session-locals-predicate)
 
+(setq mmm-global-classes '(universal file-variables))
+
 ;;;; Files
 
-(eval-after-load "auto-insert-tkld"
-  '(progn
-     (setq auto-insert-automatically 'ask)
-     (require 'proj)
-     (delete '("[]>:/]\\..*emacs" . "Emacs Lisp") auto-insert-alist)))
+(defvar read-only-file-patterns '("/home/ramk/install/vc/emacs/.*"))
 
-(setq auto-insert-exclude
-      (eval-when-compile
-	(require 'make-regexp)
-	(make-regexp '("desktop"))))
+(defun make-specific-files-read-only ()
+  (let ((patterns read-only-file-patterns) (case-fold-search nil))
+    (catch 'pattern-matched
+      (while patterns
+	(and (stringp (car patterns))
+	     (string-match (car patterns) buffer-file-name)
+	     (toggle-read-only 1)
+	     (throw 'pattern-matched nil))
+	(setq patterns (cdr patterns))))))
+
+(add-hook 'find-file-hooks 'make-specific-files-read-only)
+
+(require 'proj)
+(template-initialize)
 
 (defvar backup-exclude-dirs
   (list temporary-file-directory small-temporary-file-directory))
-
-(and (stringp semanticdb-default-save-directory)
-     (setq backup-exclude-dirs
-	   (cons (expand-file-name semanticdb-default-save-directory)
-		 backup-exclude-dirs)))
 
 (defun backup-name-in-excluded-dir-p (name)
   (let ((dir backup-exclude-dirs))
@@ -566,17 +776,66 @@
 	(setq dir (cdr dir))) t)))
 (setq backup-enable-predicate 'backup-name-in-excluded-dir-p)
 
+(eval-when-compile (require 'tramp))
+
+(defun make-backup-file-name-rebase-directory (file)
+  (if (memq system-type '(windows-nt ms-dos cygwin vax-vms axp-vms))
+      ;; Steer clear of other OS's
+      (let (make-backup-file-name-function)
+	(make-backup-file-name file))
+    (let ((alist backup-directory-alist) elt backup-directory rootdir)
+      (while alist
+	(setq elt (car alist))
+	(if (string-match (car elt) file)
+	    (setq backup-directory (cdr elt)
+		  alist nil)
+	  (setq alist (cdr alist))))
+      (or (file-name-absolute-p file)
+	  (setq file (expand-file-name file)))
+      (setq rootdir
+	    (if (and (fboundp 'tramp-tramp-file-p) (tramp-tramp-file-p file))
+		(with-parsed-tramp-file-name file nil
+		  (tramp-make-tramp-file-name
+		   multi-method method user host "/"))
+	      "/"))
+      (or (file-name-absolute-p file)
+	  (setq file (expand-file-name file)))
+      (setq backup-directory
+	    (expand-file-name
+	     (file-relative-name
+	      (file-name-directory file) rootdir) backup-directory))
+      (condition-case nil
+	  (make-directory backup-directory 'parents)
+	(file-error (setq backup-directory nil)))
+      (if backup-directory
+	  (concat (expand-file-name (file-name-nondirectory file)
+				    backup-directory) "~") file))))
+
+(setq make-backup-file-name-function 'make-backup-file-name-rebase-directory)
+
+(defadvice find-function-noselect
+  (before strip-definition-advice (function) activate preactivate)
+  "Modify `find-function' to accomodate advised subrs"
+  (when (and (symbolp function) (ad-is-advised function))
+    (let ((def (ad-get-orig-definition function)))
+      (when (and def (or (eq (car-safe def) 'autoload) (subrp def)))
+	(setq function (make-symbol (symbol-name function)))
+	(fset function def)))))
+
 ;;;; Specific package init
 
 ;; Silence the compiler
 (defvar dired-deletion-confirmer)
 (setq dired-deletion-confirmer 'y-or-n-p)
 
+(eval-when-compile (defvar tooltip-gud-tips-p))
 (and window-system (setq tooltip-gud-tips-p t))
 
+(setq url-configuration-directory "~/.emacs.d/url")
+
 (setq compilation-environment
-      '("CPPFLAGS=" "CFLAGS=-march=pentium4 -mfpmath=sse"
-	"CXXFLAGS=-march=pentium4 -mfpmath=sse" "LDFLAGS="))
+      '("CPPFLAGS=" "CFLAGS=-march=athlon-xp -mfpmath=sse -ggdb3"
+	"CXXFLAGS=-march=athlon-xp -mfpmath=sse -ggdb3" "LDFLAGS="))
 
 (defun doxymacs-add-project (name)
   (let ((home (expand-file-name "~")))
@@ -585,21 +844,35 @@
 		       (concat home "/.doxygen.tags/" name ".xml")
 		       (concat "file://" home "/programs/" name "/doc/")))))
 
-(setq mf--source-file-extension "cc")
-
+(eval-when-compile (defvar mpg123-startup-volume))
 (setq mpg123-startup-volume nil)
+
+;; Shut up Mr. Compiler!
+(defvar tramp-methods)
+
+(defun tramp-methods-parameter-set (method param value)
+  (let ((valpos (cdr-safe (assq param (cdr (assoc method tramp-methods))))))
+    (and (consp valpos) (setcar valpos value))))
+
+(eval-after-load "tramp"
+  '(progn
+     (tramp-methods-parameter-set "su" 'tramp-login-args '("%u" "-s" "/bin/sh"))
+     (tramp-methods-parameter-set
+      "sudo" 'tramp-login-args '("-u" "%u" "-p" "Password:" "/bin/sh"))))
 
 (eval-after-load "rfcview" '(require 'info))
 
 ;; For with-unlogged-message
 (eval-when-compile (require 'empi-core))
 
+(defvar fortune-last)
+
 (defun display-fortune ()
   (interactive)
   (with-temp-buffer
-    (call-process "/usr/local/games/fortune" nil t nil)
-    (with-unlogged-message
-     (display-message-or-buffer (buffer-string)))))
+    (call-process "/usr/games/fortune" nil t nil "-a")
+    (setq fortune-last (buffer-string))
+    (with-unlogged-message (display-message-or-buffer fortune-last))))
 
 (run-with-idle-timer 60 t 'display-fortune)
 
@@ -608,5 +881,7 @@
 (add-hook 'after-init-hook
 	  '(lambda ()
 	     (add-hook 'find-file-hook 'save-protected-buffer-variables t)
-	     (session-initialize)
+	     (add-hook 'kill-buffer-hook 'session-before-store-buffer)
 	     (setq safe-load-compile-end-prompt nil)))
+
+(require 'files-patch)
