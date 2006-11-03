@@ -4,7 +4,11 @@ local hdir bkdir rbkdir ropts
 
 nback ()
 {
-    tar -jcf "$bkdir/$1.tar.bz2" -C "$2" "$@" || echo "Backup $1 failed" >&2;
+    local name bdir
+    name=$1
+    bdir=$2
+    shift 2
+    tar -jcf "$bkdir/$name.tar.bz2" -C "$bdir" "$@" || echo "Backup $name failed" >&2;
 }
 
 hdir="${SHOME:-$HOME}"
