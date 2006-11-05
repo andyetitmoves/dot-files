@@ -10,7 +10,7 @@ local entries subdirs files subdir file
 entries=(${(M)${(f)"$(<${1}CVS/Entries)"}:#*/*/*})
 subdirs=(${${${(M)entries:#D*}#*/}%%/*})
 files=(${${${entries}#*/}%%/*})
-for file in $1.#*~${1}CVS(:t); do
+for file in $1.#*~${1}CVS(N:t); do
     [[ ${#${(M)files:#${(q)file}}} -eq 0 ]] && echo $1$file
 done
 for subdir in $subdirs; do
