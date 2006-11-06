@@ -1,0 +1,23 @@
+#!/bin/zsh
+
+if [[ $# != 1 ]]; then
+    echo Usage: $0 file >&2
+    return 1
+fi
+
+local prog
+
+case $1 in
+    *.gz)
+	prog=gunzip
+	;;
+    *.bz2)
+	prog=bunzip2
+	;;
+    *)
+	echo Unknown file type for file $1 >&2
+	return 2
+	;;
+esac
+
+evince =($prog -c $1)
