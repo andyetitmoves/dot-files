@@ -1,0 +1,20 @@
+#!/bin/zsh
+
+typeset -a args
+
+[[ $argv[$#-1] != -- ]] && set -- "$@" --
+
+while (( $# )); do
+    if [[ $1 == -- ]]; then
+	if [[ $#args -gt 1 ]]; then
+	    sleep $args[1]
+	    ${args[2,-1]}
+	else
+	    echo Malformed command: $args >&2
+	fi
+	args=()
+    else
+	args+=($1)
+    fi
+    shift
+done
