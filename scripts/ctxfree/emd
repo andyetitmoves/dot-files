@@ -1,0 +1,83 @@
+#!/bin/sh
+
+local prog quiet profile control excludes \
+    mirrordir mirrordir_opts savelog savelog_opts
+
+prog="${0##*/}"
+
+print_help () {
+    cat <<EOF
+Usage: $prog [OPTION]... PROFILE
+A profile based wrapper around mirrordir
+
+  -q           exit without error if the profile directory is missing
+  -h           print this help
+
+PROFILE should be a writable directory
+PROFILE/control should be the control directory or a link to the same
+PROFILE/exclude if present provides the paths in control to exclude
+PROFILE/conf if present is a shell-script fragment used as configuration
+  The following variables if defined in that are used:
+    mirrordir: The program used to mirror the directory
+    mirrordir_opts: Additional options passed to mirrordir
+    savelog: The program used to rotate logs
+    savelog_opts: Additional options passed to savelog
+
+Report bugs to R.Ramkumar <andyetitmoves@gmail.com>
+EOF
+}
+
+if [ "$1" = -q ]; then
+    quiet=yes
+    shift
+elif [ "$1" = -h ]; then
+    print_help
+    return 0
+fi
+
+if [ -z "$1" ]; then
+    print_help >&2
+    return 1
+fi
+
+profile="$1"
+
+if ! [ -d "$profile" ]; then
+    if [ "$quiet" = yes ]; then
+	return 0
+    else
+	echo Profile $profile not accessible >&2
+	return 2
+    fi
+fi
+
+control="$(readlink -ef "$profile/control")"
+
+if ! [ -d "$control" ]; then
+    echo Invalid control directory $control >&2
+    return 3
+fi
+
+if ! mkdir -p "$profile/backup"; then
+    echo Unable to create backup directory >&2
+    return 4
+fi
+
+excludes="$profile/exclude"
+
+[ -r "$excludes" ] || excludes=/dev/null
+
+[ -r "$profile/conf" ] && . "$profile/conf"
+
+${savelog:-savelog} -q -c 5 $savelog_opts "$profile/log"
+
+echo_exec () {
+    echo "$@"
+    "$@"
+}
+
+echo_exec ${mirrordir:-mirrordir} --verbose $mirrordir_opts \
+    --exclude-from "$excludes" "$control" "$profile/backup" \
+    > "$profile/log" 2>&1
+
+unset -f echo_exec print_help
