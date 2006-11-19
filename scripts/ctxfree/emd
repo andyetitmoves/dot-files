@@ -1,6 +1,6 @@
 #!/bin/sh
 
-local prog quiet profile control excludes \
+local prog quiet profile control excludes res \
     mirrordir mirrordir_opts savelog savelog_opts
 
 prog="${0##*/}"
@@ -80,4 +80,8 @@ echo_exec ${mirrordir:-mirrordir} --verbose $mirrordir_opts \
     --exclude-from "$excludes" "$control" "$profile/backup" \
     > "$profile/log" 2>&1
 
+res=$?
+
 unset -f echo_exec print_help
+
+return $res
