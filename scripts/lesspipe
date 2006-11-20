@@ -197,8 +197,9 @@ if [ $# -eq 1 ] ; then
 				;;
 
 			*.o|*.a|*.so|*.so.*)
-				if [ -x "`which nm`" ]; then nm "$1"
-				else echo "No nm available"; fi ;;
+				if [ -x "`which readelf`" ]; then readelf -a "$1"
+				elif [ -x "`which nm`" ]; then nm "$1"
+				else echo "No readelf or nm available"; fi ;;
 
 			*.bin|*.raw)
 				if [ -x "`which isoinfo`" ]; then
