@@ -121,7 +121,7 @@ typeset -A modinfo midesc vcfilter
 
 midesc=(
     P "source changed"
-    C "has conflicting files"
+    C "CONFLICTING"
     U "clean"
     D "possibly dirty dependencies"
     F "compilation requested"
