@@ -272,6 +272,10 @@ if [ $# -eq 1 ] ; then
 				elif [ -x "`which unzoo`" ]; then unzoo -l "$1";
 				else echo "No unzoo or zoo available"; fi ;;
 
+			*.gpg)
+				if [ -x "`which gpg`" ]; then gpg -d "$1";
+				else echo "No gpg available"; fi ;;
+
 		esac
 	) 2>/dev/null
 
