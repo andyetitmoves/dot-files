@@ -26,7 +26,7 @@ sub field_valid {
 }
 
 my $cols = 80;
-my $flush = 5;
+my $flush = 0;
 my ($mhost, $mport);
 my $fldsep = ' - ';
 my $dumpfile;
