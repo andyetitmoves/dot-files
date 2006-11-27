@@ -21,7 +21,7 @@ sub input_mozhist {
 #    foreach ($fcont =~ m,=(https?://[^)?]*)\??[^)]*\),mg) {
     foreach ($fcont =~ m,=([^:)]*://[^)]*)\),mg) {
 	s/\\\n//g;
-	s/\?.*//g;
+	s/[#?].*//g;
 	s,/$,,;
 #	print STDERR "$_\n";
 	$matches->{$_}++ ;
