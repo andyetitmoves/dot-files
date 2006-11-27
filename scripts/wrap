@@ -1,0 +1,106 @@
+#!/usr/bin/perl
+
+use warnings;
+use strict;
+
+use Text::Tabs;
+
+my $columns = 76;			# <= screen width
+my $debug = 0;
+my @break = ();
+my $huge = 'wrap';			# alternatively: 'die' or 'overflow'
+my $unexpand = 1;
+my $tabstop = 8;
+my $separator = "\n";
+my $separator2 = undef;
+
+sub wrap {
+    my ($ip, $xp, @t) = @_;
+
+    local($Text::Tabs::tabstop) = $tabstop;
+    my $r = "";
+    my $tail = pop(@t);
+    my $t = expand(join("", (map { /\s+\z/ ? ( $_ ) : ($_, ' ') } @t), $tail));
+    my $lead = $ip;
+    my $ll = $columns - length(expand($ip)) - 1;
+    $ll = 0 if $ll < 0;
+    my $nll = $columns - length(expand($xp)) - 1;
+    my $nl = "";
+    my $remainder = "";
+
+    use re 'taint';
+
+    pos($t) = 0;
+    while ($t !~ /\G\s*\Z/gc) {
+	print "Text remaining: ".substr($t, pos($t))."\n" if $debug;
+	my $broken;
+	foreach (@break) {
+	    my $delim = $_;
+	    if ($t =~ /\G([^\n]{0,$ll})($delim|\n*\z)/xmgc) {
+		print "Matching against `$delim' succeeded\n" if $debug;
+		$broken=1;
+		$r .= $unexpand
+		  ? unexpand($nl . $lead . $1)
+		    : $nl . $lead . $1;
+		$remainder = $2;
+		last;
+	    }
+	    print "Matching against `$delim' failed\n" if $debug;
+	}
+	unless (defined $broken) {
+	    if ($huge eq 'wrap' && $t =~ /\G([^\n]{$ll})/gc) {
+		$r .= $unexpand
+		  ? unexpand($nl . $lead . $1)
+		    : $nl . $lead . $1;
+		$remainder = defined($separator2) ? $separator2 : $separator;
+	    } elsif ($huge eq 'overflow' && $t =~ /\G([^\n]*?)($break[0]|\z)/xmgc) {
+		$r .= $unexpand
+		  ? unexpand($nl . $lead . $1)
+		    : $nl . $lead . $1;
+		$remainder = $2;
+	    } elsif ($huge eq 'die') {
+		die "couldn't wrap '$t'";
+	    } else {
+		die "This shouldn't happen";
+	    }
+	}
+	$lead = $xp;
+	$ll = $nll;
+	$nl = defined($separator2)
+	  ? ($remainder eq "\n"
+	     ? "\n"
+	     : $separator2)
+	    : $separator;
+    }
+    $r .= $remainder;
+
+    print "-----------$r---------\n" if $debug;
+
+    print "Finish up with '$lead'\n" if $debug;
+
+    $r .= $lead . substr($t, pos($t), length($t)-pos($t))
+      if pos($t) ne length($t);
+
+    print "-----------$r---------\n" if $debug;;
+
+    return $r;
+}
+
+use Getopt::Long;
+
+Getopt::Long::Configure ('gnu_getopt');
+
+GetOptions ('columns|c=i'		=> \$columns,
+	    'debug|d!'			=> \$debug,
+	    'break|b=s'			=> \@break,
+	    'huge|h=s'			=> \$huge,
+	    'unexpand|x!'		=> \$unexpand,
+	    'tabstop|t=i'		=> \$tabstop,
+	    'primary-separator|S=s'	=> \$separator,
+	    'secondary-separator|s=s'	=> \$separator2,
+	   ) or die 'Unable to parse command line';
+
+@break = ('\s') unless $#break;
+
+$/ = undef;
+print (wrap "", "", <>);
