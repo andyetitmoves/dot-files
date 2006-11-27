@@ -1,0 +1,4 @@
+#!/bin/sh
+# Wrapper around xpdf to make running presentations easier
+
+exec xpdf -cfg "$HOME/.xpdf/pres.conf" -fullscreen "$@"
