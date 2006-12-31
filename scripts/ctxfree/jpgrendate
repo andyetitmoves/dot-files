@@ -1,0 +1,14 @@
+#!/bin/zsh
+
+local stamp file nfile ext
+
+coproc identify -format '%[EXIF:DateTime]\n%i' "./$^@"
+
+while read -p stamp && read -p file; do
+    if [[ -n $stamp ]] && [[ -n $file ]]; then
+	ext="${file:e}"
+	[[ -n $ext ]] && ext=".$ext"
+	nfile="${file:h}/${(j:-:)${(s: :)stamp}}$ext"
+	[[ $file != $nfile ]] && mv -i $file $nfile
+    fi
+done
