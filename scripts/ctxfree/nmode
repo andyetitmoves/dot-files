@@ -1,5 +1,11 @@
 #!/bin/sh
 #Small script to initialize all files/dirs recursively to sane permissions.
 
-find "${1:-.}" -type f -print0 | xargs -0 chmod 644
-find "${1:-.}" -type d -print0 | xargs -0 chmod 755
+[ $# -eq 0 ] && set -- .
+
+local dir
+
+for dir in "$@"; do
+    find "$dir" -type f -print0 | xargs -0 chmod 644
+    find "$dir" -type d -print0 | xargs -0 chmod 755
+done
