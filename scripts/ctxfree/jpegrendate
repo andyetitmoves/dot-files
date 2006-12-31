@@ -1,14 +1,34 @@
 #!/bin/zsh
 
-local stamp file nfile ext
+local file nfile fmtpieces ext tag value eof
+typeset -a etags fmtpieces
+typeset -A exif
 
-coproc identify -format '%[EXIF:DateTime]\n%i' "./$^@"
+etags=(DateTime DateTimeOriginal DateTimeDigitized \
+    SubSecTime SubSecTimeOriginal SubSecTimeDigitized)
 
-while read -p stamp && read -p file; do
-    if [[ -n $stamp ]] && [[ -n $file ]]; then
+fmtpieces=('%[EXIF:'$^etags']' '%i')
+
+coproc identify -format "${(F)fmtpieces}" "./$^@"
+
+while true; do
+    eof=
+    exif=()
+    for tag in $etags; do
+	if ! read -r -p value; then
+	    eof=yes
+	    break
+	fi
+    done
+    [[ $eof == yes ]] && break
+    read -r -p file || break
+    value="${exif[DateTime]:-${exif[DateTimeOriginal]:-${exif[DateTimeDigitized]}}}"
+    if [[ -n $value ]] && [[ -n $file ]]; then
+	ext="${exif[SubSecTime]:-${exif[SubSecTimeOriginal]:-${exif[SubSecTimeDigitized]}}}"
+	[[ -n $ext ]] && value="$value.$ext"
 	ext="${file:e}"
 	[[ -n $ext ]] && ext=".$ext"
-	nfile="${file:h}/${(j,:,)${(s, ,)stamp}}$ext"
+	nfile="${file:h}/${(j,:,)${(s, ,)value}}$ext"
 	[[ $file != $nfile ]] && mv -i $file $nfile
     fi
 done
