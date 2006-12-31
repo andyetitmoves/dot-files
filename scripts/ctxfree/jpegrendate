@@ -4,6 +4,9 @@ local file nfile fmtpieces ext tag value eof
 typeset -a etags fmtpieces
 typeset -A exif
 
+emulate -L zsh
+setopt extendedglob
+
 etags=(DateTime DateTimeOriginal DateTimeDigitized \
     SubSecTime SubSecTimeOriginal SubSecTimeDigitized)
 
@@ -18,6 +21,10 @@ while true; do
 	if ! read -r -p value; then
 	    eof=yes
 	    break
+	fi
+	if [[ -n $value ]] && [[ $value != unknown ]]; then
+	    [[ $tag == DateTime* ]] && [[ $value == ([:0 ])# ]] && continue
+	    exif[$tag]="$value"
 	fi
     done
     [[ $eof == yes ]] && break
