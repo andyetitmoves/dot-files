@@ -36,6 +36,11 @@ while true; do
 	ext="${file:e}"
 	[[ -n $ext ]] && ext=".$ext"
 	nfile="${file:h}/${(j,:,)${(s, ,)value}}$ext"
-	[[ $file != $nfile ]] && mv -i $file $nfile
+	if [[ $file != $nfile ]]; then
+	    echo $file '->' $nfile
+	    mv -i $file $nfile
+	fi
+    else
+	echo No date information found for file $file >&2
     fi
 done
