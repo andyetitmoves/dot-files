@@ -8,6 +8,11 @@ emulate -L zsh
 setopt extendedglob
 unsetopt bgnice monitor
 
+if [[ $# -eq 0 ]]; then
+    echo Usage: $0 FILES... >&2
+    return 1
+fi
+
 etags=(DateTime DateTimeOriginal DateTimeDigitized \
     SubSecTime SubSecTimeOriginal SubSecTimeDigitized)
 
@@ -25,7 +30,7 @@ if coproc identify "${args[@]}"; then
     disown
 else
     echo Unable to run "'"identify"'" on specified files >&2
-    return 1
+    return 2
 fi
 
 while true; do
