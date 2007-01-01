@@ -159,11 +159,17 @@ if [ $# -eq 1 ] ; then
 
 			*.gif|*.jpeg|*.jpg|*.pcd|*.png|*.tga|*.tiff|*.tif)
 				if [ -x "`which identify`" ]; then
+					if [ -x "`which readlink`" ]; then
+						realfile="`readlink -ef "$1"`"
+					else
+						# Cross your fingers
+						realfile="$1"
+					fi
 					case "$LFILE" in
 						*.jpeg|*.jpg)
-							identify -verbose "$1" | grep -v ^0x ;;
+							identify -verbose "$realfile" | grep -v ^0x ;;
 						*)
-							identify -verbose "$1" ;;
+							identify -verbose "$realfile" ;;
 					esac
 				else
 					echo "No identify available"
