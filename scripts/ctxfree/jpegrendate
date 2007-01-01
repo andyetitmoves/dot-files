@@ -1,7 +1,7 @@
 #!/bin/zsh
 
-local file nfile fmtpieces ext tag value eof
-typeset -a etags fmtpieces
+local file nfile ext tag value eof
+typeset -a etags args
 typeset -A exif
 
 emulate -L zsh
@@ -10,9 +10,16 @@ setopt extendedglob
 etags=(DateTime DateTimeOriginal DateTimeDigitized \
     SubSecTime SubSecTimeOriginal SubSecTimeDigitized)
 
-fmtpieces=('%[EXIF:'$^etags']' '%i')
+args=('%[EXIF:'$^etags']' '%i')
+args=(-format "${(F)args}")
 
-coproc identify -format "${(F)fmtpieces}" "./$^@"
+# Canonicalize filenames lest ImageMagick does "smart" filename parsing
+
+for file in "$@"; do
+    args+=`readlink -ef $file`
+done
+
+coproc identify "${args[@]}"
 
 while true; do
     eof=
@@ -35,9 +42,10 @@ while true; do
 	[[ -n $ext ]] && value="$value.$ext"
 	ext="${file:e}"
 	[[ -n $ext ]] && ext=".$ext"
-	nfile="${file:h}/${(j,:,)${(s, ,)value}}$ext"
+	value="${(j,:,)${(s, ,)value}}$ext"
+	nfile="${file:h}/$value"
 	if [[ $file != $nfile ]]; then
-	    echo $file '->' $nfile
+	    echo ${file:h}: ${file:t} '->' $value
 	    mv -i $file $nfile
 	fi
     else
