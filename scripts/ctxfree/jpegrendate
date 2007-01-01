@@ -6,6 +6,7 @@ typeset -A exif
 
 emulate -L zsh
 setopt extendedglob
+unsetopt bgnice monitor
 
 etags=(DateTime DateTimeOriginal DateTimeDigitized \
     SubSecTime SubSecTimeOriginal SubSecTimeDigitized)
@@ -19,7 +20,10 @@ for file in "$@"; do
     args+=`readlink -ef $file`
 done
 
-coproc identify "${args[@]}"
+if coproc identify "${args[@]}"; then
+    # Don't print useless messages when run in interactive shells
+    disown
+fi
 
 while true; do
     eof=
