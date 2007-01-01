@@ -17,12 +17,15 @@ args=(-format "${(F)args}")
 # Canonicalize filenames lest ImageMagick does "smart" filename parsing
 
 for file in "$@"; do
-    args+=`readlink -ef $file`
+    args+=`readlink -ef $file || echo $file`
 done
 
 if coproc identify "${args[@]}"; then
     # Don't print useless messages when run in interactive shells
     disown
+else
+    echo Unable to run "'"identify"'" on specified files >&2
+    return 1
 fi
 
 while true; do
