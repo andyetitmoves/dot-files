@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/zsh
 
 local profdir state_file pid
 
@@ -11,7 +11,7 @@ profdir=~/.execs/"$1"
 state_file="$profdir"/state
 
 lexec () {
-    "$@" &
+    eval "${(q)@}" "&"
     echo $! >> "$state_file"
 }
 
