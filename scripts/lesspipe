@@ -57,7 +57,7 @@ html_dump () {
 
 video_props () {
 	if [ -x `which mplayer` ] && [ -x `which perl` ]; then
-		MPLAYER_VERBOSE=-1 mplayer -vo null -ao null -frames 0 \
+		MPLAYER_VERBOSE=-10 mplayer -vo null -ao null -frames 0 \
 			-identify "$1" -msglevel all=-1:identify=9 | \
 			perl -ne '
 /ID_([^=]*)=(.*)/ or next;
