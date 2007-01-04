@@ -51,7 +51,7 @@ The string is passed as the --format parameter to the mpc command line."
 (defvar empi-mpc-title (vconcat empi-mpc-status [:qtitle 1]))
 
 (defun empi-mpc-titles (str pexit ctx cmd &rest args)
-  (list-all-occur "#[0-9]+) \\(.*\\)\n" str (car args)))
+  (list-all-occur "^[ >]?[0-9]+) \\(.*\\)\n" str (car args)))
 
 (defvar empi-mpc 'empi-proc-command)
 (setplist 'empi-mpc
