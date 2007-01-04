@@ -50,9 +50,8 @@ The string is passed as the --format parameter to the mpc command line."
 (defvar empi-mpc-command (vconcat empi-mpc-status [nil t]))
 (defvar empi-mpc-title (vconcat empi-mpc-status [:qtitle 1]))
 
-(defvar empi-mpc-titles
-  '(lambda (str pexit ctx cmd &rest args)
-     (list-all-occur "#[0-9]+) \\(.*\\)\n" str (car args))))
+(defun empi-mpc-titles (str pexit ctx cmd &rest args)
+  (list-all-occur "#[0-9]+) \\(.*\\)\n" str (car args)))
 
 (defvar empi-mpc 'empi-proc-command)
 (setplist 'empi-mpc
@@ -73,8 +72,8 @@ The string is passed as the --format parameter to the mpc command line."
 		["^\\([0-9]+\\):\\([0-9]+\\)" nil
 		 (+ (* (ston 1) -60000) (* (ston 2) -1000))])
   :qpltitles (("playlist" "--format" ,empi-mpc-plentry-format)
-	      . ,empi-mpc-titles)
-  :qplfiles (("playlist" "--format" "%file%") . ,empi-mpc-titles)))
+	      . empi-mpc-titles)
+  :qplfiles (("playlist" "--format" "%file%") . empi-mpc-titles)))
 
 (provide 'empi-mpc)
 
