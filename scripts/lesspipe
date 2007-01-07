@@ -165,7 +165,7 @@ if [ $# -eq 1 ] ; then
 						# Cross your fingers
 						realfile="$1"
 					fi
-					case "$LFILE" in
+					case "$realfile" in
 						*.jpeg|*.jpg)
 							identify -verbose "$realfile" | grep -v ^0x ;;
 						*)
