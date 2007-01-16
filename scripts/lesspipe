@@ -157,7 +157,7 @@ if [ $# -eq 1 ] ; then
 				fi
 				;;
 
-			*.gif|*.jpeg|*.jpg|*.pcd|*.png|*.tga|*.tiff|*.tif)
+			*.gif|*.jpeg|*.jpg|*.thm|*.pcd|*.png|*.tga|*.tiff|*.tif)
 				if [ -x "`which identify`" ]; then
 					if [ -x "`which readlink`" ]; then
 						realfile="`readlink -ef "$1"`"
@@ -166,7 +166,7 @@ if [ $# -eq 1 ] ; then
 						realfile="$1"
 					fi
 					case "$realfile" in
-						*.jpeg|*.jpg)
+						*.jpeg|*.jpg|*.thm)
 							identify -verbose "$realfile" | grep -v ^0x ;;
 						*)
 							identify -verbose "$realfile" ;;
