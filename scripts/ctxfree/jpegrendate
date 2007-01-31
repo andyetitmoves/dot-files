@@ -1,6 +1,6 @@
 #!/bin/zsh
 
-local file nfile ext tag value eof
+local file nfile ext tag value eof mvcmd
 typeset -a etags args
 typeset -A exif
 
@@ -8,15 +8,22 @@ emulate -L zsh
 setopt extendedglob
 unsetopt bgnice monitor
 
+if [[ $1 == -c ]]; then
+    mvcmd="$2"
+    shift 2
+fi
+
 if [[ $# -eq 0 ]]; then
     echo Usage: $0 FILES... >&2
     return 1
 fi
 
+[[ -z "$mvcmd" ]] && mvcmd='mv -i $file $nfile'
+
 etags=(DateTime DateTimeOriginal DateTimeDigitized \
     SubSecTime SubSecTimeOriginal SubSecTimeDigitized)
 
-args=('%[EXIF:'$^etags']' '%i')
+args=('%[EXIF:'$^etags']' '%i\n')
 args=(-format "${(F)args}")
 
 # Canonicalize filenames lest ImageMagick does "smart" filename parsing
@@ -41,6 +48,7 @@ while true; do
 	    eof=yes
 	    break
 	fi
+	value=${value%.}
 	if [[ -n $value ]] && [[ $value != unknown ]]; then
 	    [[ $tag == DateTime* ]] && [[ $value == ([:0 ])# ]] && continue
 	    exif[$tag]="$value"
@@ -58,7 +66,7 @@ while true; do
 	nfile="${file:h}/$value"
 	if [[ $file != $nfile ]]; then
 	    echo ${file:h}: ${file:t} '->' $value
-	    mv -i $file $nfile
+	    eval $mvcmd
 	fi
     else
 	echo No date information found for file $file >&2
