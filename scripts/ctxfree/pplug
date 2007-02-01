@@ -2,7 +2,7 @@
 # A simple script to change the read/write mode of mounted devices
 # Especially useful for removable media
 
-local ret=0 dev mode=rw
+local ret=0 dev mode=rw opts
 
 if [ "$1" = -u ]; then
     mode=ro
@@ -20,7 +20,10 @@ for dev in "$@"; do
 	ret=`expr $ret + 1`
 	continue
     fi
-    sudo mount -oremount,$mode "$dev"
+    if ! [ -d "$dev" ] || mountpoint -q "$dev"; then
+	opts=remount,
+    fi
+    sudo mount -o$opts$mode "$dev"
 done
 
 return $ret
