@@ -15,13 +15,13 @@ if [ -z "$1" ]; then
 fi
 
 for dev in "$@"; do
-    if [ $mode = ro ] && sudo fuser -mv "$dev"; then
-	echo The above processes seem to be using the device $dev, not unplugging...
-	ret=`expr $ret + 1`
-	continue
-    fi
     if ! [ -d "$dev" ] || mountpoint -q "$dev"; then
 	opts=remount,
+	if [ $mode = ro ] && sudo fuser -mv "$dev"; then
+	    echo The above processes seem to be using the device $dev, not unplugging...
+	    ret=`expr $ret + 1`
+	    continue
+	fi
     fi
     sudo mount -o$opts$mode "$dev"
 done
