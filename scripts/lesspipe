@@ -191,7 +191,7 @@ if [ $# -eq 1 ] ; then
 				if [ -x "`which ogginfo`" ]; then ogginfo "$1"
 				else echo "No ogginfo available"; fi ;;
 
-			*.avi|*.mpg|*.asf|*.wmv|*.vob|*.mov|*.mp4|*.rm|*.wma|*.ogm|*.flv|*.divx)
+			*.avi|*.mpg|*.asf|*.wmv|*.vob|*.mov|*.mp4|*.rm|*.wma|*.ogm|*.flv|*.divx|*.3gp)
 				video_props "$1"
 				;;
 			*.iso)
