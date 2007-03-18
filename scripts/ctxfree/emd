@@ -63,13 +63,18 @@ if ! mkdir -p "$profile/backup"; then
     return 4
 fi
 
+if ! mkdir -p "$profile/logs"; then
+    echo Unable to create log directory >&2
+    return 4
+fi
+
 excludes="$profile/exclude"
 
 [ -r "$excludes" ] || excludes=/dev/null
 
 [ -r "$profile/conf" ] && . "$profile/conf"
 
-${savelog:-savelog} -q -c 5 $savelog_opts "$profile/log"
+${savelog:-savelog} -q -c 100000 $savelog_opts "$profile/logs/log"
 
 echo_exec () {
     echo emd: executing: "$@"
