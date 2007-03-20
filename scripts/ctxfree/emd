@@ -83,11 +83,11 @@ echo_exec () {
 
 echo_exec ${mirrordir:-mirrordir} --verbose $mirrordir_opts \
     --exclude-from "$excludes" "$control" "$profile/backup" \
-    > "$profile/log" 2>&1
+    > "$profile/logs/log" 2>&1
 
 res=$?
 
-echo emd: ${mirrordir:-mirrordir} exited with code $res >> "$profile/log"
+echo emd: ${mirrordir:-mirrordir} exited with code $res >> "$profile/logs/log"
 
 unset -f echo_exec print_help
 
