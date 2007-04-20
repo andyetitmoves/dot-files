@@ -38,7 +38,10 @@ iso_list() {
 }
 
 ms_summary () {
-	if [ -x "`which wvSummary`" ]; then
+	if [ -x "`which exiftool`" ]; then
+		echo; echo --; echo Summary for "$1":; echo
+		exiftool --ExifTool:All "$1"
+	elif [ -x "`which wvSummary`" ]; then
 		echo; echo --; echo Summary for "$1":; echo
 		wvSummary "$1"
 	fi
@@ -56,7 +59,9 @@ html_dump () {
 }
 
 video_props () {
-	if [ -x `which mplayer` ] && [ -x `which perl` ]; then
+	if [ -x `which exiftool` ]; then
+		exiftool --ExifTool:All -g2 "$1"
+	elif [ -x `which mplayer` ] && [ -x `which perl` ]; then
 		MPLAYER_VERBOSE=-10 mplayer -vo null -ao null -frames 0 \
 			-identify "$1" -msglevel all=-1:identify=9 | \
 			perl -ne '
@@ -132,8 +137,8 @@ if [ $# -eq 1 ] ; then
 				if [ -x "`which catdoc`" ]; then catdoc "$1"
 				elif [ -x "`which wvText`" -a -e /dev/stdout ]; then
 					wvText "$1" /dev/stdout
-					ms_summary "$1"
 				fi
+				ms_summary "$1"
 				;;
 
 			*.ppt)
@@ -158,7 +163,9 @@ if [ $# -eq 1 ] ; then
 				;;
 
 			*.gif|*.jpeg|*.jpg|*.thm|*.pcd|*.png|*.tga|*.tiff|*.tif)
-				if [ -x "`which identify`" ]; then
+				if [ -x "`which exiftool`" ]; then
+					exiftool --ExifTool:All -g2 "$1"
+				elif [ -x "`which identify`" ]; then
 					if [ -x "`which readlink`" ]; then
 						realfile="`readlink -ef "$1"`"
 					else
