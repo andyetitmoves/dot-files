@@ -233,10 +233,13 @@ if [ $# -eq 1 ] ; then
 			*.pdf)
 				if [ -x "`which pdftotext`" ]; then
 					pdftotext -layout -nopgbrk "$1" -
-					if [ -x "`which pdfinfo`" ]; then
+					if [ -x "`which exiftool`" ]; then
 						echo; echo --
-						echo Document information for "$1"
-						echo
+						echo Document information for "$1"; echo
+						exiftool --ExifTool:All "$1"
+					elif [ -x "`which pdfinfo`" ]; then
+						echo; echo --
+						echo Document information for "$1"; echo
 						pdfinfo -meta "$1"
 					fi
 				else echo "No pdftotext available"; fi ;;
