@@ -292,6 +292,9 @@ if [ $# -eq 1 ] ; then
 				if [ -x "`which gpg`" ]; then gpg -d "$1";
 				else echo "No gpg available"; fi ;;
 
+			*.sqlite)
+				if [ -x "`which sqlite3`" ]; then echo .dump | sqlite3 "$1"; fi ;;
+
 		esac
 	) 2>/dev/null
 
