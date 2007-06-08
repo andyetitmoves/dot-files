@@ -1,14 +1,22 @@
 #!/bin/sh
 # Using a config file, print shell code to update proxy environment variables
 
-[ -z "$SHOME" ] && SHOME="$HOME"
+local CFILE
+
+if [ -n "$1" ]; then
+    CFILE="$1"
+elif [ -n "$SHOME" ]; then
+    CFILE="$SHOME/.proxy"
+else
+    CFILE="$HOME/.proxy"
+fi
 
 unset PROXY http_proxy https_proxy ftp_proxy HTTP_PROXY \
     HTTPS_PROXY FTP_PROXY NO_PROXY no_proxy
 
-[ -r "$SHOME/.proxy" ] || return 0
+[ -r "$CFILE" ] || return 0
 
-. "$SHOME/.proxy" || return 0
+. "$CFILE" || return 0
 
 prvar () {
     if [ -n "$2" ]; then
@@ -26,3 +34,5 @@ prvar HTTPS_PROXY "${HTTPS_PROXY:=$PROXY}"
 prvar FTP_PROXY "${FTP_PROXY:=$PROXY}"
 prvar NO_PROXY "$NO_PROXY"
 prvar no_proxy "$NO_PROXY"
+
+unset -f prvar
