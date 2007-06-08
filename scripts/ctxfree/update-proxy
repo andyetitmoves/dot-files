@@ -1,7 +1,8 @@
 #!/bin/sh
 # Using a config file, print shell code to update proxy environment variables
 
-local CFILE
+local PROXY http_proxy https_proxy ftp_proxy HTTP_PROXY \
+    HTTPS_PROXY FTP_PROXY NO_PROXY no_proxy CFILE
 
 if [ -n "$1" ]; then
     CFILE="$1"
