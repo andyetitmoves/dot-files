@@ -1,14 +1,14 @@
-PREFIX ?= $(shell pkg-config --variable=prefix gaim)
-LIBDIR ?= $(shell pkg-config --variable=libdir gaim)
+PREFIX ?= $(shell pkg-config --variable=prefix pidgin)
+LIBDIR ?= $(shell pkg-config --variable=libdir pidgin)
 
-PLUGINDIR ?= $(LIBDIR)/gaim
-DOCDIR ?= $(PREFIX)/share/doc/gaim-copy-status
+PLUGINDIR ?= $(LIBDIR)/pidgin
+DOCDIR ?= $(PREFIX)/share/doc/pidgin-copy-status
 
-GAIM_CFLAGS = $(shell pkg-config --cflags gaim gtk+-2.0)
-GAIM_LDFLAGS = $(shell pkg-config --libs gaim gtk+-2.0)
+PIDGIN_CFLAGS = $(shell pkg-config --cflags pidgin gtk+-2.0)
+PIDGIN_LDFLAGS = $(shell pkg-config --libs pidgin gtk+-2.0)
 
-CFLAGS += $(GAIM_CFLAGS) -fPIC
-LDFLAGS += $(GAIM_LDFLAGS) -fPIC -shared
+CFLAGS += $(PIDGIN_CFLAGS) -fPIC
+LDFLAGS += $(PIDGIN_LDFLAGS) -fPIC -shared
 
 all: copystatus.so
 

@@ -1,8 +1,8 @@
-#define GAIM_PLUGINS
-
-#include "version.h"
+#define PURPLE_PLUGINS
 
 #include <gtk/gtk.h>
+
+#include "version.h"
 
 #include "gtkplugin.h"
 #include "account.h"
@@ -13,14 +13,14 @@
 #define _(MsgId) (MsgId)
 #define N_(MsgId) (MsgId)
 
-static void copy_status (GaimBuddy *b)
+static void copy_status (PurpleBuddy *b)
 {
-	GaimPlugin *prpl;
+	PurplePlugin *prpl;
 
-	prpl = gaim_find_prpl(gaim_account_get_protocol_id(b->account));
+	prpl = purple_find_prpl(purple_account_get_protocol_id(b->account));
 	if (prpl != NULL) {
-		GaimPluginProtocolInfo *prpl_info
-			= GAIM_PLUGIN_PROTOCOL_INFO(prpl);
+		PurplePluginProtocolInfo *prpl_info
+			= PURPLE_PLUGIN_PROTOCOL_INFO(prpl);
 		if (prpl_info && prpl_info->status_text) {
 			GtkClipboard* clipbd = gtk_clipboard_get
 				(gdk_atom_intern ("CLIPBOARD", FALSE));
@@ -32,43 +32,43 @@ static void copy_status (GaimBuddy *b)
 	}
 }
 
-static void plugin_action (GaimPluginAction* action)
+static void plugin_action (PurplePluginAction* action)
 {
-	GaimGtkBuddyList *blist = gaim_gtk_blist_get_default_gtk_blist();
-	GaimBlistNode *node= blist->selected_node;
-	if (node && (GAIM_BLIST_NODE_IS_CONTACT(node) ||
-		     GAIM_BLIST_NODE_IS_BUDDY(node))) {
-		GaimBuddy *buddy;
-		if (GAIM_BLIST_NODE_IS_CONTACT(node)) {
-			buddy = gaim_contact_get_priority_buddy
-				((GaimContact*)node);
+	PidginBuddyList *blist = pidgin_blist_get_default_gtk_blist();
+	PurpleBlistNode *node= blist->selected_node;
+	if (node && (PURPLE_BLIST_NODE_IS_CONTACT(node) ||
+		     PURPLE_BLIST_NODE_IS_BUDDY(node))) {
+		PurpleBuddy *buddy;
+		if (PURPLE_BLIST_NODE_IS_CONTACT(node)) {
+			buddy = purple_contact_get_priority_buddy
+				((PurpleContact*)node);
 			if (! buddy)
 				return;
 		}
 		else
-			buddy = (GaimBuddy*) node;
+			buddy = (PurpleBuddy*) node;
 		copy_status (buddy);
 	}
 }
 
-static GList* get_plugin_actions (GaimPlugin *plugin, gpointer context)
+static GList* get_plugin_actions (PurplePlugin *plugin, gpointer context)
 {
 	GList *list = NULL;
 
 	list = g_list_append
-		(list, gaim_plugin_action_new (_("Copy"), plugin_action));
+		(list, purple_plugin_action_new (_("Copy"), plugin_action));
 	return list;
 }
 
-static GaimPluginInfo info = {
-	GAIM_PLUGIN_MAGIC,
-	GAIM_MAJOR_VERSION,
-	GAIM_MINOR_VERSION,
-	GAIM_PLUGIN_STANDARD,
-	GAIM_GTK_PLUGIN_TYPE,
+static PurplePluginInfo info = {
+	PURPLE_PLUGIN_MAGIC,
+	PURPLE_MAJOR_VERSION,
+	PURPLE_MINOR_VERSION,
+	PURPLE_PLUGIN_STANDARD,
+	PIDGIN_PLUGIN_TYPE,
 	0,
 	NULL,
-	GAIM_PRIORITY_DEFAULT,
+	PURPLE_PRIORITY_DEFAULT,
 	"gtk-andyetitmoves-copystatus",
 	_("Copy Status"),
 	"1.0",
@@ -86,7 +86,7 @@ copy the status of the selected buddy to clipboard"),
 	get_plugin_actions
 };
 
-static void init_plugin(GaimPlugin *plugin) {
+static void init_plugin(PurplePlugin *plugin) {
 }
 
-GAIM_INIT_PLUGIN(copy_status, init_plugin, info);
+PURPLE_INIT_PLUGIN(copy_status, init_plugin, info);
