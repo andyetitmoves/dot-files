@@ -15,7 +15,7 @@ local confbase=~/.aub
 local confdir=$confbase/$1
 
 if [[ ! -d $confdir ]]; then
-    echo Profile $profile does not exist. Please create $confdir/conf >&2
+    echo Profile $profile does not exist. Please create $confdir >&2
     return 2
 fi
 
