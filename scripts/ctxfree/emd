@@ -10,7 +10,7 @@ print_help () {
 Usage: $prog [OPTION]... PROFILE
 A profile based wrapper around mirrordir
 
-  -q           exit without error if the profile directory is missing
+  -q           hide progress messages, ignore missing profile errors
   -h           print this help
 
 PROFILE should be a writable directory
@@ -76,19 +76,25 @@ excludes="$profile/exclude"
 
 ${savelog:-savelog} -q -c 100000 $savelog_opts "$profile/logs/log"
 
-echo_exec () {
-    echo emd: executing: "$@"
-    "$@"
+log_exec () {
+    file=$1
+    shift
+    echo emd: executing: "$@" >> "$file"
+    if [ "$quiet" = yes ]; then
+	"$@" >> "$file" 2>&1
+    else
+	"$@" 2>&1 | tee "$file"
+    fi
 }
 
-echo_exec ${mirrordir:-mirrordir} --verbose $mirrordir_opts \
-    --exclude-from "$excludes" "$control" "$profile/backup" \
-    > "$profile/logs/log" 2>&1
+log_exec "$profile/logs/log" \
+    ${mirrordir:-mirrordir} --verbose $mirrordir_opts \
+    --exclude-from "$excludes" "$control" "$profile/backup"
 
 res=$?
 
 echo emd: ${mirrordir:-mirrordir} exited with code $res >> "$profile/logs/log"
 
-unset -f echo_exec print_help
+unset -f log_exec print_help
 
 return $res
