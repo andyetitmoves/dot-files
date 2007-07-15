@@ -6,5 +6,5 @@ setopt extendedglob
 
 autoload -Uz zargs
 
-zargs ~/.gaim/logs/**/*~*.chat/*(.) -- ls -l | \
+zargs ~/.purple/logs/**/*~*.chat/*(.) -- ls -l | \
     awk '{ print $5 "\t" $9 }' | sort -nr | cat -n
