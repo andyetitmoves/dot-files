@@ -1,0 +1,16 @@
+#!/bin/sh
+# Interactively queries and executes an arbitrary E17 action
+
+local action params
+
+if [ $# -eq 0 ]; then
+    zenity --title 'Execute E Action' --text 'Action' --entry | \
+	read action params
+    [ -z "$action" ] && return 1
+else
+    action="$1"
+    shift
+    params="$@"
+fi
+
+enlightenment_remote -exec-action "$action" "$params"
