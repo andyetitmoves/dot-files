@@ -53,7 +53,8 @@ typeset -a vcupcmd mkcmd instcmd
 typeset -A vcfilter
 
 [[ -r $confbase/conf ]] && . $confbase/conf
-[[ -r $confdir/conf ]] && . $confdir/conf
+[[ -z ${AUB_NOPKGCONF:-$nopkgconf} ]] && \
+    [[ -r $confdir/conf ]] && . $confdir/conf
 
 aub_set_array () {
     local var=$1
