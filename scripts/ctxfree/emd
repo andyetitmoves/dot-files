@@ -74,7 +74,7 @@ excludes="$profile/exclude"
 
 [ -r "$profile/conf" ] && . "$profile/conf"
 
-${savelog:-savelog} -q -c 100000 $savelog_opts "$profile/logs/log"
+${savelog:-savelog} -q -n -c 100000 $savelog_opts "$profile/logs/log"
 
 log_exec () {
     file=$1
