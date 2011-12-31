@@ -295,6 +295,11 @@ if [ $# -eq 1 ] ; then
 			*.sqlite)
 				if [ -x "`which sqlite3`" ]; then echo .dump | sqlite3 "$1"; fi ;;
 
+			*.torrent)
+				if [ -x "`which bt_showmetainfo`" ]; then bt_showmetainfo "$1"; fi ;;
+
+			*.flac)
+				if [ -x "`which metaflac`" ]; then metaflac --list "$1"; fi ;;
 		esac
 	) 2>/dev/null
 
