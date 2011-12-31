@@ -1,0 +1,13 @@
+#!/bin/sh
+
+EUSER="`id -nu`"
+EHOME="$(eval echo ~"$EUSER")"
+
+SHOME="$EHOME/.startup/conf/startup-home"
+if [ -r "$SHOME" ]; then
+    SHOME=`cat "$SHOME"`
+else
+    SHOME="$HOME"
+fi
+
+export EUSER EHOME SHOME

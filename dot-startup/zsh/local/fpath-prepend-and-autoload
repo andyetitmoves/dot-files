@@ -1,0 +1,14 @@
+#autoload
+
+local func pathvar
+
+if [[ $# -gt 0 ]]; then
+  fpath=("$@" $fpath)
+  pathvar=argv
+else
+  pathvar=fpath
+fi
+
+for func in ${^${(P)pathvar}}/[^_]*(N-.:t); do
+  autoload -Uz "$func"
+done

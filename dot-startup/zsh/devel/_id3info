@@ -1,0 +1,9 @@
+#compdef id3info
+
+_arguments -s \
+  '(-h --help)'{-h,--help}'[display help and exit]' \
+  '(-V --version)'{-V,--version}'[display version information and exit]' \
+  '(-a --assign)'{-a,--assign}'[test the assignment operator]' \
+  '(-w --warning)'{-w,--warning}'[turn on warnings]' \
+  '(-n --notices)'{-n,--notices}'[turn on notices]' \
+  '*:id3v2 tagged file:_files -g "*.[mM][pP]3(-.)"'

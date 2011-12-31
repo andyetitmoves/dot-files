@@ -1,0 +1,25 @@
+#!/bin/zsh
+
+fpath-prepend-and-autoload \
+    "$SHOME/scripts/ctxfree" "$OZDOTDIR/site"
+
+hash -d \
+    mus=/usr/local/share/music \
+    mpd=/srv/mpd/songs \
+    esite=/usr/local/share/emacs/site-lisp \
+    pub=/srv/share \
+    edata=/media/edata \
+    tvid=/media/tvid \
+    evid=/media/evid \
+    spare=/media/spare \
+    flash=/media/usb0 \
+    cd=/media/cdrom
+
+if [[ -n $commands[mpc] ]]; then
+    mpd-pause-widget () {
+	mpd-pause
+	zle -M "`mpc`"
+    }
+    zle -N mpd-pause-widget mpd-pause-widget
+    bindkey '^Ec' mpd-pause-widget
+fi

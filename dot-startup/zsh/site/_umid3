@@ -1,0 +1,5 @@
+#compdef umid3
+
+_arguments \
+    '1:Input tagged file:_files -g "*.[mM][pP]3(-.)"' \
+    '2:Output tagged file:_files -g "*.[mM][pP]3(-.)"'

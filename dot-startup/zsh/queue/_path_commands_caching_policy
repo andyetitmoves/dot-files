@@ -1,0 +1,20 @@
+#autoload
+
+local oldp file
+typeset -a dbfiles
+
+# rebuild if cache is more than a week old
+oldp=( "$1"(Nmw+1) )
+(( $#oldp )) && return 0
+
+dbfiles=(/usr/share/man/index.(bt|db|dir|pag)(N) \
+  /usr/man/index.(bt|db|dir|pag)(N) \
+  /var/cache/man/index.(bt|db|dir|pag)(N) \
+  /var/catman/index.(bt|db|dir|pag)(N) \
+  /usr/share/man/*/whatis(N))
+
+for file in $dbfiles; do
+  [[ $file -nt $1 ]] && return 0
+done
+
+return 1

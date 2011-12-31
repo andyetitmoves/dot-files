@@ -1,0 +1,10 @@
+#!/bin/zsh
+
+compdef _gnu_generic id3vfy simvd
+compdef _command tconn
+compdef _id3info colid3
+
+compdef '_filter_files "bzip2 compressed file" "*.(bz2|tbz|tbz2)(-.)"' b2g
+compdef '_filter_files "gzip compressed file" "*.(([tT]|)[gG]|)[zZ](-.)"' g2b
+
+compdef '_message "no more arguments"' clearosd dlgcmd mpd-pause mposd osdxtail

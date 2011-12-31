@@ -1,0 +1,46 @@
+#autoload
+
+(( $+_firefox_default_profile_folder == 0 )) && {
+  local profbase profiles
+
+  typeset -g _firefox_default_profile_folder
+
+  zstyle -s ':urls:' firefox-profile-base profbase \
+    || profbase=~/.mozilla/firefox
+
+  [[ -d $profbase ]] && {
+    _confread $profbase/profiles.ini profiles Profile\* \
+      "%1(d:1:0):%1(r~$profbase/~)%p" p:Path r:IsRelative d:Default
+    _firefox_default_profile_folder=${${${(M)profiles:#1:*}[1]}[3,-1]}
+  }
+}
+
+[[ -z $_firefox_default_profile_folder ]] && return
+
+local mozhist ucache minage cache_newp
+
+mozhist=$_firefox_default_profile_folder/history.dat
+ucache=$ZDOTDIR/.zurls
+
+zstyle -s ':urls:' url-cache-minimum-age minage || minage=10
+minage=$ucache/.update-start-stamp(Nmm-$minage)
+
+cache_newp=( ${~minage} )
+
+[[ -f $mozhist ]] && [[ -f $ucache/.update-start-stamp ]] &&
+(( $#cache_newp )) || [[ -d $ucache && $mozhist -ot $ucache ]] || {
+  mkdir -p $ucache
+  touch $ucache/.update-start-stamp
+  (
+    {
+      urlmine --out-format tree --output $ucache \
+	--in-format mozhist $mozhist 2> /dev/null
+      touch $ucache
+    } &
+  )
+}
+
+typeset -g REPLY=$ucache
+
+# This takes too long...perl is faster...perhaps this expression can be optimized
+# ${(M)${(f)"$(echo "${"${"$(<"$mozhist")"//\\[^:graph:]/}"//\=(#b)(http(|s):\/\/[^\)]#)/\\n$match[1]\\n}")"}:#http(|s):*}

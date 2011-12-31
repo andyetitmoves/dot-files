@@ -1,0 +1,7 @@
+#autoload
+
+local expl
+
+_description files expl "$1"
+
+_files "$expl[@]" -g "$2"

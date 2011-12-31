@@ -1,0 +1,74 @@
+#autoload
+
+_ssh_options_forwarding () {
+  if compset -P 1 '*:'; then
+    if compset -P '*:'; then
+      _message -e port-numbers 'port number'
+    else
+      _hosts "$@" -qS:
+    fi
+  else
+    _message -e port-numbers 'listen-port number'
+  fi
+}
+
+set -A $1 \
+  'AddressFamily[specify address family to use for connection]:address family:((any\:Any\ family inet\:IPv4\ only inet6\:IPv6\ only))' \
+  'BatchMode[use batch mode]:enable:(yes no)' \
+  'BindAddress[specify binding address on local machine]:bind address:_bind_addresses' \
+  'ChallengeResponseAuthentication[use challenge response authentication]:enable:(yes no)' \
+  'CheckHostIP[check host IP adress in known_hosts file]:enable:(yes no)' \
+  'Cipher[cipher to use for session in SSHv1]:cipher:(blowfish 3des des)' \
+  "Ciphers[ciphers allowed for SSHv2 in order of preference]:ciphers:_values -s ${2:-,} cipher 3des-cbc aes128-cbc aes192-cbc aes256-cbc aes128-ctr aes192-ctr aes256-ctr arcfour128 arcfour256 arcfour blowfish-cbc cast128-cbc" \
+  'ClearAllForwardings[clear all port forwardings specified till now]:enable:(yes no)' \
+  'Compression[use compression during data transmission]:enable:(yes no)' \
+  'CompressionLevel[specify compression level to use]:level:((1\:fast 2 3 4 5 6\:default 7 8 9\:slow\ and\ best))' \
+  'ConnectionAttempts[specify number of connection tries]:attempts:' \
+  'ConnectTimeout[specify connection timeout]:timeout (s):' \
+  'ControlMaster[enable sharing of network connection for multiple sessions]:enable:((yes\:enable no\:disable ask\:ask\ user auto\:use\ if\ a\ master\ is\ not\ present\ already autoask\:\"auto\"\ with\ confirmation))' \
+  'ControlPath[path to control socket for sharing connections]: : _alternative "disable:disable:(none)" "sockets:socket:_files -g \"*(-=)\""' \
+  'DynamicForward[forward a port on local machine over the channel]:port:' \
+  'EscapeChar[set the escape character]:character:' \
+  'ForwardAgent[forward connection to authentication agent to remote machine]:enable:(yes no)' \
+  'ForwardX11[redirect X11 connections over channel and set DISPLAY]:enable:(yes no)' \
+  'ForwardX11Trusted[trust remote X11 clients]:enable:(yes no)' \
+  'GatewayPorts[allow remote hosts to connect to local forwarded ports]:enable:(yes no)' \
+  'GSSAPIDelegateCredentials[forward credentials to the server]:enable:(yes no)' \
+  'HashKnownHosts[hash host names added to the known_hosts file]:enable:(yes no)' \
+  'HostbasedAuthentication[try rhosts based authentication]:enable:(yes no)' \
+  "HostKeyAlgorithms[SSHv2 host key algorithms used in order of preference]:host-key-algs:_values -s ${2:-,} host\ key\ algorithm ssh-rsa ssh-dss" \
+  'HostKeyAlias[specify alias to use for host key]:alias:' \
+  'HostName[specify real host name to log into]:host name:_hosts' \
+  'IdentityFile[specify file from which authentication identity is read]:identity file:_files' \
+  'IdentitiesOnly[use identity files only for identities]:enable:(yes no)' \
+  'KbdInteractiveDevices[specify list of methods to use in keyboard-interactive authentication]:methods:' \
+  'LocalCommand[execute command on local machine after connecting]:command: _command_names -e' \
+  'LocalForward[forward a TCP port from remote machine]:forwarded host:_ssh_options_forwarding' \
+  'LogLevel[verbosity level]:level:(QUIET FATAL ERROR INFO VERBOSE DEBUG DEBUG1 DEBUG2 DEBUG3)' \
+  "MACs[MAC algorithms in order of preference]:mac algorithms:_values -s ${2:-,} mac\ algorithm hmac-md5 hmac-sha1 hmac-ripemd160 hmac-sha1-96 hmac-md5-96" \
+  'NoHostAuthenticationForLocalhost[disable host authentication for localhost]:enable:(yes no)' \
+  'NumberOfPasswordPrompts[number of password prompts]:number:' \
+  'PasswordAuthentication[enable password authentication]:enable:(yes no)' \
+  'PermitLocalCommand[allow local command execution on connection]:enable:(yes no)' \
+  "PreferredAuthentications[authentication methods in order of preference]:auth methods:_values -s ${2:-,} authentication\ method hostbased publickey keyboard-interactive password" \
+  "Protocol[protocol versions to support in order of preference]:protocols:_values -s ${2:-,} protocol 1\[SSHv1\] 2\[SSHv2\]" \
+  'ProxyCommand[command to use to connect to the server]:command: _command_names -e' \
+  'PubkeyAuthentication[enable public key authentication]:enable:(yes no)' \
+  'RekeyLimit[amount of data transmitted before renegotiating session key]:amount:' \
+  'RemoteForward[forward a TCP port to remote machine]:forwarded host:_ssh_options_forwarding' \
+  'RhostsAuthentication[enable rhosts based authentication]:enable:(yes no)' \
+  'RhostsRSAAuthentication[enable rhosts based authentication with RSA host authentication]:enable:(yes no)' \
+  'RSAAuthentication[enable RSA authentication]:enable:(yes no)' \
+  "SendEnv[environment variables to send to server]:environment variables:_values -s \  environment\ variable ${(k)parameters[(R)*scalar*~*local*]}" \
+  'ServerAliveCountMax[number of server alive messages to send without receiving any]:number:' \
+  'ServerAliveInterval[timeout before sending a server alive message]:timeout (s):' \
+  'SetupTimeOut[timeout for setting up the session]:timeout (s):' \
+  'SmartcardDevice[specify smartcard device to use]:device:_files -g "*(-%)"' \
+  'StrictHostKeyChecking[never add host keys to known hosts files]:enable:(yes no)' \
+  'TCPKeepAlive[enable sending TCP keepalive messages to server]:enable:(yes no)' \
+  'Tunnel[request starting tun device forwarding]:enable:(yes point-to-point ethernet no)' \
+  'TunnelDevice[specify tunnel device on client]:device:_files -g "*(-%c)"' \
+  'UsePrivilegedPort[use privileged port for outgoing connections]:enable:(yes no)' \
+  'UserKnownHostsFile[file to use as the host key database]:known hosts file:_files' \
+  'VerifyHostKeyDNS[verify remote key using DNS and SSHFP resource records]:enable:(yes no)' \
+  'XAuthLocation[specify pathname of xauth program]:path:_files -g "*(-*)"'

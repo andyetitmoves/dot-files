@@ -1,0 +1,74 @@
+#compdef sshfs
+
+local arg
+typeset -a sshopts sshfsopts wkargs
+typeset -A workarounds
+
+workarounds=(
+  rename 'fix renaming to existing file'
+  nodelay 'set nodelay tcp flag'
+  truncate 'fix truncate for old servers'
+)
+
+for arg in ${workarounds[(I)*]}; do
+  wkargs+=("'(no$arg)${arg}[${workarounds[$arg]}]'"
+    "'($arg)no${arg}[do not ${workarounds[$arg]}]'")
+done
+
+_ssh_options_get sshopts
+
+sshfsopts=(
+  'port[connect to port specified]:port number'
+  'compression[enable compression of data transmitted]'
+  'reconnect[reconnect to server]'
+  'sshfs_sync[synchronous writes]'
+  'no_readahead[synchronous reads (no speculative readahead)]'
+  'sshfs_debug[print some debugging information]'
+  'cache[enable caching]:enable/disable cache:((yes\:enable\ \(default\) no\:disable))'
+  'cache_timeout[timeout for caches]:timeout (s)'
+  'cache_stat_timeout[timeout for stat cache]:timeout(s)'
+  'cache_dir_timeout[timeout for dir cache]:timeout(s)'
+  'cache_link_timeout[timeout for link cache]:timeout(s)'
+  "workaround[list of workarounds]:workaround:_values -s \: workaround $wkargs"
+  'idmap[user/group ID mapping]:mapping type:((none\:no\ translation user\:only\ translate\ UID\ of\ connecting\ user))'
+  'ssh_command[specify execution command instead of ssh]:command:_command_names'
+  'ssh_protocol[ssh protocol to use]:protocol version:((1\:SSHv1 2\:SSHv2))'
+  'sftp_server[path to sftp server or subsystem]:path:_files -g \*\(\*\)'
+  'directport[directly connect to specified port bypassing ssh]:port number'
+  'transform_symlinks[transform absolute symlinks to relative]'
+  $sshopts
+)
+
+# printeach () { for i ($@) echo $i }
+
+# _sshfs_options_alternative () {
+#   typeset -a qexpl
+#   _alternative \
+#     "fuse-option: :_fuse_values ${${(qq@)expl}} -w -A sshfsopts mount\ option" \
+#     "ssh-option:ssh options:_ssh_options -s , -w ${${(qq@)expl}}"
+# }
+
+_fuse_arguments -F sshfsopts \
+  '-p[connect to port specified]:port number' \
+  '-C[enable compression of data transmitted]' \
+  '-1[use protocol SSHv1]' \
+  ':remote directory:_user_at_host -S:' \
+  ':mount point:_files -/'
+
+# typeset -A val_args
+
+# _sshfs_values () {
+#   _values "$@" -M 'm:{a-zA-Z}={A-Za-z}' "mount option" $sshopts
+# }
+
+# case "$state" in
+#   mtopt)
+#     # _fuse_values -A sshfsopts 'mount option'
+#     _alternative \
+#       'fuse-option:mount option:_fuse_values -A sshfsopts "mount option"' \
+#       'ssh-option:mount option:_sshfs_values'
+#     ;;
+#   *)
+#     state=
+#     ;;
+# esac

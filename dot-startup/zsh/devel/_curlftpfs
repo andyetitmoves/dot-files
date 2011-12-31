@@ -1,0 +1,58 @@
+#compdef curlftpfs
+
+# TODO:
+# See what to do about (SSL)
+# Complete opts:
+#   engine: get list dynamically?
+#   ciphers: which all?
+#   interface: possible to complete interface? alternatively hostnames
+#   proxy: host, host:port, http://[user[:pass]@]host[:port][/]
+#   user, proxy_user: user:password
+# Complete args: 1st arg (ftp host): ftp:// urls only
+
+typeset -a copts
+
+copts=(
+  'ftpfs_debug[print some debugging information]'
+  'transform_symlinks[prepend mountpoint to absolute symlink targets]'
+  'disable_epsv[use PASV, without trying EPSV first]'
+  'skip_pasv_ip[skip the IP address for PASV]'
+  'ftp_port[specify port to use with address instead of PASV]:port number'
+  'disable_eprt[use PORT, without trying EPRT first]'
+  'tcp_nodelay[use the TCP_NODELAY option]'
+  'connect_timeout[specify maximum time allowed for connection]:timeout (s)'
+  'ssl[enable SSL/TLS for both control and data connections]'
+  'ssl_control[enable SSL/TLS only for control connection]'
+  'ssl_try[try SSL/TLS first but connect anyway]'
+  'no_verify_hostname[does not verify the hostname (SSL)]'
+  'no_verify_peer[does not verify the peer (SSL)]'
+  'cert[specify client certificate file (SSL)]:file:_files'
+  'cert_type[specify certificate file type (SSL)]:file type:((DER PEM ENG))'
+  'key[specify private key file name (SSL)]:file:_files'
+  'key_type[specify private key file type (SSL)]:file type:((DER PEM ENG))'
+  'pass[specify pass phrase for the private key (SSL)]:pass phrase'
+  'engine[specify crypto engine to use (SSL)]:crypto engine'
+  'cacert[specify file with CA certificates to verify the peer (SSL)]:file:_files'
+  'capath[specify CA directory to verify peer against (SSL)]:directory:_files -/'
+  'ciphers[specify SSL ciphers to use (SSL)]:ciphers:'
+  'interface[specify network interface/address to use]:interface'
+  'krb4[enable krb4 with specified security level]:security level:((client safe confidential private))'
+  'proxy[use specified HTTP proxy]:host:_urls'
+  'proxytunnel[operate through a HTTP proxy tunnel (using CONNECT)]'
+  'proxy_anyauth[pick "any" proxy authentication method]'
+  'proxy_basic[use Basic authentication on the proxy]'
+  'proxy_digest[use Digest authentication on the proxy]'
+  'proxy_ntlm[use NTLM authentication on the proxy]'
+  'user[set server user and password]:user and password'
+  'proxy_user[set proxy user and password]:user and password'
+  'tlsv1[use TLSv1 (SSL)]'
+  'sslv3[use SSLv3 (SSL)]'
+  'ipv4[resolve name to IPv4 address]'
+  'ipv6[resolve name to IPv6 address]'
+  'utf8[try to transfer file list with utf-8 encoding]'
+)
+
+_fuse_arguments -F copts \
+  '(-v --verbose)'{-v,--verbose}'[make libcurl print verbose debug]' \
+  ':ftp host:_urls' \
+  ':mount point:_files -/'

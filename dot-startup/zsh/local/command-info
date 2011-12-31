@@ -1,0 +1,11 @@
+#autoload
+
+local i=1
+
+typeset -a words=(${(z)2})
+
+for ((i=1;i<=$#words;i++)); do
+  [[ "$words[$i]" = *[^\\]=* ]] || break
+done
+
+[[ $i -le $#words ]] && zle -M "$($1 $words[$i])"

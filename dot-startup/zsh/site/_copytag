@@ -1,0 +1,21 @@
+#compdef copytag
+
+local curcontext="$curcontext" expl state line ret=1
+typeset -A opt_args
+
+_arguments -C -s -w \
+  '(-h --help)'{-h,--help}'[display help and exit]' \
+  '(-V --version)'{-V,--version}'[display version information and exit]' \
+  '(-s --save-old)'{-s-,--save-old=-}'[save old tag of outfile]:: :->tagfile' \
+  ':input id3v2 tagged file:_files -g "*.(#i)(mp3|tag)(-.)"' \
+  ':output id3v2 tagged file:_files -g "*.(#i)(mp3|tag)(-.)"' && ret=0
+
+case $state in
+  tagfile)
+    _wanted old-tag-output-file expl \
+      "old tag output file (default: ${${${(@)words:#-*}[3]:r}:-OUTPUT}.tag)" \
+      _files -g "*.(#i)tag(-.)" && ret=0
+    ;;
+esac
+
+return $ret

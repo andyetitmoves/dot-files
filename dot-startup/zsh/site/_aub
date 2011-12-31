@@ -1,0 +1,3 @@
+#compdef aub
+
+_arguments '1:AUB profile:_files -/ -W ~/.aub'

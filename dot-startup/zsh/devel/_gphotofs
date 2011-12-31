@@ -1,0 +1,3 @@
+#compdef gphotofs
+
+_fuse_arguments ':mount point:_files -/'

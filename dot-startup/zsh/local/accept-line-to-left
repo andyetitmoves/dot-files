@@ -1,0 +1,5 @@
+#autoload
+
+local RBUFFER=
+
+zle accept-line

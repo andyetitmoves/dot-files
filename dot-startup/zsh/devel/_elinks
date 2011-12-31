@@ -1,0 +1,99 @@
+#compdef elinks
+
+# ELinks 0.9.0 - Text WWW browser
+
+local curcontext="$curcontext" state line ret=1 expl
+typeset -A opt_args
+
+_arguments -C -A '-*' \
+  '*-anonymous[restrict to anonymous mode]::boolean:(0 1)' \
+  '*-auto-submit[autosubmit first form]::boolean:(0 1)' \
+  '*-base-session[clone session with given ID]:ID number:' \
+  '*-config-dir[set config dir to given string]:configuration directory:_files -/' \
+  '*-config-file[configuration file name]:configuration file:_files' \
+  '*-config-dump[print current configuration information]' \
+  '(- 1)-config-help[print help for configuration options]' \
+  '*-default-mime-type[MIME type to assume for documents]:MIME type:_mime_types' \
+  '*-default-keys[ignore configured keybindings]::boolean:(0 1)' \
+  '*-dump[write formatted version of given URL to stdout]::boolean:(0 1)' \
+  '*-dump-charset[codepage to use with -dump]:codepage:' \
+  '*-dump-width[width of document formatted with -dump]:width:' \
+  '*-eval[evaluate given configuration option]:configuration option:' \
+  '*-force-html[assume the file is HTML]' \
+  '(- 1)-'{\?,h,help}'[print usage help and exit]' \
+  '*-localhost[work offline]::boolean:(0 1)' \
+  '(- 1)-long-help[print detailed usage help and exit]' \
+  '(- 1)-lookup[look up specified host]:host:_hosts' \
+  '*-no-connect[run as separate instance]::boolean:(0 1)' \
+  "*-no-home[don't use files in ~/.elinks]::boolean:(0 1)" \
+  '*-no-numbering[do not number links in dump output]::boolean:(0 1)' \
+  '*-no-references[do not print link references in dump output]::boolean:(0 1)' \
+  '*-remote[pass given command to remote ELinks instance]:command:->remote' \
+  '*-session-ring[connect to session ring with given ID]:ID number:' \
+  '*-source[write the source of given URL to stdout]::boolean:(0 1)' \
+  '*-touch-files[touch files in ~/.elinks when running with -no-connect/-session-ring]::boolean:(0 1)' \
+  '*-verbose[specify verbosity level]:level:((0\:serious\ errors 1\:serious\ errors\ and\ warnings 2\:all\ messages))' \
+  '(- 1)-version[print version information and exit]' \
+  '1:URL:->url' && ret=0
+
+# ping(): look for a remote instance
+
+# openURL(): prompt URL in current tab
+
+# openURL(URL): open URL in current tab
+
+# openURL(URL, new-tab): open URL in new tab
+
+# openURL(URL, new-window): open URL in new window
+
+# addBookmark(URL): bookmark URL
+
+# infoBox(text): show text in a message box
+
+# xfeDoCommand(openBrowser): open new window
+
+while (( $#state )); do
+  if [[ "$state" = url ]]; then
+    local elinks_bookmarks
+
+    if [[ -s ~/.elinks/bookmarks ]]; then
+      elinks_bookmarks=( $(cut -f2 ~/.elinks/bookmarks) )
+    fi
+
+    _alternative \
+      'files:file:_files' \
+      'bookmarks:bookmark:compadd -a elinks_bookmarks' \
+      'urls:URL:_urls' && return
+  elif [[ "$state" = remote ]]; then
+    if ! compset -P '*\('; then
+      _wanted rcommands expl 'remote command' compadd -S '' \
+	ping\(\) {openURL,addBookmark,infoBox,xfeDoCommand}\(
+    elif ! compset -P '*,'; then
+      case $IPREFIX$PREFIX in
+	*openURL*)
+	  compset -S '(,|\))*' || ISUFFIX=",\ $ISUFFIX"
+	  state+=( url )
+	  ;;
+	*addBookmark*)
+	  compset -S '\)*' || ISUFFIX="\)$ISUFFIX"
+	  _urls && ret=0
+	  ;;
+	*infoBox*)
+	  _message text && ret=0
+	  ;;
+	*xfeDoCommand*)
+	  compadd -S '\) ' openBrowser && ret=0
+	  ;;
+      esac
+    elif ! compset -P '\)*'; then
+      case $IPREFIX$PREFIX in
+	*openURL*)
+	  compadd -S '\) ' new-tab new-window && ret=0
+	  ;;
+      esac
+    fi
+  fi
+  shift state
+done
+
+return ret

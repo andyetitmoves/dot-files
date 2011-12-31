@@ -1,0 +1,3 @@
+#compdef proxychains
+
+_command_names -e

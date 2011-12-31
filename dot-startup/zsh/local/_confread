@@ -1,0 +1,44 @@
+#autoload
+
+emulate -L zsh
+setopt extendedglob
+
+zmodload -i zsh/zutil # zformat
+
+local __line __now __field __file=$1 __replyvar=$2 __match=$3 __format=$4
+typeset -a __result
+typeset -A __values
+
+shift 4
+
+_confread_add_result () {
+  local __param __reply
+  typeset -a __fparams
+  if [[ -n $__now ]]; then
+    __fparams=(s:$__now)
+    for __param in $@; do
+      __fparams+=$__param[1]:$__values[$__param[3,-1]]
+    done
+    zformat -f __reply "$__format" $__fparams
+    __result+=$__reply
+  fi
+}
+
+while read -r __line; do
+  __line=${__line%$'\r'}
+  [[ $__line == (|[\#\;]*) ]] && continue
+  if [[ $__line == \[*\] ]]; then
+    _confread_add_result $@
+    __now=${${__line##\[[[:space:]]#}%%[[:space:]]#\]}
+    [[ $__now == $~__match ]] || __now=
+    __values=()
+  elif [[ -n $__now ]]; then
+    __field=${__line%%[[:space:]]#=[[:space:]]#(#b)(*)}
+    [[ $__field != $__line && -n $__field ]] && __values[$__field]=$match[1]
+  fi
+done < $__file
+_confread_add_result $@
+
+unfunction _confread_add_result
+
+set -A "$__replyvar" "${(@)__result}"

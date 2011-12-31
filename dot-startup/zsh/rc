@@ -1,0 +1,174 @@
+#!/bin/zsh
+
+source ~/.startup/bootstrap
+
+source "$SHOME/.startup/rc"
+
+OZDOTDIR="$ZDOTDIR"
+ZDOTDIR="$EHOME/.startup/zsh"
+
+typeset -U path cdpath fpath
+
+HISTSIZE=1500
+SAVEHIST=1000
+
+# Hack! zsh sets a default PS1 even before we start. So, we are unable to find
+# if a PS1 has been passed to us from the environment (like in Emacs' tramp), or
+# it is zsh's default value. So, we weed out the default value, and hope that
+# nobody wants to set it to this value from the environment :-)
+
+PS1=${PS1##%m%\# *}
+
+setopt promptsubst
+
+# We need to port this to non-xterm (vt's especially) terminals
+
+: ${PS1:=$'\e[1;33m\e)0\C-nq\e[%(?.$((COLUMNS-14)).$((COLUMNS-21)))b\C-o'\
+$'%(?..\e[31m {$(printf %03d $?)} \e[33m)[%D{%I:%M:%S %p}]\n%{\e[0;33m%}'\
+"$([[ -r $EHOME/.startup/conf/pradd ]] && < $EHOME/.startup/conf/pradd)"\
+$'%h.%{\e[39m%} '}
+RPS1=$'%{\e[1;37m%}%~%{\e[0m%}'
+
+MAILPATH="/var/spool/mail/$USER"
+MAILCHECK=4
+
+setopt auto_pushd pushd_minus pushd_ignore_dups pushd_silent pushd_to_home \
+    hist_expire_dups_first hist_ignore_dups hist_expire_dups_first \
+    inc_append_history auto_cd extended_glob
+unsetopt hup bg_nice list_types list_beep
+
+DIRSTACKSIZE=40
+
+hash -d zsh=/usr/share/zsh/functions/Completion
+
+fpath=("$OZDOTDIR/local" $fpath)
+autoload -Uz fpath-prepend-and-autoload
+
+fpath-prepend-and-autoload
+fpath-prepend-and-autoload \
+    "$OZDOTDIR/local" "$OZDOTDIR/devel" "$OZDOTDIR/queue"
+
+alias upath='export PATH=$PATH'
+alias mmv='noglob zmv -W'
+
+zstyle ':session:default:' dirstack yes
+
+[[ -r "$ZDOTDIR/exit" ]] && trap 'source $ZDOTDIR/exit' EXIT
+
+zstyle ':mime:*' current-shell yes
+zstyle ':mime:*' never-background yes
+zstyle :mime: mailcap-priorities files flags priority
+zstyle :mime: mailcap-prio-flags '*needsterminal*' '*test=test -n "$DISPLAY"*'
+
+zsh-mime-setup
+
+zmodload -i zsh/files
+alias mv='command mv'
+
+widget-make-bind popd-widget '^.'
+widget-make-bind ls-widget '\el'
+widget-make-bind accept-line-to-left '^J'
+
+alias which-command=which
+
+zle -N which-status which-status
+
+bindkey '^ ' set-mark-command
+bindkey '^H'  undefined-key
+bindkey '^Hf' run-help
+bindkey '^Hc' which-status
+bindkey '^Hk' describe-key-briefly
+bindkey '^Hw' where-is
+
+# if ! [[ -f "$OZDOTDIR/.zkbd/$TERM-$VENDOR-$OSTYPE" ]]; then
+#     autoload -Uz zkbd
+#     zkbd
+# fi
+
+if source "$OZDOTDIR/.zkbd/$TERM-$VENDOR-$OSTYPE" 2> /dev/null; then
+    [ -n "$key[F1]" ] && bindkey "$key[F1]" run-help
+    [ -n "$key[Menu]" ] && bindkey "$key[Menu]" execute-named-cmd
+    [ -n "$key[F3]" ] && bindkey "$key[F3]" which-command
+    [ -n "$key[F4]" ] && bindkey "$key[F4]" which-status
+    unset key
+fi
+
+# widget-make-bind predict-on '^P'
+# widget-make-bind predict-off '\M-C\M-0'
+# predict-on
+
+zession-load
+
+# This section has site-local external dependencies
+
+source "$OZDOTDIR/rc-site"
+
+# Completion Setup
+
+# If the user has explicitly set a different source home than his/her own,
+# We shall accept the trust of that source home in that course,
+# and accept directories compaudit thinks are insecure.
+
+compinit ${${SHOME:#$HOME}/$SHOME/-u}
+
+zstyle ':completion:*' auto-description 'specify: %d'
+zstyle ':completion:*' completer _complete _list _correct _approximate
+zstyle ':completion:*' completions 1
+zstyle ':completion:*' format $'%{\e[1;32m%}%U%d%u%{\e[0m%}'
+zstyle ':completion:*:corrections' format $'%{\e[1;32m%}%U%d (distance %e from %o)%u%{\e[0m%}'
+zstyle ':completion:*:warnings' format $'%{\e[1;31m%}I give up, type it out yourself%{\e[0m%}'
+zstyle ':completion:*' glob 1
+zstyle ':completion:*' group-name ''
+zstyle ':completion:*' insert-unambiguous true
+zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS} # ${${(s.:.)LS_COLORS}/\*(#b)(*)=/\=\*${(q)match[1]}(#q.)=}
+zstyle ':completion:*' list-prompt '%SDisplaying at %p: %m matches, %l lines%s'
+zstyle ':completion:*' list-suffixes true
+zstyle ':completion:*' matcher-list '' 'm:{a-z}={A-Z}' 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=** r:|=**'
+zstyle ':completion:*' max-errors 2 numeric
+zstyle ':completion:*' menu select=1
+zstyle ':completion:*' original true
+zstyle ':completion:*' prompt '%e errors. Correct > '
+zstyle ':completion:*' select-prompt '%SScrolling at %p: %m matches, %l lines%s'
+zstyle ':completion:*' substitute 1
+zstyle :compinstall filename '/home/ramk/.startup/zsh/rc'
+
+if [[ $UID -eq 0 ]]; then
+    psopts='-A -o pid,user,args'
+else
+    psopts='-U $UID -o pid,args'
+fi
+
+[[ -z "$cdrecorder" ]] &&
+if [[ -f /dev/cdrecorder ]]; then
+    cdrecorder=/dev/cdrecorder
+elif [[ -f /dev/cdrw ]]; then
+    cdrecorder=/dev/cdrw
+fi
+
+zstyle ':completion:*:processes' command ps $psopts
+zstyle ':completion:*:processes-names' command ps -U \$UID -ho command
+zstyle ':completion:*' mpc-format-string \
+    '[[%title%]|[%file%]][ - %artist%][ - %album%][ - Track %track%]'
+[[ -n "$MPD_DB_ROOT" ]] &&
+zstyle ':completion:*' mpd-music-directory "$MPD_DB_ROOT"
+
+zstyle ':completion:*:hosts' use-ip yes
+zstyle ':completion:*:hosts' known-hosts-file \
+    /etc/ssh/ssh_known_hosts "$EHOME/.ssh/known_hosts" ~/.ssh/known_hosts
+
+[[ -n "$cdrecorder" ]] &&
+zstyle ':completion:*:device' command cdrecord dev="$cdrecorder" -scanbus
+
+zstyle ':completion:*:messages' format $'\e[1;32m%d\e[0m'
+zstyle ':completion:*' use-cache yes
+
+# *** Needs urlmine ***
+
+zstyle ':completion:*:urls' firefox-profile-base "$EHOME/.mozilla/firefox"
+zstyle -e ':completion:*:urls' urls '_get_url_style; reply=$REPLY'
+
+unset psopts cdrecorder
+
+# This section has site-local external dependencies
+
+source "$OZDOTDIR/site-complete"

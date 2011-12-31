@@ -1,0 +1,5 @@
+#autoload
+
+zle -N "$1" "$1"
+
+bindkey "$2" "$1"

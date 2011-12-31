@@ -1,0 +1,11 @@
+#autoload
+
+local key="$1" name="$2"
+
+shift 2
+
+eval "$name () { $@ && zle accept-line; }"
+
+typeset -fg $name > /dev/null
+
+widget-make-bind "$name" "$key"

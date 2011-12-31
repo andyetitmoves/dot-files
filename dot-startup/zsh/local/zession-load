@@ -1,0 +1,14 @@
+#autoload
+
+local profile savefile
+
+[[ -z $1 ]] && profile=default
+
+if ! zstyle -s ":session:$profile:" session-file savefile; then
+  mkdir -p "$ZDOTDIR/.zession"
+  savefile="$ZDOTDIR/.zession/$profile"
+fi
+
+[ -r "$savefile" ] || return 0
+
+. "$savefile"

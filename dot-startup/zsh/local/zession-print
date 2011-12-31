@@ -1,0 +1,21 @@
+#autoload
+
+local profile context
+typeset -a sessvar
+
+[[ -z $1 ]] && profile=default
+context=":session:$profile:"
+
+if zstyle -t $context dirstack && (( $#dirstack )); then
+  echo 'dirs -c'
+  echo 'for dir in '${(qOa)dirstack}" "${(q)PWD}'; do'
+  echo -e '  cd $dir 2> /dev/null\ndone\nunset dir'
+fi
+
+zstyle -a $context variables sessvar
+
+if (( $#sessvar )); then
+  emulate -L zsh
+  unsetopt typeset_silent
+  typeset "${sessvar[@]}"
+fi

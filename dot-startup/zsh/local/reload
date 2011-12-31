@@ -1,0 +1,13 @@
+#autoload
+
+emulate -L zsh
+
+(( $# )) || {
+  echo Usage: $0 \<function...\> >&2
+  return 1
+}
+
+while (( $# )); do
+  $1 () { autoload -XUz }
+  shift
+done

@@ -1,0 +1,36 @@
+#autoload
+
+shorten_path ()
+{
+  local pstr='%~'
+  [[ -n $2 ]] && pstr="%$2<$pstr<"
+  REPLY="$(cd $1; echo ${(%)pstr})"
+}
+
+integer ret
+
+typeset -a nextdir
+
+nextdir=("${dirstack[@]}" "$PWD")
+
+zle -R "Pop to ${nextdir[1]}"
+
+while true; do
+  zle read-command
+  ret=$?
+  if [[ $ret -eq 0 ]] && [[ $REPLY == popd-widget ]]; then
+    nextdir=("${(@)nextdir[2,-1]}" "${nextdir[1]}")
+    zle -R "Pop to ${nextdir[1]}"
+  else
+    break
+  fi
+done
+
+if [[ $ret -eq 0 ]]; then
+  doit=$REPLY
+  cd ${nextdir[1]}
+  zle reset-prompt
+  zle $REPLY
+fi
+
+return $ret

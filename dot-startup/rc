@@ -1,0 +1,63 @@
+#!/bin/sh
+
+. "$SHOME/.startup/env"
+
+export EDITOR='emacsclient -t'
+
+export HISTFILE="$EHOME/.startup/history"
+
+ECONFDIR="$SHOME/.emacs.d/config"
+
+cache="--cache-file=$EHOME/.config.cache"
+gcflags="--disable-libtool-lock --disable-debugging"
+gaflags="--enable-maintainer-mode --enable-dependency-tracking $gcflags"
+
+alias ncconf="./configure -C $gcflags"
+alias ncauto="./autogen.sh -C $gaflags"
+alias genconf="./configure $cache $gcflags"
+alias genauto="./autogen.sh $cache $gaflags"
+
+unset cache gcflags gaflags
+
+alias genosd="osd_cat -c green -O 2 -p bottom -A right \
+-f '-*-fixed-*-*-*-*-*-*-100-*-*-100-iso8859-1'"
+alias ls='ls --color=auto'
+alias la='ls -A'
+alias l='ls'
+alias ll='ls -l'
+alias lla='ls -lA'
+alias lal='ls -lA'
+alias cd..='cd ..'
+alias qed="emacs -nw -Q -l $ECONFDIR/qed.elc"
+alias empc="emacs -Q -l $ECONFDIR/empc.elc"
+alias qline='sed "s/..*/\"\\0\"/"'
+alias grep='grep --color=auto'
+alias wgetbook='wgetdoc -r -np'
+alias wgetdoc='wget -E -k -p -nc '
+alias mchk='mp3check -eGBrbp'
+alias iv='imlib2_view'
+alias tunnel='ssh -o BatchMode=yes -N'
+alias sshfs='sshfs -o reconnect,transform_symlinks,idmap=user'
+alias fumount='fusermount -u'
+alias neton='execs neton'
+alias raptitude='env -u http_proxy -u ftp_proxy sudo aptitude'
+alias xppd="xpdf -cfg $HOME/.xpdf/pres.conf -fullscreen"
+alias punplug='pplug -u'
+alias tailf='inotail -f'
+alias etredate="exiftool '-FileName<DateTimeOriginal' -d '%Y:%m:%d:%H:%M:%S%%-.c.%%e' -v"
+alias vidredate="exiftool '-FileName<TrackCreateDate' -d '%Y:%m:%d:%H:%M:%S%%-.c.%%e' -v"
+alias e="$EDITOR"
+
+colid3 () { id3info "$@" | id3fmt | less -R ; }
+
+lss () { ls -Cw $COLUMNS --color=always "$@" | less -R ; }
+las () { la -Cw $COLUMNS --color=always "$@" | less -R ; }
+lls () { ll --color=always "$@" | less -R ; }
+llas () { lla --color=always "$@" | less -R ; }
+
+DIRCOLORS="$SHOME/.startup/dircolors/$TERM"
+
+[ -r "$DIRCOLORS" ] || DIRCOLORS="$SHOME/.startup/dircolors/default"
+[ -r "$DIRCOLORS" ] && eval `dircolors --sh "$DIRCOLORS"`
+
+unset ECONFDIR DIRCOLORS

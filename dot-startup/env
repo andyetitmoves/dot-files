@@ -1,0 +1,27 @@
+#!/bin/sh
+
+export PATH="$SHOME/projects/single:$SHOME/scripts:$SHOME/scripts/ctxfree:$SHOME/install/root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/eclipse"
+
+export CPPFLAGS="-DNDEBUG"
+export CFLAGS="-pipe -march=native -m64 -mfpmath=sse -O2"
+export CXXFLAGS="$CFLAGS -fno-enforce-eh-specs"
+export LDFLAGS="-s -Wl,--relax,--sort-common"
+export INSTALL="/usr/bin/install -p"
+export LD_RUN_PATH="$SHOME/install/root/lib"
+export PKG_CONFIG_PATH="$SHOME/install/root/lib/pkgconfig"
+
+export MPD_HOST=127.0.0.1
+export MPD_PORT=6600
+export MPD_DB_ROOT=/srv/mpd/songs
+export MBOX="$EHOME/.mbox"
+export CVS_RSH=ssh
+
+export EMAIL='andyetitmoves@gmail.com'
+
+export XAUTHORITY="$SHOME/.Xauthority"
+
+[ -r "$EHOME/.startup/conf/umask" ] && umask `cat "$EHOME/.startup/conf/umask"`
+
+# update-proxy is a custom script
+
+eval $(update-proxy; lesspipe)
