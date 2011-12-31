@@ -7,4 +7,4 @@ setopt extendedglob
 autoload -Uz zargs
 
 zargs ~/.purple/logs/**/*~*.chat/*(.) -- ls -l | \
-    awk '{ print $5 "\t" $9 }' | sort -nr | cat -n
+    awk '{ print $5 "\t" $8 }' | sort -nr | cat -n
