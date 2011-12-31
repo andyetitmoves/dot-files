@@ -27,7 +27,8 @@ setopt promptsubst
 $'%(?..\e[31m {$(printf %03d $?)} \e[33m)[%D{%I:%M:%S %p}]\n%{\e[0;33m%}'\
 "$([[ -r $EHOME/.startup/conf/pradd ]] && < $EHOME/.startup/conf/pradd)"\
 $'%h.%{\e[39m%} '}
-RPS1=$'%{\e[1;37m%}%~%{\e[0m%}'
+
+RPS1=$'%{\e[1;32m%}$([[ -n "$SSH_CONNECTION" ]] && echo "$HOST:")%{\e[1;37m%}%~%{\e[0m%}'
 
 MAILPATH="/var/spool/mail/$USER"
 MAILCHECK=4
