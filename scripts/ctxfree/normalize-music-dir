@@ -1,0 +1,52 @@
+#!/bin/zsh
+
+local ctr rest
+
+ec () {
+    echo "Executing: ${(q)@}"
+    "$@"
+}
+
+check_run () {
+    local pat="$1(N)"; shift
+    local files; files=(${~pat})
+    [[ $#files -gt 0 ]] || return 9
+    ec "$@"
+}
+
+mvp () { check_run $1 zmv -W $1 $2; }
+
+if [[ -d Covers ]]; then
+    ec mv -i Covers/* .
+    ec rmdir Covers
+fi
+
+if [[ -d Tracks ]]; then
+    ec mv -i Tracks/* .
+    ec rmdir Tracks
+fi
+
+noglob check_run '\[xDR\] * - ?? - *' zmv '\[xDR\] * - (??) - (*)' '$1-$2'
+zargs -r -- *.mp3(N) -- rename 's/^([0-9]*)\. */$1/'
+noglob mvp [0-9][0-9]\ *.mp3 [0-9][0-9]-*.mp3
+noglob mvp *.\ *.mp3 *-*.mp3
+zargs -r -- *.mp3(N) -- rename 's/ *- */-/g'
+noglob mvp '*-Sevanthi.com.mp3' *.mp3
+noglob mvp Track* *
+noglob mvp '* .mp3' *.mp3
+
+zargs -r -- *.m3u(N) Readme*(N) -- ec rm -f
+zargs -r -i{} -- *.nfo(N) -- ec mv {} release-info
+
+integer ctr=1 rest=1
+noglob check_run 00-Front.jpg mv 00-Front.jpg $ctr-Front.jpg && ctr=ctr+1
+rest=$ctr; ctr=ctr+1
+noglob mvp 00-Inlay* 0$ctr-Inlay* && ctr=ctr+1
+noglob mvp 00-Book* 0$ctr-Book* && ctr=ctr+1
+noglob mvp 00-* 0$ctr-* && ctr=ctr+1
+
+zargs -r -- *.mp3(N) -- ec mp3gain -r -k
+
+[[ -f 1?-* ]] || noglob mvp 0* *
+
+unset -f ec check_run mvp

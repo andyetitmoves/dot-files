@@ -1,0 +1,44 @@
+#!/bin/zsh
+
+local mvcmd file nfile ext
+
+if [[ $1 == -c ]]; then
+    mvcmd="$2"
+    shift 2
+fi
+
+if [[ $# -ne 2 ]]; then
+    echo Usage: $0 '[-c move-command]' file nfile >&2
+    return 1
+fi
+
+[[ -z "$mvcmd" ]] && mvcmd='mv -i $file $nfile'
+
+[[ -n ${2:e} ]] && ext=.${2:e}
+
+typeset -a append exist
+
+exist=(${2:r}-([0-9])#$ext(N))
+append=("$1")
+
+if [[ -e $2 ]]; then
+    append=("$2" "${append[@]}")
+elif [[ -z $exist ]]; then
+    file=$1
+    nfile=$2
+    eval $mvcmd
+    return 0
+fi
+
+integer idx ctr=0
+
+for i in "${exist[@]}"; do
+    idx=${${i##${2:r}-}%%$ext}
+    [[ $idx -gt $ctr ]] && ctr=$idx
+done
+
+for file in "${append[@]}"; do
+    ctr=$((ctr + 1))
+    nfile=${2:r}-$ctr$ext
+    eval $mvcmd
+done

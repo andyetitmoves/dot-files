@@ -1,0 +1,9 @@
+#!/bin/zsh
+
+# Escape URI % escapes from the basename of the file
+
+local dir="$(echo ${${1%/}##*/} | perl -pe 's/%([0-9A-Fa-f]{2})/chr(hex($1))/eg')"
+
+wget -O - "$1" | sed -ne 's!.*href=".*dir=\([^&]*\)&amp;file=\(.*\.mp3\)".*!'\
+'http://66.90.103.126/~rose4you/www.rose4you.dk/\1\2!gp' | \
+    wget -r -np -i- -P"$dir" -nd

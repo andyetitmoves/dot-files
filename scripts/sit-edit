@@ -1,0 +1,16 @@
+#!/bin/sh
+
+PATH="$PATH:/home/ramk/scripts"
+
+for file in "$@"; do
+    basename="${file##*/}"
+    tempdir="$(mktemp -dt $basename.sit.XXXXXX)"
+    echo "All temporary files are present in the directory $tempdir"
+    sit --data-prefix "$tempdir/original-data" $file > "$tempdir/original.sit" && \
+	cp -a "$tempdir/original.sit" "$tempdir/changed.sit" && \
+	emacs -nw "$tempdir/changed.sit" && \
+	[ "$tempdir/changed.sit" -nt "$tempdir/original.sit" ] && \
+	sit --mode set "$file" < "$tempdir/changed.sit" && \
+	sit --data-prefix "$tempdir/verify-data" $file > "$tempdir/verify.sit"
+done
+

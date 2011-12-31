@@ -1,0 +1,19 @@
+#!/bin/zsh
+
+echo_exec () {
+    echo "${(q)@}"
+    "$@"
+}
+
+for composer in *; do
+    for album in "$composer"/*; do
+	for file in "$album"/*; do
+	    [[ $file == *.mp3 ]] && \
+		echo_exec id3v2 --TCOM "$composer" --TALB "${album#*/}" "$file"
+            [[ $file == *.flac ]] && \
+		echo_exec metaflac --remove-tag=Album --remove-tag=Composer \
+		--set-tag=Composer="$composer" --set-tag=Album="${album#*/}" "$file"
+        done
+    done
+done
+

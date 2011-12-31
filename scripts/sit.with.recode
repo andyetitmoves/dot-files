@@ -1,0 +1,599 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use FindBin;
+use lib "/home/ramk/projects/sit/lib";
+use lib "$FindBin::Bin/lib";
+
+use MP3::Tag;
+use File::MimeInfo;
+use Getopt::Long;
+use MIME::Base64;
+use File::Temp;
+use Text::Iconv;
+
+use Data::Dumper;
+use Data::Hexdumper;
+
+my %frame_props;
+my %field_props;
+my %field_descriptions;
+my %field_desc_names;
+my %var_props;
+my %value_descriptions;
+my %value_desc_names;
+
+my %variable_operations;
+my %field_handlers;
+my %variable_handlers;
+my %encoding_names;
+
+my $mode = 'list';
+my $output_file = '-';
+my $data_prefix = 'sit';
+my $inline = 1;
+my $recode;
+
+### Functions ###
+
+sub sit_get_lvalue {
+    my ($frame, $field) = @_;
+
+    $frame = (uc $frame) if $frame;
+    $field = (lc $field) if $field;
+    $frame or do {
+	warn "Empty frame specified\n";
+	return;
+    };
+    my $props = $frame_props{$frame};
+    defined $props or do {
+	warn "Sorry, we do not understand frame '$frame' as yet!\n";
+	return;
+    };
+    $field = $props->{default} unless $field;
+    $field or do {
+	warn "Unable to find field in frame $frame\n";
+	return;
+    };
+
+    return ($frame, $field);
+}
+
+sub sit_get_rvalue {
+    my ($value, $value_type, $flags) = @_;
+    my $data;
+
+    if ($value_type eq '=') {
+	$data = $value;
+    } elsif ($value_type eq '<<') {
+	$data = '';
+	while (<>) {
+	    last if $_ eq "$value\n";
+	    $data .= $_;
+	}
+    } elsif ($value_type eq '<') {
+	open my $datafile, $value or do {
+	    warn "Unable to open data file $value\n";
+	    next;
+	};
+	local $/;
+	$data = <$datafile>;
+	close $datafile;
+    }
+    if ((index $flags, '~') >= 0) {
+	# TODO: Interpolate
+	$data = "Interpolate: $data";
+    }
+    return $data;
+}
+
+sub sit_default_variable_handler {
+    my ($context, $operation, $frame, $field, $value) = @_;
+    if ($operation == 0) {
+	my $frames = $context->{buffer}->{$frame} or return;
+	my $key = $context->{keymap}->{$frame};
+	$key = 'frame-00' unless defined $key;
+	my $frame = $frames->{$key} or return;
+
+	return $frame->{$field};
+
+    } elsif ($operation == 1) {
+	my $buffer = ($context->{buffer} || ($context->{buffer} = {}));
+	my $frames = ($buffer->{$frame} || ($buffer->{$frame} = {}));
+	my $key = $context->{keymap}->{$frame};
+	$key = 'frame-00' unless defined $key;
+	my $frame = ($frames->{$key} || ($frames->{$key} = {}));
+
+	$frame->{$field} = $value;
+    }
+}
+
+sub sit_handle_field_key {
+    my ($context, $operation, $frame, $field, $value) = @_;
+    if ($operation == 0) {
+	my $key = $context->{keymap}->{$frame};
+	$key = 'frame-00' unless defined $key;
+	return $key;
+
+    } elsif ($operation == 1) {
+	defined $frame_props{$frame}->{multiple} or do {
+	    warn "Cannot set key on $frame: Only one occurrence needs to be present.\n";
+	    return;
+	};
+	$context->{keymap}->{$frame} = $value;
+    }
+}
+
+sub sit_run_variable_handler {
+    my ($context, $operation, $frame, $field, @args) = @_;
+    my $handler = ($variable_handlers{"$frame.$field"} ||
+		   $field_handlers{$field} ||
+		   \&sit_default_variable_handler);
+    return $handler->($context, $operation, $frame, $field, @args);
+}
+
+sub sit_operation_get_variable {
+    my ($context, $frame, $field) = @_;
+    return sit_run_variable_handler ($context, 0, $frame, $field);
+}
+
+sub sit_operation_set_variable {
+    my ($context, $frame, $field, $value) = @_;
+    return sit_run_variable_handler ($context, 1, $frame, $field, $value);
+}
+
+sub sit_operation_split_vector_field {
+    my ($context, $frame, $field, $value) = @_;
+    # FIXME: split parse, currently render might generate a split statement.
+    return sit_run_variable_handler ($context, 1, $frame, $field, $value);
+}
+
+sub sit_operation_base64_decode_field {
+    my ($context, $frame, $field, $value) = @_;
+    return sit_run_variable_handler ($context, 1, $frame, $field, (decode_base64 $value));
+}
+
+sub sit_tag_add_frame {
+    my ($tag, $frame_id, $fields) = @_;
+    my $format = (MP3::Tag::ID3v2::get_format $frame_id);
+    my @data;
+    unless (defined $format) {
+	warn "Unsupported frame: $frame_id\n";
+	return;
+    }
+    foreach (@$format) {
+	next if exists $_->{v3name};
+	my $name = $_->{name} or do {
+	    push @data, '';
+	    next;
+	};
+	my $field = ($field_desc_names{$name} || $name);
+	my $value = $fields->{$field};
+	$value = ($field_props{$field} || {})->{default} unless defined $value;
+	$value = '' unless defined $value;
+	my $t_value = ($value_descriptions{"$frame_id.$field"} || {})->{$value};
+	$t_value = $value unless defined $t_value;
+	push @data, $t_value;
+    }
+    $tag->add_frame($frame_id, @data);
+}
+
+sub sit_render_tag {
+    my ($buffer, $tag) = @_;
+    while (my ($frame_id, $frames) = each %{$buffer}) {
+	foreach my $key (sort keys %{$frames}) {
+	    sit_tag_add_frame $tag, $frame_id, $frames->{$key};
+	}
+    }
+}
+
+sub sit_update_buffer {
+    my $context = shift;
+    while (<>) {
+	chomp;
+	s/\#.*//g; # Strip comment portion
+	/^\s*$/ and next; # Skip empty lines
+
+	/(\S+?)(?:\.(\S+))?\s*([~:]*)(=|<<?)\s*(.*)/ or do {
+	    warn "Invalid line: $_\n";
+	    next;
+	};
+	my ($frame_str, $field_str, $op_flags, $value_type, $value_desc)
+	  = ($1, $2, $3, $4, $5);
+
+	my ($frame, $field) = (sit_get_lvalue $frame_str, $field_str) or next;
+	my $value = (sit_get_rvalue $value_desc, $value_type, $op_flags) or next;
+
+	my $operation = 'set';
+
+	if ((index $op_flags, ':') >= 0) {
+	    $value =~ /(\S+)\s*(.*)?/ or do {
+		warn "Operation not specified in value description: $value\n";
+		next;
+	    };
+	    ($operation, $value) = ($1, $2);
+	}
+
+	my $handler = $variable_operations{$operation} or do {
+	    warn "Unknown operation specified for $frame.$field: $operation\n";
+	    next;
+	};
+
+	warn ucfirst($operation).": $frame.$field to: $value\n";
+	$handler->($context, $frame, $field, $value);
+    }
+}
+
+sub sit_do_set {
+    my $context = shift;
+    sit_update_buffer $context;
+    my $newtag = $context->{tags}->new_tag ("ID3v2");
+    sit_render_tag $context->{buffer}, $newtag;
+    $context->{tags}->{ID3v2}->remove_tag ();
+    $newtag->write_tag ();
+}
+
+# What the hell is this?
+sub sit_merge_value {
+    my ($frame_id, $field, $value) = @_;
+}
+
+my $filename_suffix_counter = 1;
+
+sub sit_convert_field {
+    my ($value, $from_enc, $to_enc) = @_;
+    if ($from_enc && $to_enc && $from_enc != $to_enc) {
+	my $iconv = Text::Iconv->new ($encoding_names{$from_enc}, $encoding_names{$to_enc});
+	my $conv_val = $iconv->convert ($value);
+	if (defined $conv_val) {
+	    $value = $conv_val;
+	} else {
+	    warn "Unable to recode:\n" . hexdump(data => $value, number_format => 'C');
+	}
+    }
+    return $value;
+}
+
+sub sit_print_frame {
+    my ($frame_id, $frame) = @_;
+    my $file_extension;
+    my $props = $frame_props{$frame_id};
+    my $frame_encoding = $frame->{encoding};
+    $frame->{encoding} = $recode if $recode && exists $encoding_names{$recode};
+    while (my ($desc, $val) = each %$frame) {
+	my $key = $field_desc_names{$desc};
+	$key = $desc unless defined $key;
+	my $suffix = (((exists $props->{default}) &&
+		       ($props->{default} eq $key)) ? '' : ".$key");
+	my $this_field_props = ($field_props{$key} || {});
+	next if (exists $this_field_props->{default})
+	  && ($this_field_props->{default} eq $val);
+	if ($desc =~ /_.*/) {
+	    if ($inline) {
+		print "$frame_id$suffix :<< EOF\nset-base64\n";
+		print (encode_base64 $val);
+		print "EOF\n";
+	    } else {
+		unless (defined $file_extension) {
+		    my $mime = $frame->{'MIME type'};
+		    $file_extension = File::MimeInfo::extensions($mime) if $mime;
+		    $file_extension = ($mime ? (($mime =~ /image\/(.*)/) ? $1 : '') : '')
+			unless $file_extension;
+		    $file_extension = ".$file_extension" if $file_extension;
+		}
+		my ($file, $filename) = File::Temp::tempfile("${data_prefix}-XXXXXX",
+							     DIR => $ENV{TMPDIR},
+							     SUFFIX => $file_extension);
+		binmode($file);
+		print $file $val;
+		close $file;
+		print "$frame_id$suffix < $filename\n";
+		$filename_suffix_counter++;
+	    }
+	} else {
+	    my $field_encoding;
+	    $field_encoding = $frame_encoding if $this_field_props->{encoded};
+	    my $values_ref = $value_desc_names{$frame_id.$suffix};
+	    my $alias = $values_ref->{$val} if defined $values_ref;
+	    $val = $alias if $alias;
+	    my $oppre = '';
+	    my $vector_field = ($var_props{"$frame_id.$key"} || {})->{vector};
+	    if ($vector_field && ((index $val, "\0") >= 0)) {
+		my @comps = (split /\0/, $val);
+		if ($#comps > 0) {
+		    # FIXME: Assumes that there are no :'s within a field
+		    $val = 'split :'.join(':', (map { sit_convert_field($_, $field_encoding, $recode) } @comps));
+		    $oppre = ':';
+		}
+	    } else { $val = sit_convert_field($val, $field_encoding, $recode); }
+	    print "$frame_id$suffix $oppre".
+	      # FIXME: theoretically, $val could contain a line "EOF"
+	      (($val =~ /\n/g) ? "<< EOF\n$val\nEOF" : "= $val")."\n";
+	}
+    }
+}
+
+sub sit_print_tag {
+    my $id3v2 = shift;
+    my $frameids = $id3v2->get_frame_ids('truename');
+
+    foreach my $frame_id (keys %$frameids) {
+	my ($rawname, $data) = $id3v2->get_frames($frame_id, 'raw');
+	# print "Raw: $rawname:\n".hexdump($data)."\n";
+	my ($refname, $refdata) = $id3v2->get_frames($frame_id);
+	# print "Refined: $refname, $refdata\n";
+	my ($name, @insts) = $id3v2->get_frames($frame_id, 'hash');
+	# print "Name: $name, Insts: ". Dumper(\@insts)."\n";
+	warn "No frames present for $frame_id, but present on the frame list!\n"
+	  if $#insts < 0;
+	my $multiple = ($frame_props{$frame_id} || {})->{multiple};
+	my $ctr = 0;
+	for my $frame (@insts) {
+	    my $framekey = (sprintf 'frame-%02d', $ctr);
+	    if (ref $frame) {
+		print "\n";
+		print "$frame_id.key = $framekey\n" if $multiple;
+		sit_print_frame $frame_id, $frame;
+		$ctr ++;
+	    }
+	}
+    }
+}
+
+sub sit_do_fill {
+    my $contexts = shift;
+    print "\n# This file has been automatically generated by sit\n";
+    foreach (keys %$contexts) {
+	my $tags = $contexts->{$_}->{tags};
+	print "\n# FILE = ".$tags->filename ()."\n";
+	sit_print_tag $tags->{ID3v2} if exists $tags->{ID3v2};
+    }
+    print "\n# End of generated file\n";
+}
+
+### Actual Program ###
+
+$Data::Dumper::Indent = 2;
+$| = 1;
+
+Getopt::Long::Configure ('gnu_getopt');
+
+GetOptions ('mode|m=s'	      => \$mode,
+	    'output|o=s'      => \$output_file,
+	    'data-prefix|d=s' => \$data_prefix,
+	    'inline|i!'	      => \$inline,
+	    'recode|r=i'      => \$recode,
+	   ) or die 'Unable to parse command line';
+
+if (defined $recode && ! exists($encoding_names{$recode})) {
+    warn "Invalid recoding value: $recode, ignoring";
+    $recode = undef;
+}
+
+unless ($ARGV[0]) {
+    print STDERR "No mp3 file specified\n";
+    exit 1;
+}
+
+my %contexts;
+
+foreach (@ARGV) {
+    unless ($contexts{$_}) {
+	my $file_tag = MP3::Tag->new ($_);
+	if ($file_tag) {
+	    $contexts{$_} = { tags => $file_tag };
+	    $file_tag->get_tags;
+	} else { warn "Unable to create tag context for file '$_'" }
+    }
+}
+
+my $file = shift @ARGV;
+
+my $tags = MP3::Tag->new ($file);
+$tags->get_tags;
+
+my %context =
+  (
+   'tags' => $tags,
+  );
+
+for ($mode) {
+    /list/ && do { sit_do_fill \%contexts; last };
+    /set/ && do { sit_do_set $contexts{$file}; last };
+}
+
+$contexts{$_}->{tags}->close foreach keys %contexts;
+
+### Globals ###
+
+BEGIN {
+
+    my @id3v24text = # v2.4 text frames
+      (
+       'TALB','TBPM','TCOM','TCON','TCOP','TDEN','TDLY','TDOR','TDRC','TDRL',
+       'TDTG','TENC','TEXT','TFLT','TIPL','TIT1','TIT2','TIT3','TKEY','TLAN',
+       'TLEN','TMCL','TMED','TMOO','TOAL','TOFN','TOLY','TOPE','TOWN','TPE1',
+       'TPE2','TPE3','TPE4','TPOS','TPRO','TPUB','TRCK','TRSN','TRSO','TSOA',
+       'TSOP','TSOT','TSRC','TSSE','TSST','TXXX',
+      );
+
+    my @frame_props_definition =
+      (
+        # First the default properties
+
+       [@id3v24text,
+	'TDAT','TIME','TORY','TRDA','TSIZ','TYER','IPLS', # v2.3 deprecated Text Frames
+	'COMM','OWNE','PCNT','USER','USLT', # Other text frames
+       ] => {default=>'text'},
+
+       ['WCOM','WCOP','WOAF','WOAR','WOAS','WORS','WPAY','WPUB','WXXX',
+	'AENC','COMR','LINK','POPM',
+       ] => {default=>'url'},
+
+       ['APIC','CRM','ENCR','GEOB','GRID','MCDI','PRIV','SYTC','TDRC','UFID',
+       ] => {default=>'data'},
+
+       ['RBUF'] => {default=>'size'},
+
+       ['EQUA','ETCO','MLLT','POSS','RVAD','RVRB','SYLT'] => {},
+
+       # When is multiple frames allowed?
+
+       ['UFID','TXXX','WCOM','WOAR','WXXX','USLT','SYLT','COMM','RVA2','EQU2',
+	'APIC','GEOB','POPM','RBUF','AENC','LINK','USER','COMR','ENCR','GRID',
+	'PRIV','SIGN',
+       ] => {multiple=>1},
+      );
+
+    while (@frame_props_definition) {
+	my $frames = shift @frame_props_definition;
+	my $props = shift @frame_props_definition;
+	foreach my $frame (@{$frames}) {
+	    $frame_props{$frame} = {} unless exists $frame_props{$frame};
+	    $frame_props{$frame} = { %{$frame_props{$frame}}, %{$props}};
+	}
+    }
+
+    %field_descriptions =
+      (
+       encoding          => '_encoding',
+       text              => 'Text',
+       desc              => 'Description',
+       url               => 'URL',
+       mimetype          => 'MIME type',
+       data              => '_Data',
+       lang              => 'Language',
+       previewstart      => 'Preview start',
+       previewlength     => 'Preview length',
+       picturetype       => 'Picture Type',
+       price             => 'Price',
+       validuntil        => 'Valid until',
+       receivedas        => 'Received as',
+       sellername        => 'Name of Seller',
+       logo              => '_Logo',
+       ownerid           => 'Owner ID',
+       explanation       => 'Content/explanation',
+       method            => 'Method symbol',
+       filename          => 'Filename',
+       owner             => 'Owner',
+       symbol            => 'Symbol',
+       id                => 'ID',
+       pricepaid         => 'Price payed',
+       purchasedate      => 'Date of purchase',
+       imageformat       => 'Image Format',
+       picturetype       => 'Picture Type',
+       rating            => 'Rating',
+       counter           => 'Counter',
+       bufsize           => 'Buffer size',
+       embeddedinfoflag  => 'Embedded info flag',
+       offsettonexttag   => 'Offset to next tag',
+       reverbleft        => 'Reverb left (ms)',
+       reverbright       => 'Reverb right (ms)',
+       reverbbouncesl    => 'Reverb bounces (left)',
+       reverbbouncesr    => 'Reverb bounces (right)',
+       feedbackll        => 'Reverb feedback (left to left)',
+       feedbacklr        => 'Reverb feedback (left to right)',
+       feedbackrr        => 'Reverb feedback (right to right)',
+       feedbackrl        => 'Reverb feedback (right to left)',
+       premixlr          => 'Premix left to right',
+       premixrl          => 'Premix right to left',
+       timestampformat   => 'Time Stamp Format',
+      );
+
+    $field_desc_names{$field_descriptions{$_}} = $_ foreach keys %field_descriptions;
+
+    %field_props =
+      (
+       encoding => {default=>0},
+       # This list needs to be completed
+       text => {encoded=>1},
+       desc => {encoded=>1},
+      );
+
+    foreach my $text_frame (@id3v24text, 'IPLS') {
+	my $text_field = "$text_frame.text";
+	my $cur = $var_props{$text_field} || {};
+	$cur->{vector} = 1;
+	$var_props{$text_field} = $cur;
+    }
+
+    %value_descriptions =
+      (
+       'APIC.picturetype' =>
+       {
+	'other'		  => 'Other',
+	'icon'		  => "32x32 pixels 'file icon' (PNG only)",
+	'other-icon'	  => 'Other file icon',
+	'cover-front'	  => 'Cover (front)',
+	'cover-back'	  => 'Cover (back)',
+	'leaflet'	  => 'Leaflet page',
+	'media'		  => 'Media (e.g. lable side of CD)',
+	'lead-artist'	  => 'Lead artist/lead performer/soloist',
+	'lead-performer'  => 'Lead artist/lead performer/soloist',
+	'soloist'	  => 'Lead artist/lead performer/soloist',
+	'artist'	  => 'Artist/performer',
+	'performer'	  => 'Artist/performer',
+	'conductor'	  => 'Conductor',
+	'band'		  => 'Band/Orchestra',
+	'orchestra'	  => 'Band/Orchestra',
+	'composer'	  => 'Composer',
+	'lyricist'	  => 'Lyricist/text writer',
+	'text-writer'	  => 'Lyricist/text writer',
+	'rec-loc'	  => 'Recording Location',
+	'during-rec'	  => 'During recording',
+	'during-perf'	  => 'During performance',
+	'capture'	  => 'Movie/video screen capture',
+	'fish'		  => 'A bright coloured fish',
+	'illustration'	  => 'Illustration',
+	'band-logo'	  => 'Band/artist logotype',
+	'artist-logo'	  => 'Band/artist logotype',
+	'pub-logo'	  => 'Publisher/Studio logotype',
+	'studio-logo'	  => 'Publisher/Studio logotype',
+       },
+       'COMR.received-as' =>
+       {
+	'other'		  => 'Other',
+	'std-album'	  => 'Standard CD album with other songs',
+	'compr-cd'	  => 'Compressed audio on CD',
+	'internet'	  => 'File over the Internet',
+	'stream'	  => 'Stream over the Internet',
+	'note-sheet'	  => 'As note sheets',
+	'note-sheet-book' => 'As note sheets in a book with other sheets',
+	'other-media'	  => 'Music on other media',
+	'non-musical'	  => 'Non-musical merchandise',
+       },
+      );
+
+    foreach (keys %value_descriptions) {
+	my $hash = $value_descriptions{$_};
+	my %rhash;
+	$rhash{$hash->{$_}} = $_ foreach keys %$hash;
+	$value_desc_names{$_} = { %rhash };
+    }
+
+    %variable_operations =
+      (
+       'set' => \&sit_operation_set_variable,
+       'split' => \&sit_operation_split_vector_field,
+       'set-base64' => \&sit_operation_base64_decode_field,
+      );
+
+    %field_handlers =
+      (
+       'key' => \&sit_handle_field_key,
+      );
+
+    %variable_handlers =
+      (
+      );
+
+    %encoding_names =
+      (
+       '0' => 'ISO-8859-1',
+       '1' => 'UTF-16',
+       '2' => 'UTF-16BE',
+       '3' => 'UTF-8',
+      );
+}

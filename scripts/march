@@ -1,0 +1,39 @@
+#!/bin/sh
+
+script="${0##*/}"
+
+root='/srv/media/movies'
+
+if [ $# -lt 3 ]; then
+    echo "$script SRC-DIR BASENAME QUALITY [LANGUAGE [RATING]]" >&2
+    return 9
+fi
+
+upcase_match () {
+    value="$1"; shift
+    regex="$1"; shift
+    param="$1"; shift
+    conv="$(echo "$value" | tr '[a-z]' '[A-Z]')"
+    if ! expr "$conv" : "^$regex\$" > /dev/null; then
+	echo "Invalid value for parameter $param: $value" >&2
+	echo I
+    fi
+}
+
+dir="$1"; shift
+basename="$1"; shift
+
+[ -d "$dir" ] || {
+    echo "Movie $dir is not a directory!, quitting..." >&2
+    return 8
+}
+
+quality="$(upcase_match "$1" '[0-9]' Quality)"; shift;
+language='T'; [ $# -gt 0 ] && { language="$(upcase_match "$1" '[HTE]' Language)"; shift; }
+rating='U'; [ $# -gt 0 ] && { rating="$(upcase_match "$1" '[0-9U]' Rating)"; shift; }
+
+expr "$quality$language$rating" : I > /dev/null && return 7
+
+dest_base="$(echo $basename | tr ' ' '.').$language$quality$rating"
+
+echo "$dir to $root/$dest_base"

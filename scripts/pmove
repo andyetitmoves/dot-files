@@ -1,0 +1,36 @@
+#!/bin/sh
+
+local destination ownership REPLY arg
+
+if [ $# -lt 2 ]; then
+    echo "Usage: $0 DESTINATION FILE..." >&2
+    return 9
+fi
+
+destination="$1"; shift
+
+set_output () {
+    local value ret
+    value="$("$@" 2> /dev/null)"
+    ret=$?
+    [ $ret -gt 0 ] && return $ret
+    REPLY="$value"
+    return 0
+}
+
+set_output stat -c %U:%G "$destination" ||
+set_output stat -c %U:%G "$(dirname "$destination")" || {
+    echo Unable to determine destination ownership >&2
+    return 1
+}
+
+ownership="$REPLY"
+
+for arg in "$@"; do
+    find "$arg" -type f -print0 | xargs -r0 chmod 664
+    find "$arg" -type d -print0 | xargs -r0 chmod 775
+done
+
+sudo chown -R "$ownership" "$@"
+sudo mv -vi "$@" "$destination"
+

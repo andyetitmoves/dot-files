@@ -1,0 +1,42 @@
+#!/bin/sh
+
+local dir output_dir file basename outfile
+
+if [ $# -gt 0 ]; then
+    dir="$1"; shift
+else
+    dir='.'
+fi
+
+dir="$(readlink -ef "$dir")"
+
+if [ $# -gt 0 ]; then
+    output_dir="$1"; shift
+else
+    output_dir="$dir"
+fi
+
+output_dir="$output_dir/${dir##*/}"
+
+mkdir -p "$output_dir"
+
+flac2mp3_copy_tags () {
+    eval "$(metaflac --list --block-type=VORBIS_COMMENT "$1" | perl -ne '/ *comment.*: ([^=]*)=(.*)/ && print "FLAC2MP3_\U$1\E='"'"'$2'"'"'\n"' | tee /dev/stderr)"
+    id3v2 --artist "${FLAC2MP3_ARTIST:-$FLAC2MP3_ORIGINALARTIST}" --album "$FLAC2MP3_ALBUM" \
+	--song "$FLAC2MP3_TITLE" --genre "$FLAC2MP3_GENRE" \
+	--year "$FLAC2MP3_DATE" --track "$FLAC2MP3_TRACKNUMBER" "$2"
+    unset $(set | sed -ne 's/^\(FLAC2MP3_[^=]*\)=.*/\1/p')
+}
+
+for file in "$dir"/*; do
+    basename="${file%.*}"
+    if [ "$basename.flac" = "$file" ]; then
+	outfile="$output_dir/${basename##*/}.mp3"
+        flac --stdout --decode "$file" | lame --verbose -q 0 -V 0 - "$outfile"
+	mp3gain -r -k "$outfile"
+	flac2mp3_copy_tags "$file" "$outfile"
+    else
+        cp -v "$file" $output_dir
+    fi
+done
+

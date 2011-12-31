@@ -1,0 +1,42 @@
+#!/bin/zsh
+
+flac2mp3_copy_tags ()
+{
+    eval "$(metaflac --list --block-type=VORBIS_COMMENT "$1" | perl -ne '/ *comment.*: ([^=]*)=(.*)/ && print "FLAC2MP3_\U$1\E='"'"'$2'"'"'\n"' | tee /dev/stderr)"
+    id3v2 --artist "${FLAC2MP3_ARTIST:-$FLAC2MP3_ORIGINALARTIST}" --album "$FLAC2MP3_ALBUM" \
+	--song "$FLAC2MP3_TITLE" --genre "$FLAC2MP3_GENRE" \
+	--year "$FLAC2MP3_DATE" --track "$FLAC2MP3_TRACKNUMBER" "$2"
+    unset $(set | sed -ne 's/^\(FLAC2MP3_[^=]*\)=.*/\1/p')
+}
+
+convert_file ()
+{
+    local basename outfile
+    file="$1"; output_dir="$2";
+    basename="${file%.*}"
+    if [ "$basename.flac" = "$file" ]; then
+	outfile="$output_dir/${basename##*/}.mp3"
+        flac --stdout --decode "$file" | lame --verbose -q 0 -V 0 - "$outfile"
+	mp3gain -r -k "$outfile"
+	flac2mp3_copy_tags "$file" "$outfile"
+    else
+        cp -av "$file" $output_dir
+    fi
+}
+
+local output_dir_base file output_dir
+
+if [[ $# -lt 1 ]]; then
+    echo $0 output-dir files.. >&2
+    return 9
+fi
+
+output_dir_base="$1"; shift
+
+for file in "$@"; do
+    [[ -f "$file" ]] || { echo "$file is not a file" >&2; continue; }
+    [[ "$file" == [^/]* ]] || { echo "$file is not a relative path" >&2; continue; }
+    output_dir="$output_dir_base/${file%${file##*/}}"
+    mkdir -p "$output_dir"
+    convert_file "$file" "$output_dir"
+done

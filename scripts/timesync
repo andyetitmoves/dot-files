@@ -1,0 +1,48 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use Time::Local;
+
+sub tstamp {
+    my $name = shift;
+    $name =~ /([0-9:]*).*/;
+    # print "We need: $1\n";
+    my @comps = split(/:/, $1);
+    # print "$_ is split as [".scalar(@comps)."] ".join(',', @comps)."\n";
+    if (@comps > 6) {
+	@comps = 6;
+    } elsif (@comps < 6) {
+	push @comps, ((1) x (3 - @comps)) if @comps < 3;
+	push @comps, ((0) x (6 - @comps));
+    }
+    @comps = (reverse @comps);
+    # print "Final split: ".join(',', @comps)."\n";
+    return (timegm @comps);
+}
+
+sub fixname {
+    my ($name, $stamp) = @_;
+    $name =~ /([0-9:]*)(.*)/;
+    my @flds = split(/:/, $1);
+    @flds = 6 if @flds > 6;
+    # print "Precision: ".scalar(@flds)."\n";
+    my @comps = (gmtime $stamp)[0..5];
+    $comps[5] += 1900;
+    $_ = (sprintf '%02d', $_) foreach @comps[0..4];
+    # print "$stamp is split as [".scalar(@comps)."] ".join(',', @comps)."\n";
+    @comps = (reverse @comps);
+    return join(':', @comps[0..$#flds]).$2;
+}
+
+my $rcorrect = shift;
+my $rwrong = shift;
+
+my $skew = (tstamp $rcorrect) - (tstamp $rwrong);
+
+print "echo skew is $skew\n";
+
+foreach (@ARGV) {
+    my $stamp = (tstamp $_);
+    print "mv -i '$_' '".fixname($_, $stamp + $skew)."';\n";
+}

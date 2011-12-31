@@ -1,0 +1,35 @@
+#!/bin/sh
+
+taudio="$(mktemp -t to3gp.XXXXXX)"
+
+if [ $? -gt 0 ]; then
+    echo Unable to create temporary file >&2
+    exit 1
+fi
+
+tvideo="$(mktemp -t to3gp.XXXXXX)"
+
+if [ $? -gt 0 ]; then
+    echo Unable to create temporary file >&2
+    exit 1
+fi
+
+mencoder -nosound -ovc lavc -lavcopts vcodec=mpeg4 -ofps 12 \
+    -vf expand=176:144,scale=176:-2 -msglevel all=1 -o "$tvideo" "$1" &
+mplayer -vo null -ao pcm:fast:file="$taudio" \
+    -af resample=8000,volume=+16db:sc -msglevel all=1 "$1" &
+
+wait
+
+output="${1%.*}"
+
+if [ -z "${output##*/}"]; then
+    output="$1".3gp
+else
+    output="$output".3gp
+fi
+
+ffmpeg -i "$tvideo" -i "$taudio" -b 49512 -ac 1 -ab 12200 \
+    -map 0.0 -map 1.0 -s qcif -ar 8000 "$output"
+
+rm -f "$tvideo" "$taudio"

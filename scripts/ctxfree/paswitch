@@ -1,0 +1,14 @@
+#!/bin/sh
+
+sink="$1"; shift
+
+{
+    {
+	echo set-default-sink "$sink"
+	echo list-sink-inputs
+	sleep 1 # For some reason, pacmd takes some time
+    } | pacmd | sed -ne 's/ *index: *\([0-9]*\)$/\1/p' | \
+	xargs -n1 -I'{}' echo move-sink-input '{}' "$sink"
+    sleep 1
+} | pacmd
+

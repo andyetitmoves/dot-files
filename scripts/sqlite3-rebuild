@@ -1,0 +1,8 @@
+#!/bin/sh
+
+database="$1"; shift
+
+echo ".dump" | sqlite3 "$database" > "$database".dump && \
+    savelog "$database" && \
+    cat "$database".dump | sqlite3 "$database" && \
+    rm -f "$database".dump

@@ -1,0 +1,22 @@
+#!/bin/zsh
+
+local date pg dirsuf
+
+if [[ $1 == -s ]]; then
+    date=supplement
+else
+    date="${1:-$(date +%d%m%Y)}"
+fi
+
+{
+    if [[ "$date" == supplement ]]; then
+	for ((pg=1;pg<=4;pg++)); do
+	    echo "http://www.tamilsudr.com/epaper/Supliment/PgImage/bigImg/pg$pg.gif"
+	done
+    else
+	for ((pg=1;pg<=12;pg++)); do
+	    echo "http://www.tamilsudr.com/epaper/$date/Chennai/PgImage/bigImg/pg$pg.gif"
+	done
+    fi
+
+} | wget -P"tamilsudr-$date" -nd -i-

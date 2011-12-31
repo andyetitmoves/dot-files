@@ -1,0 +1,12 @@
+#!/bin/sh
+
+compiz_prop="$(xprop -root _COMPIZ_VIDEO_SUPPORTED)"
+
+[ "${compiz_prop%%not found*}" != "$compiz_prop" ] || compiz=yes
+
+if [ "$compiz" = yes ]; then
+    exec metacity --replace
+else
+    exec compiz --replace
+fi
+
