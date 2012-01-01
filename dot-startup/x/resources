@@ -1,0 +1,24 @@
+! local Xresources
+
+Xpdf*background: black
+Xpdf*foreground: cyan
+
+Display*background: black
+Display*foreground: cyan
+
+XTerm*termName: xterm-256color
+XTerm*cursorBlink: true
+XTerm*sessionMgt: false
+XTerm*background: black
+XTerm*foreground: rgb:68/D1/F0
+XTerm*faceName: DejaVu Sans Mono-10
+XTerm*saveLines: 1000
+XTerm*scrollTtyOutput: false
+XTerm*backarrowKeyIsErase: true
+XTerm*metaSendsEscape: true
+XTerm*printerCommand: sh -c 'cat >> xterm-prdump'
+
+Emacs.FontBackend: xft
+Emacs.Font: DejaVu Sans Mono-10
+Emacs.background: black
+Emacs.foreground: white
