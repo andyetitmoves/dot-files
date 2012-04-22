@@ -1,16 +1,17 @@
+
 ;;;; Paths
 
 (eval-and-compile
-  (defvar ramk-home "/home/ramk")
+  (defvar startup-home (or (getenv "$SHOME") "~"))
 
-  (defsubst add-ramk-subdir (path)
-    (add-to-list 'load-path (concat ramk-home "/elisp/" path)))
+  (defsubst prefix-home-subdir-to-load-path (path)
+    (let ((load-dir (concat startup-home "/" path)))
+      (and (file-directory-p load-dir) (add-to-list 'load-path load-dir))))
 
-  (let ((load-shadow-dir (expand-file-name "~/.emacs.d/shadow")))
-    (and (file-directory-p load-shadow-dir)
-	 (add-to-list 'load-path load-shadow-dir)))
-  (mapc 'add-ramk-subdir '("misc" "empi" "empi/defs"))
-  (add-to-list 'load-path (concat ramk-home "/install/devel/libmpdee")))
+  (mapc 'prefix-home-subdir-to-load-path
+	'("elisp/misc" "elisp/empi" "elisp/empi/defs"
+	  "install/devel/libmpdee" ".emacs.d/site-lisp"
+	  ".emacs.d/shadow")))
 
 (defvar query-replace-from-history nil)
 (defvar query-replace-to-history nil)
@@ -30,6 +31,7 @@
  '(TeX-insert-braces nil)
  '(TeX-newline-function (quote reindent-then-newline-and-indent))
  '(TeX-parse-self t)
+ '(TeX-view-program-selection (quote (((output-dvi style-pstricks) "dvips and gv") (output-dvi "xdvi") (output-pdf "Evince") (output-html "xdg-open"))))
  '(abbrev-mode t)
  '(apropos-do-all t)
  '(apt-utils-kill-buffer-confirmation-function (quote y-or-n-p))
@@ -66,21 +68,18 @@
  '(cperl-lazy-help-time 2)
  '(cperl-pod-here-scan nil)
  '(cperl-under-as-char t)
- '(debian-bug-From-address "\"Ramkumar R\" <ramk@cse.iitm.ernet.in>")
  '(debian-bug-display-help nil)
  '(debian-bug-download-directory "~/downloads")
  '(default-input-method "tamil-itrans")
  '(delete-old-versions t)
  '(delete-selection-mode t)
- '(desktop-base-file-name "desktop")
+ '(desktop-base-file-name "desktop-state.el")
  '(desktop-globals-to-save nil)
+ '(desktop-load-locked-desktop t)
  '(desktop-locals-to-save nil)
  '(desktop-path (quote ("~/.emacs.d")))
  '(desktop-save-mode t)
- '(dictionary-proxy-port 8080)
- '(dictionary-proxy-server "127.0.0.1")
- '(dictionary-use-http-proxy t)
- '(dig-program "host")
+ '(develock-auto-enable nil)
  '(dired-dwim-target t)
  '(dired-recursive-copies (quote top))
  '(display-time-24hr-format t)
@@ -97,8 +96,17 @@
  '(empi-mode-line-playtime-mode t nil (empi))
  '(empi-player-alist (quote (("mpd" (empi-mpc :restrict (:qpltitles :qplfiles)) empi-mpd empi-mpc empi-forward) ("dummy" empi-dummy))))
  '(empl-playlist-locked t)
+ '(eshell-directory-name "~/.emacs.d/eshell/")
  '(fill-column 80)
- '(global-font-lock-mode t nil (font-lock))
+ '(global-font-lock-mode t)
+ '(global-semantic-decoration-mode t nil (semantic/decorate/mode))
+ '(global-semantic-highlight-edits-mode t nil (semantic/util-modes))
+ '(global-semantic-highlight-func-mode t nil (semantic/util-modes))
+ '(global-semantic-idle-completions-mode t nil (semantic/idle))
+ '(global-semantic-idle-summary-mode t)
+ '(global-semantic-idle-tag-highlight-mode t nil (semantic/idle))
+ '(global-semantic-show-unmatched-syntax-mode t nil (semantic/util-modes))
+ '(global-semanticdb-minor-mode t)
  '(gnus-article-button-face (quote button))
  '(gnus-directory "~/.emacs.d/gnus")
  '(gnus-extract-address-components (quote mail-extract-address-components))
@@ -112,6 +120,7 @@
  '(gnus-read-newsrc-file nil)
  '(gnus-save-newsrc-file nil)
  '(gnus-startup-file "~/.emacs.d/gnus/newsrc")
+ '(gnus-summary-thread-gathering-function (quote gnus-gather-threads-by-references))
  '(gnus-thread-sort-functions (quote (gnus-thread-sort-by-number gnus-thread-sort-by-date)))
  '(gnus-topic-display-empty-topics nil)
  '(gnus-treat-date-local (quote head))
@@ -123,14 +132,16 @@
  '(grep-prompt "Grep [%w] ")
  '(gud-tooltip-mode t)
  '(hfy-optimisations (quote (merge-adjacent-tags zap-string-links kill-context-leak div-wrapper keep-overlays)))
+ '(hippie-expand-try-functions-list (quote (try-complete-file-name-partially try-complete-file-name try-expand-all-abbrevs try-expand-list try-expand-line try-expand-dabbrev try-expand-dabbrev-all-buffers try-expand-dabbrev-from-kill try-complete-lisp-symbol-partially try-complete-lisp-symbol)))
+ '(html-helper-mode-uses-visual-basic t nil (html-helper-mode))
  '(ido-enable-flex-matching t)
  '(ido-everywhere t)
  '(ido-mode (quote both) nil (ido))
- '(ido-save-directory-list-file "~/.emacs.d/ido.last")
+ '(ido-save-directory-list-file "~/.emacs.d/ido-last.el")
  '(ido-use-filename-at-point (quote guess))
  '(ido-use-url-at-point t)
- '(inhibit-splash-screen t)
- '(ispell-program-name "aspell")
+ '(inhibit-startup-screen t)
+ '(ispell-program-name "aspell" t)
  '(kept-new-versions 5)
  '(kept-old-versions 1)
  '(kill-whole-line t)
@@ -147,8 +158,8 @@
  '(message-directory "~/.mail")
  '(message-from-style (quote angles))
  '(message-log-max 1000)
- '(message-send-mail-function (quote message-smtpmail-send-it))
- '(message-user-organization "Indian Institute of Technology Madras")
+ '(message-send-mail-function (quote message-send-mail-with-sendmail))
+ '(message-user-organization "Bloomberg L.P.")
  '(message-wash-forwarded-subjects t)
  '(minibuf-isearch-always-with-complete t)
  '(minibuf-isearch-message-on-right t)
@@ -158,6 +169,7 @@
  '(mmm-mode-string "")
  '(mouse-highlight 1)
  '(mouse-wheel-mode t nil (mwheel))
+ '(mpd-db-root "/srv/mpd/songs")
  '(nnmail-message-id-cache-file "~/.emacs.d/gnus/nnmail-cache")
  '(pc-select-meta-moves-sexps t)
  '(pc-select-selection-keys-only t)
@@ -165,28 +177,24 @@
  '(pgg-default-user-id "\"Ramkumar R\" <andyetitmoves@gmail.com>")
  '(predictive-auto-learn t)
  '(predictive-dict-autosave nil)
- '(proj-c++ t)
- '(proj-description "Lab Information Management System")
- '(proj-library t)
- '(proj-name "Lims")
- '(proj-toplevel "~/programs/lims/src/")
- '(proj-use-relative-paths t)
  '(ps-use-face-background t)
  '(query-replace-from-history-variable (quote query-replace-from-history))
  '(query-replace-to-history-variable (quote query-replace-to-history))
  '(reftex-plug-into-AUCTeX t)
  '(reftex-save-parse-info t)
  '(reftex-toc-split-windows-horizontally t)
+ '(safe-local-variable-values (quote ((c-comment-only-line-offset . 0) (c-offsets-alist (statement-block-intro . +) (knr-argdecl-intro . 0) (substatement-open . 0) (label . 0) (statement-cont . +)))))
  '(scroll-bar-mode nil)
+ '(semantic-complete-inline-analyzer-displayor-class (quote semantic-displayor-traditional))
+ '(semantic-mode t)
+ '(semanticdb-default-save-directory "~/.emacs.d/semantic-cache")
+ '(semanticdb-default-system-save-directory "~/.emacs.d/semantic-cache")
  '(server-mode t)
  '(session-initialize t nil (session))
  '(session-locals-include (quote (buffer-read-only view-mode buffer-undo-list)))
- '(session-save-file "~/.emacs.d/session")
+ '(session-save-file "~/.emacs.d/session-state.el")
  '(session-undo-check -1)
  '(sh-shell-arg (quote ((bash . "-i") (csh . "-f") (pdksh) (ksh88) (rc . "-p") (wksh) (zsh . "-f"))))
- '(shell-command-completion-mode t nil (shell-command))
- '(shell-command-on-region-prompt "CmdReg [%w] ")
- '(shell-command-prompt "Cmd [%w] ")
  '(show-paren-mode t)
  '(show-paren-style (quote expression))
  '(show-trailing-whitespace t)
@@ -194,6 +202,7 @@
  '(smtpmail-queue-dir "~/.emacs.d/queued-mail/")
  '(ssl-view-certificate-program-arguments (quote ("x509" "-text" "-inform" "DER")))
  '(ssl-view-certificate-program-name "openssl")
+ '(svn-status-preserve-window-configuration t)
  '(table-time-before-reformat 0)
  '(table-time-before-update 0)
  '(tempbuf-minimum-timeout 60)
@@ -206,17 +215,19 @@
  '(tooltip-mode t nil (tooltip))
  '(tramp-auto-save-directory "~/.emacs.d/tramp-autosave")
  '(tramp-backup-directory-alist (quote (("." . "~/.emacs.d/backup"))))
- '(tramp-default-method-alist (quote (("\\`localhost\\'" "\\`root\\'" "sudo"))))
+ '(tramp-default-method "sftp")
+ '(tramp-default-method-alist nil)
  '(transient-mark-mode t)
  '(truncate-lines t)
  '(uniquify-buffer-name-style (quote post-forward-angle-brackets) nil (uniquify))
  '(url-automatic-caching t)
- '(user-mail-address "andyetitmoves@gmail.com")
+ '(url-configuration-directory "~/.emacs.d/url")
  '(vc-make-backup-files t)
  '(version-control t)
  '(view-inhibit-help-message t)
  '(view-read-only t)
  '(view-remove-frame-by-deleting t)
+ '(visible-bell t)
  '(w3-configuration-directory "~/.emacs.d/w3/")
  '(w3-do-incremental-display t)
  '(w3-honor-stylesheets t)
@@ -231,22 +242,15 @@
   ;; If you edit it by hand, you could mess it up, so be careful.
   ;; Your init file should contain only one such instance.
   ;; If there is more than one, they won't work right.
- '(default ((t (:background "black" :foreground "white" :weight bold :height 98 :width normal :family "misc-fixed"))))
- '(bold ((t (:weight extra-bold :height 0.9 :family "verdana"))))
- '(bold-italic ((t (:inherit (bold italic)))))
- '(border ((t (:background "grey70"))))
- '(button ((t (:foreground "yellow1" :underline t))))
- '(comint-highlight-input ((t (:inherit bold))))
- '(completions-common-part ((t (:foreground "grey"))))
- '(completions-first-difference ((t (:foreground "coral"))))
- '(cperl-array-face ((((class color) (background dark)) (:inherit (font-lock-variable-name-face italic)))))
- '(cperl-hash-face ((((class color) (background dark)) (:inherit font-lock-variable-name-face :underline t))))
- '(cursor ((t (:background "lightgreen"))))
+ '(border ((((class color) (background dark)) (:background "grey70"))))
+ '(completions-common-part ((((class color) (background dark)) (:foreground "grey"))))
+ '(completions-first-difference ((((class color) (background dark)) (:foreground "coral"))))
+ '(cursor ((((class color) (background dark)) (:background "lightgreen"))))
  '(custom-documentation ((t (:inherit font-lock-doc-face))))
  '(custom-variable-button ((t (:inherit (bold underline)))))
  '(escape-glyph ((((background dark)) (:foreground "cyan4"))))
  '(font-lock-regexp-grouping-backslash ((t (:inherit escape-glyph))))
- '(font-lock-regexp-grouping-construct ((t (:foreground "yellow"))))
+ '(font-lock-regexp-grouping-construct ((((class color) (background dark)) (:foreground "yellow"))))
  '(fringe ((((class color) (background dark)) (:background "grey20"))))
  '(gnus-cite-attribution ((t (:inherit italic))))
  '(gnus-emphasis-bold ((t (:inherit bold))))
@@ -256,37 +260,36 @@
  '(gnus-emphasis-underline-bold ((t (:inherit (gnus-emphasis-underline gnus-emphasis-bold)))))
  '(gnus-emphasis-underline-bold-italic ((t (:inherit (gnus-emphasis-underline gnus-emphasis-bold gnus-emphasis-italic)))))
  '(gnus-emphasis-underline-italic ((t (:inherit (gnus-emphasis-underline gnus-emphasis-italic)))))
- '(gnus-header-content ((t (:inherit italic :foreground "forest green"))))
- '(gnus-header-newsgroups ((t (:inherit italic :foreground "yellow"))))
- '(gnus-signature ((t (:foreground "CadetBlue"))))
- '(header-line ((((class color grayscale) (background dark)) (:inherit mode-line :background "grey30" :box (:line-width 4 :color "cyan" :style released-button) :width semi-expanded))))
+ '(gnus-header-content ((((class color) (background dark)) (:inherit italic :foreground "forest green"))))
+ '(gnus-header-newsgroups ((((class color) (background dark)) (:inherit italic :foreground "yellow"))))
+ '(gnus-signature ((((class color) (background dark)) (:foreground "CadetBlue"))))
+ '(header-line ((((class color) (background dark)) (:background "brown4" :foreground "lightpink" :box (:line-width 3 :color "gray20") :width semi-expanded))))
  '(highlight ((((class color) (background dark)) (:background "cyan" :foreground "darkblue"))))
- '(highlight-beyond-fill-column-face ((t (:background "grey20"))))
- '(highlight-changes ((((min-colors 88) (class color)) (:foreground "lightgoldenrod"))))
- '(highlight-changes-delete ((((class color)) (:foreground "yellow" :underline t))))
- '(highlight-current-line ((t (:background "grey20"))))
- '(ido-first-match ((t (:foreground "yellow"))))
+ '(highlight-beyond-fill-column-face ((((class color) (background dark)) (:background "grey20"))))
+ '(highlight-changes ((((min-colors 88) (class color) (background dark)) (:foreground "lightgoldenrod"))))
+ '(highlight-changes-delete ((((class color) (background dark)) (:foreground "yellow" :underline t))))
+ '(highlight-current-line ((((class color) (background dark)) (:background "grey20"))))
+ '(ido-first-match ((((class color) (background dark)) (:foreground "yellow"))))
  '(info-node ((((class color) (background dark)) (:inherit bold :foreground "cyan"))))
- '(italic ((((supports :underline t)) (:slant italic :height 0.9 :family "verdana"))))
  '(menu ((((type x-toolkit)) (:background "black" :foreground "cyan"))))
- '(mmm-default-submode-face ((t (:background "gray10"))))
- '(mode-line ((t (:foreground "cyan" :box (:line-width -1 :style released-button)))))
- '(mode-line-buffer-id ((t (:foreground "gold"))))
- '(next-error ((t (:background "yellow" :foreground "red"))))
- '(region ((t (:background "cyan" :foreground "darkblue"))))
+ '(mmm-default-submode-face ((((class color) (background dark)) (:background "gray10"))))
+ '(mode-line ((t (:background "black" :foreground "cyan" :box (:line-width -1 :style released-button)))))
+ '(mode-line-buffer-id ((((class color) (background dark)) (:foreground "gold"))))
+ '(next-error ((((class color) (background dark)) (:background "yellow" :foreground "red"))))
+ '(region ((((class color) (background dark)) (:background "cyan" :foreground "darkblue"))))
  '(rfcview-headname-face ((t (:inherit info-node))))
  '(rfcview-headnum-face ((t (:inherit info-node))))
  '(rfcview-mouseover-face ((t (:inherit highlight))))
- '(rfcview-rfcnum-face ((t (:foreground "orange"))))
- '(rfcview-stdnum-face ((t (:foreground "lightsteelblue"))))
+ '(rfcview-rfcnum-face ((((class color) (background dark)) (:foreground "orange"))))
+ '(rfcview-stdnum-face ((((class color) (background dark)) (:foreground "lightsteelblue"))))
  '(sh-heredoc ((((min-colors 88) (class color) (background dark)) (:inherit bold :foreground "yellow1"))))
- '(show-paren-match ((((class color)) (:background "grey28"))))
- '(show-paren-mismatch ((((class color)) (:background "lightpink" :foreground "darkblue"))))
- '(table-cell ((t (:background "grey10" :foreground "skyblue"))))
+ '(show-paren-match ((((class color) (background dark)) (:background "grey28"))))
+ '(show-paren-mismatch ((((class color) (background dark)) (:background "lightpink" :foreground "darkblue"))))
+ '(table-cell ((((class color) (background dark)) (:background "grey10" :foreground "skyblue"))))
  '(template-message-face ((t (:inherit bold))))
- '(todoo-item-header-face ((t (:inherit bold :foreground "goldenrod"))))
- '(tooltip ((t (:inherit variable-pitch :background "black" :foreground "green"))))
- '(trailing-whitespace ((t (:background "grey20")))))
+ '(todoo-item-header-face ((((class color) (background dark)) (:inherit bold :foreground "goldenrod"))))
+ '(tooltip ((((class color) (background dark)) (:inherit variable-pitch :background "black" :foreground "green"))))
+ '(trailing-whitespace ((((class color) (background dark)) (:background "grey20")))))
 
 ;;;; Font Setup
 
@@ -294,10 +297,14 @@
 
 (custom-theme-set-faces
  'user
- '(default
-    ((((type tty)) (:background "black" :foreground "white"))
-     (t (:background "black" :foreground "white" :slant normal :weight bold
-		     :height 120 :width normal :family "fixed")))))
+ ;; FIXME: slant roman bug: Uncomment when that gets resolved.
+ ;; '(default
+ ;;   ((((type tty)) (:background "black" :foreground "white"))))
+ '(mode-line
+   ((((class color) (background dark) (type tty))
+     (:background "gray10" :foreground "cyan"))
+    (((class color) (background dark) (type x-toolkit))
+     (:foreground "cyan" :box (:line-width -1 :style released-button))))))
 
 ;;; Language specific
 
@@ -305,15 +312,16 @@
 ;; Open gucharmap to find the beginning and ending character codes
 ;; Locate a font for the language and set
 
-(when (eq window-system 'x)
-  (set-fontset-font
-   nil
-   (cons (decode-char 'ucs #x0900) (decode-char 'ucs #x097f))
-   "-unknown-gargi-medium-r-normal--0-0-0-0-p-0-iso10646-1")
-  (set-fontset-font
-   nil
-   (cons (decode-char 'ucs #x0b80) (decode-char 'ucs #x0bff))
-   "-unknown-tscu times-medium-r-normal--0-0-0-0-p-0-iso10646-1"))
+;; FIXME: set-fontset-font definition has changed (is this really needed now?)
+;; (when (eq window-system 'x)
+;;   (set-fontset-font
+;;    nil
+;;    (cons (decode-char 'ucs #x0900) (decode-char 'ucs #x097f))
+;;    "-unknown-gargi-medium-r-normal--0-0-0-0-p-0-iso10646-1")
+;;   (set-fontset-font
+;;    nil
+;;    (cons (decode-char 'ucs #x0b80) (decode-char 'ucs #x0bff))
+;;    "-unknown-tscu times-medium-r-normal--0-0-0-0-p-0-iso10646-1"))
 
 ;;;; Disabled
 
@@ -323,12 +331,11 @@
 ;;;; Autoloads
 
 (and (boundp 'generated-autoload-file)
-     (or (file-writable-p generated-autoload-file)
-	 (setq generated-autoload-file "~/.emacs.d/loaddefs.el")))
+     (setq generated-autoload-file "~/.emacs.d/loaddefs.el"))
 
 (load "~/.emacs.d/loaddefs" t)
 
-;;;; Binding Helpers
+;;;; Utility functions
 
 (defun hi-backspace ()
   (interactive)
@@ -346,14 +353,41 @@
   (interactive)
   (switch-to-buffer (other-buffer)))
 
-(defun read-library-find-library (lib)
-  (interactive (list (read-library "Find Library: ")))
-  (find-library lib))
-
 (defun define-keys (map &rest args)
   (while (cadr args)
     (define-key map (car args) (cadr args))
     (setq args (cddr args))))
+
+(defun get-interactivity (sym &optional load)
+  (if (fboundp sym)
+      (let ((form (symbol-function sym)))
+	(cond
+	 ((subrp form) nil)
+	 ((byte-code-function-p form) (and (>= (length form) 6) (aref form 5)))
+	 ((symbolp form) (get-interactivity form))
+	 ((eq (car-safe form) 'lambda)
+	  (setq form (nthcdr 2 form))
+	  (and (stringp (car form)) (setq form (cdr form)))
+	  (car-safe (cdr-safe (car form))))
+	 ((eq (car-safe form) 'autoload)
+	  (when load
+	    (load (nth 1 form) (eq load t) t)
+	    (get-interactivity sym)))
+	 ;; next line is implied by cond anyway
+	 ;; ((memq (car-safe form) '(macro mocklisp keymap)) nil)
+	 ))))
+
+(defun show-variable (variable)
+  (interactive (eval (get-interactivity 'describe-variable t)))
+  (let ((buffer-name "*Show Variable*") created
+	(help-xref-following t))
+    (with-current-buffer
+	(or (get-buffer buffer-name)
+	    (progn
+	      (setq created t)
+	      (generate-new-buffer buffer-name)))
+      (and created (run-hooks 'show-variable-buffer-init-hook))
+      (describe-variable variable (current-buffer)))))
 
 ;;;; Bindings
 
@@ -362,7 +396,6 @@
 (define-keys (current-global-map)
   [remap backward-delete-char-untabify]	'hi-backspace
   [remap beginning-of-line]		'smart-home
-  [remap find-library]	                'read-library-find-library
   [remap newline]			'reindent-then-newline-and-indent
   [?\t]					'hippie-expand
   [C-f3]				'find-grep-dired
@@ -417,10 +450,11 @@
   (define-key view-mode-map [return] 'source-jump-at-point)
   (define-key view-mode-map [mouse-2] 'source-jump-at-mouse)
   ;; Our view-mode clobbers mouse-2 as well.
-  (eval-after-load "help"
-    '(progn
-       (define-key help-xref-override-view-map [mouse-2] 'help-follow-mouse)
-       (define-key help-xref-override-view-map [return] nil)))
+  ;; Emacs-23 doesn't seem to have the override-view-map below, commenting out.
+  ;; (eval-after-load "help"
+  ;;   '(progn
+  ;;      (define-key help-xref-override-view-map [mouse-2] 'help-follow-mouse)
+  ;;      (define-key help-xref-override-view-map [return] nil)))
   (define-key view-mode-map [backspace] 'pop-global-mark))
 
 (eval-after-load "view" '(view-after-load-hook))
@@ -585,6 +619,7 @@
 (add-hook 'c-mode-common-hook
 	  (lambda ()
 	    (c-toggle-auto-hungry-state 1)
+	    (define-key c-mode-base-map [?\t] 'hippie-expand)
 	    (highlight-beyond-fill-column)))
 (add-hook 'c-mode-hook (lambda () (setq c-basic-offset 8)))
 
@@ -744,7 +779,7 @@
 
 ;;;; Files
 
-(defvar read-only-file-patterns '("/home/ramk/install/vc/emacs/.*"))
+(defvar read-only-file-patterns '())
 
 (defun make-specific-files-read-only ()
   (let ((patterns read-only-file-patterns) (case-fold-search nil))
@@ -776,7 +811,7 @@
 	(setq dir (cdr dir))) t)))
 (setq backup-enable-predicate 'backup-name-in-excluded-dir-p)
 
-(eval-when-compile (require 'tramp))
+; (eval-when-compile (require 'tramp))
 
 (defun make-backup-file-name-rebase-directory (file)
   (if (memq system-type '(windows-nt ms-dos cygwin vax-vms axp-vms))
@@ -796,7 +831,7 @@
 	    (if (and (fboundp 'tramp-tramp-file-p) (tramp-tramp-file-p file))
 		(with-parsed-tramp-file-name file nil
 		  (tramp-make-tramp-file-name
-		   multi-method method user host "/"))
+		   method user host "/"))
 	      "/"))
       (or (file-name-absolute-p file)
 	  (setq file (expand-file-name file)))
@@ -830,8 +865,6 @@
 
 (eval-when-compile (defvar tooltip-gud-tips-p))
 (and window-system (setq tooltip-gud-tips-p t))
-
-(setq url-configuration-directory "~/.emacs.d/url")
 
 (setq compilation-environment
       '("CPPFLAGS=" "CFLAGS=-march=athlon-xp -mfpmath=sse -ggdb3"
@@ -884,4 +917,14 @@
 	     (add-hook 'kill-buffer-hook 'session-before-store-buffer)
 	     (setq safe-load-compile-end-prompt nil)))
 
+(when (and (eq window-system 'x)
+	   (locate-library "imenu"))
+  (add-hook 'semantic-init-hooks
+	    (lambda ()
+	      (condition-case nil
+		  (imenu-add-to-menubar "TAGS")
+		(error nil)))))
+
 (require 'files-patch)
+
+(put 'upcase-region 'disabled nil)

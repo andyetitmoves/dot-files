@@ -1,7 +1,6 @@
-(setq user-init-file "~/.emacs.d/config/qed.el")
-
 (custom-set-variables
-  ;; custom-set-variables was added by Custom -- don't edit or cut/paste it!
+  ;; custom-set-variables was added by Custom.
+  ;; If you edit it by hand, you could mess it up, so be careful.
   ;; Your init file should contain only one such instance.
  '(backup-directory-alist (quote (("." . "~/.emacs.d/backup"))))
  '(case-fold-search t)
