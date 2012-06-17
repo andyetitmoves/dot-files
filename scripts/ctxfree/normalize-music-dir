@@ -16,21 +16,23 @@ check_run () {
 
 mvp () { check_run $1 zmv -W $1 $2; }
 
-if [[ -d Covers ]]; then
-    ec mv -i Covers/* .
-    ec rmdir Covers
-fi
-
-if [[ -d Tracks ]]; then
-    ec mv -i Tracks/* .
-    ec rmdir Tracks
-fi
+for dir in Covers COVERS Tracks; do
+    if [[ -d $dir ]]; then
+	ec mv -i $dir/* .
+	ec rmdir $dir
+    fi
+done
 
 noglob check_run '\[xDR\] * - ?? - *' zmv '\[xDR\] * - (??) - (*)' '$1-$2'
-zargs -r -- *.mp3(N) -- rename 's/^([0-9]*)\. */$1/'
+noglob check_run '\[DDR\] * - ?? - *' zmv '\[DDR\] * - (??) - (*)' '$1-$2'
+noglob check_run '?? - * \([0-9][0-9][0-9][0-9]\) - * - \(VMR\).mp3' \
+    zmv '(??) - * \([0-9][0-9][0-9][0-9]\) - (*) - \(VMR\).mp3' '$1-$2.mp3'
+noglob check_run '00 - * \([0-9][0-9][0-9][0-9]\) \(VMR\) - Covers \(*\).jpg' \
+    zmv '00 - * \([0-9][0-9][0-9][0-9]\) \(VMR\) - Covers \((*)\).jpg' '$1.jpg'
+zargs -r -- *.mp3(N) -- ec rename 's/^([0-9]*)\. */$1-/'
+zargs -r -- *.mp3(N) -- ec rename 's/ *- */-/g'
 noglob mvp [0-9][0-9]\ *.mp3 [0-9][0-9]-*.mp3
 noglob mvp *.\ *.mp3 *-*.mp3
-zargs -r -- *.mp3(N) -- rename 's/ *- */-/g'
 noglob mvp '*-Sevanthi.com.mp3' *.mp3
 noglob mvp Track* *
 noglob mvp '* .mp3' *.mp3
