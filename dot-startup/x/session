@@ -1,0 +1,47 @@
+#!/bin/sh
+
+. "$SHOME/.startup/env"
+
+[ -f "$SHOME/.Xmodmap" ] && xmodmap "$SHOME/.Xmodmap"
+
+pids_to_kill=
+
+eval "$(dbus-launch --sh-syntax)"
+pids_to_kill="$pids_to_kill $DBUS_SESSION_BUS_PID"
+
+# beagled &
+
+spawn () {
+  "$@" &
+  pids_to_kill="$pids_to_kill $!"
+}
+
+spawn songchange "$SHOME/.songchange" %s
+
+spawn pulseaudio --high-priority
+
+spawn passkey-agent --default 0000
+
+sudo cpufreq-set -g powersave
+
+local default_wm="enlightenment_start"
+
+wm_type="${1:-default}"
+
+case "$1" in
+    failsafe)
+	x-terminal-emulator
+	;;
+    default)
+	"$default_wm"
+	;;
+    *)
+	if `which "$1"`; then
+	    "$1"
+	else
+	    "$default_wm"
+	fi
+	;;
+esac
+
+kill $pids_to_kill
