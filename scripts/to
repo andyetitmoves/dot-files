@@ -2,7 +2,7 @@
 # Executes a command with its first argument pushed after all the remaining
 # arguments, to facilitate use in programs like xargs.
 
-local cmd to
+# local cmd to
 
 if [ $# -lt 2 ]; then
     echo Usage: $0 '<command>' '<last-arg>' args... >&2

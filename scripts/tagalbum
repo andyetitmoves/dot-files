@@ -1,0 +1,39 @@
+#!/bin/zsh
+
+composer="$1"; shift
+
+echo_exec () {
+    echo "${(q)@}"
+    "$@"
+}
+
+for album in "$@"; do
+    {
+	for file in $album/*.mp3(N); do
+	    echo -n "$album: "
+	    echo -n $(id3v2 -l $file | grep TIT2 | sed -e 's/[0-9]/#/g')
+	    echo
+	done
+    } > /tmp/autotag
+    autotag_title=
+    if [[ "$(sort -u < /tmp/autotag | wc -l)" -eq 1 ]]; then
+	autotag_title=true
+	echo "All files in $album have title '$(head -n1 /tmp/autotag | cut -d: -f3- | cut -b2-)', autotagging"
+    fi
+    for file in "$album"/*(N); do
+	title_args=()
+	[[ -n $autotag_title ]] && title_args+=(--TIT2 "${${${file%.mp3}##*/}##*-}")
+	base_file="${file##*/}"
+        track_num= ; track_args=
+	[[ $base_file == [0-9]-* ]] && track_num="${base_file%%-*}"
+	[[ $base_file == [0-9][0-9]-* ]] && track_num="${base_file%%-*}"
+        if [[ $file == *.mp3 ]]; then
+            [[ -n $track_num ]] && track_args=(-T $track_num)
+	    echo_exec id3v2 --TCOM "$composer" --TALB "${album#*/}" $track_args $title_args "$file"
+        elif [[ $file == *.flac ]]; then
+	    [[ -n $track_num ]] && track_args=(--remove-tag=Track "--set-tag=Track=$track_num")
+	    echo_exec metaflac --remove-tag=Album --remove-tag=Composer $track_args \
+		--set-tag=Composer="$composer" --set-tag=Album="${album#*/}" "$file"
+        fi
+    done
+done

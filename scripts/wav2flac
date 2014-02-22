@@ -1,0 +1,51 @@
+#!/bin/zsh
+
+if [ $# -gt 0 ]; then
+    dir="$1"; shift
+else
+    dir='.'
+fi
+
+dir="$(readlink -ef "$dir")"
+
+if [ $# -gt 0 ]; then
+    output_dir="$1"; shift
+else
+    output_dir="$dir"
+fi
+
+output_dir="$output_dir/${dir##*/}"
+
+mkdir -p "$output_dir"
+
+for file in "$dir"/*; do
+    basename="${file%.*}"
+    if [ "$basename.wav" = "$file" ]; then
+	artist="$(exiftool -p '${Artist}' "$file")"
+	album="$(exiftool -p '${Product}' "$file")"
+        title="$(exiftool -p '${Title}' "$file")"
+	year="$(exiftool -p '${DateCreated}' "$file")"
+	genre="$(exiftool -p '${Genre}' "$file")"
+	outfile="$output_dir/${basename##*/}.flac"
+	flac -e --best -T "Artist=$artist" -T "Album=$album" \
+	    -T "Title=$title" -T "Date=$year" -T "Genre=$genre" \
+	    -o "$outfile" "$file"
+    elif [ "$basename.m4a" = "$file" ]; then
+	artist="$(exiftool -p '${Artist}' "$file")"
+	album="$(exiftool -p '${Album}' "$file")"
+        title="$(exiftool -p '${Title}' "$file")"
+	year="$(exiftool -p '${Year}' "$file")"
+	genre="$(exiftool -p '${Genre}' "$file")"
+	track="$(exiftool -p '${TrackNumber}' "$file")"
+	composer="$(exiftool -p '${Composer}' "$file")"
+	outfile="$output_dir/${basename##*/}.flac"
+	alac-decoder "$file" | \
+	    flac -e --best -T "Artist=$artist" -T "Album=$album" \
+	    -T "Title=$title" -T "Date=$year" -T "Genre=$genre" \
+	    -T "Track=$track" -T "Composer=$composer" \
+	    -o "$outfile" -
+    else
+        cp -v "$file" $output_dir
+    fi
+done
+

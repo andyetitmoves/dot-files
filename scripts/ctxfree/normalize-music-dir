@@ -16,39 +16,53 @@ check_run () {
 
 mvp () { check_run $1 zmv -W $1 $2; }
 
-for dir in Covers COVERS Tracks; do
-    if [[ -d $dir ]]; then
-	ec mv -i $dir/* .
-	ec rmdir $dir
-    fi
-done
+process_cwd () {
 
-noglob check_run '\[xDR\] * - ?? - *' zmv '\[xDR\] * - (??) - (*)' '$1-$2'
-noglob check_run '\[DDR\] * - ?? - *' zmv '\[DDR\] * - (??) - (*)' '$1-$2'
-noglob check_run '?? - * \([0-9][0-9][0-9][0-9]\) - * - \(VMR\).mp3' \
-    zmv '(??) - * \([0-9][0-9][0-9][0-9]\) - (*) - \(VMR\).mp3' '$1-$2.mp3'
-noglob check_run '00 - * \([0-9][0-9][0-9][0-9]\) \(VMR\) - Covers \(*\).jpg' \
-    zmv '00 - * \([0-9][0-9][0-9][0-9]\) \(VMR\) - Covers \((*)\).jpg' '$1.jpg'
-zargs -r -- *.mp3(N) -- ec rename 's/^([0-9]*)\. */$1-/'
-zargs -r -- *.mp3(N) -- ec rename 's/ *- */-/g'
-noglob mvp [0-9][0-9]\ *.mp3 [0-9][0-9]-*.mp3
-noglob mvp *.\ *.mp3 *-*.mp3
-noglob mvp '*-Sevanthi.com.mp3' *.mp3
-noglob mvp Track* *
-noglob mvp '* .mp3' *.mp3
+    for dir in Covers COVERS Tracks; do
+        if [[ -d $dir ]]; then
+	    ec mv -i $dir/* .
+	    ec rmdir $dir
+        fi
+    done
 
-zargs -r -- *.m3u(N) Readme*(N) -- ec rm -f
-zargs -r -i{} -- *.nfo(N) -- ec mv {} release-info
+    noglob check_run '\[*\] * - ?? - *' zmv '\[*\] * - (??) - (*)' '$1-$2'
+    noglob check_run '?? - * \([0-9][0-9][0-9][0-9]\) - * - \(VMR\).mp3' \
+        zmv '(??) - * \([0-9][0-9][0-9][0-9]\) - (*) - \(VMR\).mp3' '$1-$2.mp3'
+    noglob check_run '00 - * \([0-9][0-9][0-9][0-9]\) \(VMR\) - Covers \(*\).jpg' \
+        zmv '00 - * \([0-9][0-9][0-9][0-9]\) \(VMR\) - Covers \((*)\).jpg' '$1.jpg'
+    zargs -r -- *.(mp3|flac|wav)(N) -- ec rename 's/^([0-9]*)\. */$1-/'
+    zargs -r -- *.(mp3|flac|wav)(N) -- ec rename 's/ *- */-/g'
+    noglob mvp [0-9][0-9]\ *.* [0-9][0-9]-*.*
+    noglob mvp *.\ *.* *-*.*
+    noglob mvp '*-Sevanthi.com.mp3' *.mp3
+    noglob mvp '*-TamilTorrents.Net.mp3' *.mp3
+    noglob mvp Track* *
+    noglob mvp '* .*' *.*
+    zargs -r -- *.*[A-Z]*(N) -- ec rename 's/([^.]*)$/\L$1/'
 
-integer ctr=1 rest=1
-noglob check_run 00-Front.jpg mv 00-Front.jpg $ctr-Front.jpg && ctr=ctr+1
-rest=$ctr; ctr=ctr+1
-noglob mvp 00-Inlay* 0$ctr-Inlay* && ctr=ctr+1
-noglob mvp 00-Book* 0$ctr-Book* && ctr=ctr+1
-noglob mvp 00-* 0$ctr-* && ctr=ctr+1
+    zargs -r -- *.m3u(N) Readme*(N) -- ec rm -f
+    zargs -r -i{} -- *.nfo(N) -- ec mv {} release-info
 
-zargs -r -- *.mp3(N) -- ec mp3gain -r -k
+    integer ctr=1 rest=1
+    noglob check_run 00-Front.jpg mv 00-Front.jpg $ctr-Front.jpg && ctr=ctr+1
+    rest=$ctr; ctr=ctr+1
+    noglob mvp 00-Inlay* 0$ctr-Inlay* && ctr=ctr+1
+    noglob mvp 00-Book* 0$ctr-Book* && ctr=ctr+1
+    noglob mvp 00-* 0$ctr-* && ctr=ctr+1
 
-[[ -f 1?-* ]] || noglob mvp 0* *
+    zargs -r -- *.mp3(N) -- ec mp3gain -r -k
 
-unset -f ec check_run mvp
+    [[ -f 1?-* ]] || noglob mvp 0* *
+}
+
+if [[ $# -gt 0 ]]; then
+   for dir in "$@"; do
+       cd "$dir" || continue
+       process_cwd
+       cd -
+   done
+else
+    process_cwd
+fi
+
+unset -f ec check_run mvp process_cwd

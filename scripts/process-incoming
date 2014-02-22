@@ -1,0 +1,28 @@
+#!/bin/zsh
+
+tr-grep-move ()
+{
+    for id in $(transmission-remote -l | grep "$2" | awk '{ print $1 }'); do
+	echo Moving ID $id
+	transmission-remote -t $id --move "$1"
+    done
+}
+
+staged-grep-move ()
+{
+    pattern="$1"
+    find . -mindepth 1 -maxdepth 1 -regextype posix-extended -regex ".*$pattern.*" | while read file; do
+	echo Moving file $file
+	cp -av "$file" /home/ramk/downloads/torrents/staged
+    done
+    tr-move-grep /home/ramk/downloads/torrents/cached "$pattern"
+}
+
+ship ()
+{
+    mkdir -p "$1";
+    tagalbum "$(basename "$1")" "$2"
+    mv -v "$2" "$1"
+    echo "$1/$2" >> ~/to-sync
+}
+
