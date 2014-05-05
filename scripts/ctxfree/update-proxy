@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/zsh
 # Using a config file, print shell code to update proxy environment variables
 
 local PROXY http_proxy https_proxy ftp_proxy HTTP_PROXY \
