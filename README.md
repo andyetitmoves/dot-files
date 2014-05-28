@@ -26,9 +26,9 @@ For POSIX shells, the following three shell fragments can be used in `~/.startup
 env is needed once per login, even to graphical systems, like in
 `.xsession`. login situations for shell arise when:
 
-# Using the text login from one of the virtual terminals
-# Switching privileges, like su
-# Remote login, like with ssh
+1. Using the text login from one of the virtual terminals
+2. Switching privileges, like su
+3. Remote login, like with ssh
 
 You could source this from your `.profile`, `.bash_profile` etc.
 
