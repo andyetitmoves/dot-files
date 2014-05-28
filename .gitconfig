@@ -1,0 +1,22 @@
+[ui]
+[color]
+	ui = auto
+[alias]
+	all = log --oneline --decorate --graph --all
+	ll = log --oneline --decorate --graph
+	b = branch
+	o = checkout
+	t = status
+	d = diff
+	i = commit
+	a = add
+	r = rebase
+	l = log
+	g = grep
+[user]
+	name = Ramkumar Aiyengar
+	mail = andyetitmoves@gmail.com
+[branch]
+	autosetuprebase = always
+[push]
+	default = simple
