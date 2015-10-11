@@ -11,8 +11,12 @@
 	i = commit
 	a = add
 	r = rebase
-	l = log
+	l = log --decorate
+	il = log --decorate
 	g = grep
+	cp = cherry-pick
+	sr = svn rebase
+	sd = svn dcommit
 [user]
 	name = Ramkumar Aiyengar
 	mail = andyetitmoves@gmail.com
@@ -20,3 +24,9 @@
 	autosetuprebase = always
 [push]
 	default = simple
+[merge]
+	conflictstyle = diff3
+[hub]
+	protocol = https
+[credential]
+	helper = cache --timeout=3600

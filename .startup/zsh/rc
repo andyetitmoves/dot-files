@@ -21,9 +21,29 @@ PS1=${PS1##%m%\# *}
 
 setopt promptsubst
 
-# We need to port this to non-xterm (vt's especially) terminals
 
-: ${PS1:=$'\e[1;33m\e)0\C-nq\e[%(?.$((COLUMNS-14)).$((COLUMNS-21)))b\C-o'\
+# This is more compact but the repeat seq doesn't work with gnome-terminal,
+# hence we use a more elaborate scheme below
+
+# : ${PS1:=$'\e[1;33m\e)0\C-nq\e[%(?.$((COLUMNS-14)).$((COLUMNS-21)))b\C-o'\
+# $'%(?..\e[31m {$(printf %03d $?)} \e[33m)[%D{%I:%M:%S %p}]\n%{\e[0;33m%}'\
+# "$([[ -r $EHOME/.startup/conf/pradd ]] && < $EHOME/.startup/conf/pradd)"\
+# $'%h.%{\e[39m%} '}
+
+ps1_rep()
+{
+    ch="$1"; shift
+    exit="$1"; shift
+    if [ "$exit" -ne 0 ]; then
+	num="$((COLUMNS-21))"
+    else
+	num="$((COLUMNS-14))"
+    fi
+    printf "$ch"%.0s {1.."$num"}
+    return $exit # to forward the previous shell exit
+}
+
+: ${PS1:=$'\e[1;33m\e)0\C-n$(ps1_rep q $?)\C-o'\
 $'%(?..\e[31m {$(printf %03d $?)} \e[33m)[%D{%I:%M:%S %p}]\n%{\e[0;33m%}'\
 "$([[ -r $EHOME/.startup/conf/pradd ]] && < $EHOME/.startup/conf/pradd)"\
 $'%h.%{\e[39m%} '}

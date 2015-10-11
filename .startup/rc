@@ -2,7 +2,7 @@
 
 . "$SHOME/.startup/env"
 
-export EDITOR='emacsclient -t'
+export EDITOR='emacsclient'
 
 export HISTFILE="$EHOME/.startup/history"
 
@@ -47,6 +47,18 @@ alias tailf='inotail -f'
 alias etredate="exiftool '-FileName<DateTimeOriginal' -d '%Y:%m:%d:%H:%M:%S%%-.c.%%e' -v"
 alias vidredate="exiftool '-FileName<TrackCreateDate' -d '%Y:%m:%d:%H:%M:%S%%-.c.%%e' -v"
 alias e="$EDITOR"
+
+alias git='hub'
+git config -l | grep '^alias\.' | cut -d. -f2- | tr = ' ' | \
+    while read key cmd; do
+        alias g$key="git $cmd"
+    done
+
+alias sl='svn log -v | less'
+alias sd='svn diff | less'
+alias sp='svn up'
+alias si='svn ci'
+alias st='svn status'
 
 colid3 () { id3info "$@" | id3fmt | less -R ; }
 
