@@ -1,0 +1,1 @@
+ZDOTDIR=~/.startup/zsh
