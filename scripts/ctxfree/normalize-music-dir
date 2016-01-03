@@ -18,6 +18,8 @@ mvp () { check_run $1 zmv -W $1 $2; }
 
 process_cwd () {
 
+    curbase="$(basename "$PWD")"
+
     for dir in Covers COVERS Tracks; do
         if [[ -d $dir ]]; then
 	    ec mv -i $dir/* .
@@ -36,12 +38,16 @@ process_cwd () {
     noglob mvp *.\ *.* *-*.*
     noglob mvp '*-Sevanthi.com.mp3' *.mp3
     noglob mvp '*-TamilTorrents.Net.mp3' *.mp3
+    noglob check_run '* \[*\].*' zmv '(*) \[*\].(*)' '$1.$2'
+    mvp "*-$curbase-*" "**"
+    noglob mvp *--* *-*
     noglob mvp Track* *
     noglob mvp '* .*' *.*
     zargs -r -- *.*[A-Z]*(N) -- ec rename 's/([^.]*)$/\L$1/'
 
     zargs -r -- *.m3u(N) Readme*(N) -- ec rm -f
     zargs -r -i{} -- *.nfo(N) -- ec mv {} release-info
+    zargs -r -- * -- ec rename 's/ *(.*)$/$1/'
 
     integer ctr=1 rest=1
     noglob check_run 00-Front.jpg mv 00-Front.jpg $ctr-Front.jpg && ctr=ctr+1
@@ -51,6 +57,8 @@ process_cwd () {
     noglob mvp 00-* 0$ctr-* && ctr=ctr+1
 
     zargs -r -- *.mp3(N) -- ec mp3gain -r -k
+    zargs -r -- *.m4a(N) -- ec aacgain -r -k
+    zargs -r -- *.aac(N) -- ec aacgain -r -k
 
     [[ -f 1?-* ]] || noglob mvp 0* *
 }
