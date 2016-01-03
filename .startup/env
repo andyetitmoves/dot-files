@@ -14,4 +14,8 @@ export XAUTHORITY="$SHOME/.Xauthority"
 
 # update-proxy is a custom script
 
-eval $(update-proxy; lesspipe)
+for LESSPIPE in lesspipe lesspipe.sh :; do
+    [ -x "$(which $LESSPIPE)" ] && break
+done
+
+eval $(update-proxy; $LESSPIPE)

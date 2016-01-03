@@ -21,7 +21,7 @@ unset cache gcflags gaflags
 
 alias genosd="osd_cat -c green -O 2 -p bottom -A right \
 -f '-*-fixed-*-*-*-*-*-*-100-*-*-100-iso8859-1'"
-alias ls='ls --color=auto'
+alias ls='ls -G'
 alias la='ls -A'
 alias l='ls'
 alias ll='ls -l'
@@ -48,7 +48,7 @@ alias etredate="exiftool '-FileName<DateTimeOriginal' -d '%Y:%m:%d:%H:%M:%S%%-.c
 alias vidredate="exiftool '-FileName<TrackCreateDate' -d '%Y:%m:%d:%H:%M:%S%%-.c.%%e' -v"
 alias e="$EDITOR"
 
-alias git='hub'
+[ -x "$(which hub)" ] && alias git='hub'
 git config -l | grep '^alias\.' | cut -d. -f2- | tr = ' ' | \
     while read key cmd; do
         alias g$key="git $cmd"
