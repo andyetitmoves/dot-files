@@ -2,9 +2,9 @@
 
 tr-grep-move ()
 {
-    for id in $(transmission-remote -l | grep "$2" | awk '{ print $1 }'); do
+    for id in $(transmission-remote $TRANSMISSION_LOCATION -l | grep "$2" | awk '{ print $1 }'); do
 	echo Moving ID $id
-	transmission-remote -t $id --move "$1"
+	transmission-remote $TRANSMISSION_LOCATION -t $id --move "$1"
     done
 }
 
