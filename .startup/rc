@@ -73,3 +73,15 @@ DIRCOLORS="$SHOME/.startup/dircolors/$TERM"
 [ -r "$DIRCOLORS" ] && eval `dircolors --sh "$DIRCOLORS"`
 
 unset ECONFDIR DIRCOLORS
+
+export TOOLKIT_USERNAME=raiyenga
+
+phost='localhost'
+pport='8888'
+purl="http://$phost:$pport"
+
+export ANT_OPTS="-Dhttp.proxyHost=$phost -Dhttp.proxyPort=$pport -Dhttps.proxyHost=$phost -Dhttps.proxyPort=$pport"
+export http_proxy="$purl"
+export https_proxy="$purl"
+export HTTP_PROXY="$purl"
+export HTTPS_PROXY="$purl"

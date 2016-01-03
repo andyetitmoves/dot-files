@@ -23,6 +23,11 @@
 [user]
 	name = Ramkumar R. Aiyengar
 	mail = andyetitmoves@gmail.com
+
+[user "https://bbgithub.dev.bloomberg.com"]
+	name = Ramkumar Aiyengar
+	mail = raiyengar@bloomberg.net
+
 [branch]
 	autosetuprebase = always
 
@@ -36,4 +41,9 @@
 	protocol = https
 
 [credential]
-	helper = cache --timeout=3600
+	helper = osxkeychain
+
+[http "https://bbgithub.dev.bloomberg.com"]
+	proxy = bproxy.tdmz1.bloomberg.com:80
+[http]
+	proxy = http://localhost:8888
