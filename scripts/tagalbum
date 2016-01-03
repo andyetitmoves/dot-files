@@ -27,13 +27,22 @@ for album in "$@"; do
         track_num= ; track_args=
 	[[ $base_file == [0-9]-* ]] && track_num="${base_file%%-*}"
 	[[ $base_file == [0-9][0-9]-* ]] && track_num="${base_file%%-*}"
-        if [[ $file == *.mp3 ]]; then
+	album_tag="${album#*/}"
+        if [[ "$file" == *.mp3 ]]; then
             [[ -n $track_num ]] && track_args=(-T $track_num)
-	    echo_exec id3v2 --TCOM "$composer" --TALB "${album#*/}" $track_args $title_args "$file"
-        elif [[ $file == *.flac ]]; then
+	    echo_exec id3v2 --TCOM "$composer" --TALB "$album_tag" $track_args $title_args "$file"
+        elif [[ "$file" == *.flac ]]; then
 	    [[ -n $track_num ]] && track_args=(--remove-tag=Track "--set-tag=Track=$track_num")
 	    echo_exec metaflac --remove-tag=Album --remove-tag=Composer $track_args \
-		--set-tag=Composer="$composer" --set-tag=Album="${album#*/}" "$file"
+		--set-tag=Composer="$composer" --set-tag=Album="$album_tag" "$file"
+        elif [[ "$file" == *.aac ]] || [[ "$file" == *.m4a ]]; then
+	    ap=AtomicParsley
+	    has_track=
+	    $ap "$file" -t | grep -q trkn > /dev/null && has_track=yes
+	    [[ -n $track_num ]] && [[ -z "$has_track" ]] && track_args=(--tracknum "$track_num")
+	    tempf="$(tempfile -d .)"
+	    echo_exec $ap "$file" --album "$album_tag" --composer "$composer" $track_args --output "$tempf" && \
+		echo_exec mv "$tempf" "$file"
         fi
     done
 done
