@@ -193,3 +193,5 @@ unset psopts cdrecorder
 # This section has site-local external dependencies
 
 source "$OZDOTDIR/site-complete"
+
+test -e ${HOME}/.iterm2_shell_integration.zsh && source ${HOME}/.iterm2_shell_integration.zsh

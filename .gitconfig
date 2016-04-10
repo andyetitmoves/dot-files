@@ -19,10 +19,15 @@
 	cp = cherry-pick
 	sr = svn rebase
 	sd = svn dcommit
+	p = pull
 
 [user]
-	name = Ramkumar R. Aiyengar
+	name = Ramkumar Aiyengar
 	mail = andyetitmoves@gmail.com
+
+[user "https://git-wip-us.apache.org"]
+	name = Ramkumar Aiyengar
+	mail = andyetitmoves@apache.org
 
 [user "https://bbgithub.dev.bloomberg.com"]
 	name = Ramkumar Aiyengar
