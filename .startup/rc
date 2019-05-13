@@ -67,12 +67,20 @@ las () { la -Cw $COLUMNS --color=always "$@" | less -R ; }
 lls () { ll --color=always "$@" | less -R ; }
 llas () { lla --color=always "$@" | less -R ; }
 
-DIRCOLORS="$SHOME/.startup/dircolors/$TERM"
+if [ -x "$(which dircolors)" ]; then
+    DIRCOLORS_EXE='dircolors'
+elif [ -x "$(which gdircolors)" ]; then
+    DIRCOLORS_EXE='gdircolors'
+fi
 
-[ -r "$DIRCOLORS" ] || DIRCOLORS="$SHOME/.startup/dircolors/default"
-[ -r "$DIRCOLORS" ] && eval `dircolors --sh "$DIRCOLORS"`
+if [ -n "$DIRCOLORS_EXE" ]; then
+    DIRCOLORS="$SHOME/.startup/dircolors/$TERM"
+    [ -r "$DIRCOLORS" ] || DIRCOLORS="$SHOME/.startup/dircolors/default"
+    [ -r "$DIRCOLORS" ] && eval `$DIRCOLORS_EXE --sh "$DIRCOLORS"`
+    unset DIRCOLORS DIRCOLORS_EXE
+fi
 
-unset ECONFDIR DIRCOLORS
+unset ECONFDIR
 
 export TOOLKIT_USERNAME=raiyenga
 

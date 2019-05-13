@@ -10,7 +10,7 @@
 
   (mapc 'prefix-home-subdir-to-load-path
 	'("elisp/misc" "elisp/empi" "elisp/empi/defs"
-	  "install/devel/libmpdee" ".emacs.d/site-lisp"
+	  "projects/libmpdee" ".emacs.d/site-lisp"
 	  ".emacs.d/shadow")))
 
 (defvar query-replace-from-history nil)
@@ -19,10 +19,10 @@
 ;;;; Custom
 
 (custom-set-variables
-  ;; custom-set-variables was added by Custom.
-  ;; If you edit it by hand, you could mess it up, so be careful.
-  ;; Your init file should contain only one such instance.
-  ;; If there is more than one, they won't work right.
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
  '(TeX-PDF-mode t)
  '(TeX-auto-local "./")
  '(TeX-auto-save t)
@@ -31,8 +31,16 @@
  '(TeX-insert-braces nil)
  '(TeX-newline-function (quote reindent-then-newline-and-indent))
  '(TeX-parse-self t)
- '(TeX-view-program-selection (quote (((output-dvi style-pstricks) "dvips and gv") (output-dvi "xdvi") (output-pdf "Evince") (output-html "xdg-open"))))
- '(abbrev-mode t)
+ '(TeX-view-program-selection
+   (quote
+    (((output-dvi style-pstricks)
+      "dvips and gv")
+     (output-dvi "xdvi")
+     (output-pdf "Evince")
+     (output-html "xdg-open"))))
+ '(abbrev-mode t t)
+ '(ansi-color-faces-vector
+   [default default default italic underline success warning error])
  '(apropos-do-all t)
  '(apt-utils-kill-buffer-confirmation-function (quote y-or-n-p))
  '(apt-utils-show-all-versions t)
@@ -41,13 +49,20 @@
  '(backup-directory-alist (quote (("." . "~/.emacs.d/backup"))))
  '(backward-delete-char-untabify-method (quote hungry))
  '(bibtex-align-at-equal-sign t)
- '(bibtex-entry-format (quote (opts-or-alts required-fields numerical-fields page-dashes inherit-booktitle realign last-comma delimiters unify-case)))
- '(blink-cursor-mode t nil (frame))
+ '(bibtex-entry-format
+   (quote
+    (opts-or-alts required-fields numerical-fields page-dashes inherit-booktitle realign last-comma delimiters unify-case)))
  '(browse-url-browser-function (quote browse-url-firefox))
  '(c-auto-newline t t)
  '(c-basic-offset 4)
- '(c-cleanup-list (quote (brace-catch-brace empty-defun-braces defun-close-semi list-close-comma scope-operator space-before-funcall)))
- '(c-default-style (quote ((c-mode . "linux") (java-mode . "java") (other . "gnu"))))
+ '(c-cleanup-list
+   (quote
+    (brace-catch-brace empty-defun-braces defun-close-semi list-close-comma scope-operator space-before-funcall)))
+ '(c-default-style
+   (quote
+    ((c-mode . "linux")
+     (java-mode . "java")
+     (other . "gnu"))))
  '(c-echo-syntactic-information-p t)
  '(c-ignore-auto-fill nil)
  '(c-indent-level 4 t)
@@ -94,12 +109,18 @@
  '(empi-default-player "mpd")
  '(empi-initial-backends (quote (empi-mpd empi-mpc empi-forwarder empi-dummy)))
  '(empi-mode-line-playtime-mode t nil (empi))
- '(empi-player-alist (quote (("mpd" (empi-mpc :restrict (:qpltitles :qplfiles)) empi-mpd empi-mpc empi-forward) ("dummy" empi-dummy))))
+ '(empi-player-alist
+   (quote
+    (("mpd"
+      (empi-mpc :restrict
+                (:qpltitles :qplfiles))
+      empi-mpd empi-mpc empi-forward)
+     ("dummy" empi-dummy))))
  '(empl-playlist-locked t)
  '(eshell-directory-name "~/.emacs.d/eshell/")
  '(fill-column 80)
  '(global-font-lock-mode t)
- '(global-semantic-decoration-mode t nil (semantic/decorate/mode))
+ '(global-semantic-decoration-mode t)
  '(global-semantic-highlight-edits-mode t nil (semantic/util-modes))
  '(global-semantic-highlight-func-mode t nil (semantic/util-modes))
  '(global-semantic-idle-completions-mode t nil (semantic/idle))
@@ -121,25 +142,33 @@
  '(gnus-save-newsrc-file nil)
  '(gnus-startup-file "~/.emacs.d/gnus/newsrc")
  '(gnus-summary-thread-gathering-function (quote gnus-gather-threads-by-references))
- '(gnus-thread-sort-functions (quote (gnus-thread-sort-by-number gnus-thread-sort-by-date)))
+ '(gnus-thread-sort-functions
+   (quote
+    (gnus-thread-sort-by-number gnus-thread-sort-by-date)))
  '(gnus-topic-display-empty-topics nil)
  '(gnus-treat-date-local (quote head))
  '(gnus-treat-display-x-face (quote head))
- '(gnus-visible-headers (quote ("^From:" "^Newsgroups:" "^Subject:" "^Date:" "^Followup-To:" "^Reply-To:" "^Organization:" "^Summary:" "^Keywords:" "^To:" "^[BGF]?Cc:" "^Posted-To:" "^Mail-Copies-To:" "^Mail-Followup-To:" "^Apparently-To:" "^Gnus-Warning:" "^Resent-From:" "^X-Sent:" "^User-Agent:" "^X-Mailer:")))
+ '(gnus-visible-headers
+   (quote
+    ("^From:" "^Newsgroups:" "^Subject:" "^Date:" "^Followup-To:" "^Reply-To:" "^Organization:" "^Summary:" "^Keywords:" "^To:" "^[BGF]?Cc:" "^Posted-To:" "^Mail-Copies-To:" "^Mail-Followup-To:" "^Apparently-To:" "^Gnus-Warning:" "^Resent-From:" "^X-Sent:" "^User-Agent:" "^X-Mailer:")))
  '(goto-address-url-face (quote bold))
  '(grep-find-prompt "Find [%w] ")
  '(grep-highlight-matches t)
  '(grep-prompt "Grep [%w] ")
  '(gud-tooltip-mode t)
- '(hfy-optimisations (quote (merge-adjacent-tags zap-string-links kill-context-leak div-wrapper keep-overlays)))
- '(hippie-expand-try-functions-list (quote (try-complete-file-name-partially try-complete-file-name try-expand-all-abbrevs try-expand-list try-expand-line try-expand-dabbrev try-expand-dabbrev-all-buffers try-expand-dabbrev-from-kill try-complete-lisp-symbol-partially try-complete-lisp-symbol)))
- '(html-helper-mode-uses-visual-basic t nil (html-helper-mode))
+ '(hfy-optimisations
+   (quote
+    (merge-adjacent-tags zap-string-links kill-context-leak div-wrapper keep-overlays)))
+ '(hippie-expand-try-functions-list
+   (quote
+    (try-complete-file-name-partially try-complete-file-name try-expand-all-abbrevs try-expand-list try-expand-line try-expand-dabbrev try-expand-dabbrev-all-buffers try-expand-dabbrev-from-kill try-complete-lisp-symbol-partially try-complete-lisp-symbol)))
  '(ido-enable-flex-matching t)
  '(ido-everywhere t)
  '(ido-mode (quote both) nil (ido))
  '(ido-save-directory-list-file "~/.emacs.d/ido-last.el")
  '(ido-use-filename-at-point (quote guess))
  '(ido-use-url-at-point t)
+ '(indent-tabs-mode nil)
  '(inhibit-startup-screen t)
  '(ispell-program-name "aspell" t)
  '(kept-new-versions 5)
@@ -154,7 +183,6 @@
  '(mail-user-agent (quote gnus-user-agent))
  '(makefile-electric-keys t)
  '(mark-even-if-inactive t)
- '(menu-bar-mode nil nil (menu-bar))
  '(message-directory "~/.mail")
  '(message-from-style (quote angles))
  '(message-log-max 1000)
@@ -164,16 +192,10 @@
  '(minibuf-isearch-always-with-complete t)
  '(minibuf-isearch-message-on-right t)
  '(minibuf-isearch-use-migemo nil)
- '(mmm-global-mode (quote maybe) nil (mmm-mode))
- '(mmm-mode-ext-classes-alist (quote ((cperl-mode "" here-doc) (sh-mode "" here-doc) (html-helper-mode "" html-js) (html-helper-mode "" embedded-css))) nil (mmm-mode))
- '(mmm-mode-string "")
  '(mouse-highlight 1)
  '(mouse-wheel-mode t nil (mwheel))
  '(mpd-db-root "/srv/mpd/songs")
  '(nnmail-message-id-cache-file "~/.emacs.d/gnus/nnmail-cache")
- '(pc-select-meta-moves-sexps t)
- '(pc-select-selection-keys-only t)
- '(pc-selection-mode t nil (pc-select))
  '(pgg-default-user-id "\"Ramkumar R\" <andyetitmoves@gmail.com>")
  '(predictive-auto-learn t)
  '(predictive-dict-autosave nil)
@@ -183,18 +205,33 @@
  '(reftex-plug-into-AUCTeX t)
  '(reftex-save-parse-info t)
  '(reftex-toc-split-windows-horizontally t)
- '(safe-local-variable-values (quote ((c-comment-only-line-offset . 0) (c-offsets-alist (statement-block-intro . +) (knr-argdecl-intro . 0) (substatement-open . 0) (label . 0) (statement-cont . +)))))
+ '(safe-local-variable-values
+   (quote
+    ((c-comment-only-line-offset . 0)
+     (c-offsets-alist
+      (statement-block-intro . +)
+      (knr-argdecl-intro . 0)
+      (substatement-open . 0)
+      (label . 0)
+      (statement-cont . +)))))
  '(scroll-bar-mode nil)
  '(semantic-complete-inline-analyzer-displayor-class (quote semantic-displayor-traditional))
  '(semantic-mode t)
  '(semanticdb-default-save-directory "~/.emacs.d/semantic-cache")
  '(semanticdb-default-system-save-directory "~/.emacs.d/semantic-cache")
  '(server-mode t)
- '(session-initialize t nil (session))
  '(session-locals-include (quote (buffer-read-only view-mode buffer-undo-list)))
  '(session-save-file "~/.emacs.d/session-state.el")
  '(session-undo-check -1)
- '(sh-shell-arg (quote ((bash . "-i") (csh . "-f") (pdksh) (ksh88) (rc . "-p") (wksh) (zsh . "-f"))))
+ '(sh-shell-arg
+   (quote
+    ((bash . "-i")
+     (csh . "-f")
+     (pdksh)
+     (ksh88)
+     (rc . "-p")
+     (wksh)
+     (zsh . "-f"))))
  '(show-paren-mode t)
  '(show-paren-style (quote expression))
  '(show-trailing-whitespace t)
@@ -217,7 +254,6 @@
  '(tramp-backup-directory-alist (quote (("." . "~/.emacs.d/backup"))))
  '(tramp-default-method "sftp")
  '(tramp-default-method-alist nil)
- '(transient-mark-mode t)
  '(truncate-lines t)
  '(uniquify-buffer-name-style (quote post-forward-angle-brackets) nil (uniquify))
  '(url-automatic-caching t)
@@ -238,10 +274,11 @@
  '(x-select-enable-clipboard t))
 
 (custom-set-faces
-  ;; custom-set-faces was added by Custom.
-  ;; If you edit it by hand, you could mess it up, so be careful.
-  ;; Your init file should contain only one such instance.
-  ;; If there is more than one, they won't work right.
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(default ((t (:family "Lucida Console" :foundry "nil" :slant normal :weight normal :height 181 :width semi-condensed))))
  '(border ((((class color) (background dark)) (:background "grey70"))))
  '(completions-common-part ((((class color) (background dark)) (:foreground "grey"))))
  '(completions-first-difference ((((class color) (background dark)) (:foreground "coral"))))
@@ -391,7 +428,7 @@
 
 ;;;; Bindings
 
-(pc-bindings-mode)
+;(pc-bindings-mode)
 
 (define-keys (current-global-map)
   [remap backward-delete-char-untabify]	'hi-backspace
@@ -620,7 +657,8 @@
 	  (lambda ()
 	    (c-toggle-auto-hungry-state 1)
 	    (define-key c-mode-base-map [?\t] 'hippie-expand)
-	    (highlight-beyond-fill-column)))
+	    ;(highlight-beyond-fill-column)
+	    ))
 (add-hook 'c-mode-hook (lambda () (setq c-basic-offset 8)))
 
 (add-hook 'text-mode-hook 'turn-on-auto-fill)
@@ -632,7 +670,7 @@
 	     (string-equal
 	      "elc" (downcase (or (file-name-extension buffer-file-name) ""))))
 	(toggle-read-only 1)
-      (highlight-beyond-fill-column)
+      ;(highlight-beyond-fill-column)
       (turn-on-auto-fill))))
 
 (defun disable-trw ()
@@ -673,7 +711,7 @@
 ;;     (forward-char (- newpt oldpt))
 ;;     (setq deactivate-mark nil)))
 
-(require 'redo)
+;(require 'redo)
 
 ;;;; Buffers
 
@@ -716,7 +754,7 @@
 
 (defvar tempbuf-inclusion-regexp "^\\*.*\\*$")
 
-(require 'tempbuf)
+;(require 'tempbuf)
 (defun make-all-temp-bufs ()
   (let ((noecho (and (window-minibuffer-p)
 		     (minibuffer-window-active-p (selected-window)))))
@@ -771,7 +809,7 @@
 	(setq last cur))
       (setq cur (cdr-safe cur)))))
 
-(eval-when-compile (require 'session))
+;(eval-when-compile (require 'session))
 
 (setq session-locals-predicate 'session-locals-predicate)
 
@@ -794,7 +832,7 @@
 (add-hook 'find-file-hooks 'make-specific-files-read-only)
 
 (require 'proj)
-(template-initialize)
+;(template-initialize)
 
 (defvar backup-exclude-dirs
   (list temporary-file-directory small-temporary-file-directory))
@@ -925,6 +963,6 @@
 		  (imenu-add-to-menubar "TAGS")
 		(error nil)))))
 
-(require 'files-patch)
+;(require 'files-patch)
 
 (put 'upcase-region 'disabled nil)

@@ -48,7 +48,22 @@
 [credential]
 	helper = osxkeychain
 
-[http "https://bbgithub.dev.bloomberg.com"]
-	proxy = bproxy.tdmz1.bloomberg.com:80
 [http]
 	proxy = http://localhost:8888
+	sslCAinfo = ~/.bbcert/bloomberg-root-ca.crt
+
+[url "bbgithub:"]
+	insteadOf = https://bbgithub.dev.bloomberg.com
+
+[url "https://github.com/"]
+	insteadOf = github.com:
+[url "https://github.com/"]
+	insteadOf = git@github.com:
+[url "https://github.com/"]
+	insteadOf = ssh://git@github.com/
+[url "https://gitlab.com/"]
+	insteadOf = gitlab.com:
+[url "https://gitlab.com/"]
+	insteadOf = git@gitlab.com:
+[url "https://gitlab.com/"]
+	insteadOf = ssh://git@gitlab.com/
